@@ -28,7 +28,7 @@ function ageCells(matrix) {
     return row.map(col => {
       return col.set('opacity', 0).update('content', content => {
         if (Math.random() < blotchProb) {
-          return randomEmoji();
+          return 'f';
         } else {
           return content;
         }
@@ -37,12 +37,12 @@ function ageCells(matrix) {
   });
 }
 
-function watchDrops(drops, matrix) {
+function fillDrops(drops, matrix) {
   return matrix.map((row, rowIndex) => {
     return row.withMutations(mutRow => {
       drops.forEach((rowIndex1, colIndex) => {
         if (rowIndex === rowIndex1) {
-          mutRow.set(colIndex, Map({content: randomEmoji(), opacity: 1}));
+          mutRow.set(colIndex, Map({content: 'a', opacity: 1}));
         }
       });
     });
@@ -50,7 +50,7 @@ function watchDrops(drops, matrix) {
 }
 
 function stepMatrix(drops, matrix) {
-  return watchDrops(cursors, ageCells(matrix));
+  return fillDrops(drops, ageCells(matrix));
 }
 
 function stepDrops(rlen, drops) {
@@ -61,7 +61,7 @@ function stepDrops(rlen, drops) {
       if (Math.random() < freshDropProb) {
         return 0;
       } else {
-        return c;
+        return rowIndex;
       }
     }
   });
@@ -70,13 +70,24 @@ function stepDrops(rlen, drops) {
 window.onload = function() {
   var rlen = 100;
   var clen = 100;
-  var matrix = initialMatrix(rlen, clen);
   var drops = initialDrops(rlen, clen);
+  var matrix = initialMatrix(rlen, clen);
 
   var initial = performance.now();
-  function main(current) {
-    var now = current - inital;
-    console.log(now);
+  var _prev = initial;
+  var elapsedCurrent = 0;
+  var elapsedTotal = 0;
+  function main(_current) {
+    /* RAF measurement utility */
+    elapsedCurrent = _current - _prev;
+    elapsedTotal = _current - initial;
+    if (elapsedCurrent > 20) {
+      console.warn(`RAF loop took longer than 20ms (${elapsedCurrent})`);
+    }
+    _prev = _current;
+
+    matrix = stepMatrix(drops, matrix);
+    drops = stepDrops(rlen, drops);
     requestAnimationFrame(main);
   }
   requestAnimationFrame(main);

@@ -9,9 +9,12 @@ module.exports = {
   },
   module: {
     loaders: [
-      { test: /\.js$/, loader: 'jsx-loader?harmony' },
-      { test: /\.css$/, loader: 'style-loader!css-loader' },
-      { test: /\.(png|jpg)$/, loader: 'url-loader?limit=8192' },
+      { test: /\.js$/,
+        exclude: /(node_modules)/,
+        loader: 'babel', },
+      { test: /\.css$/, loader: 'style-loader!css-loader', },
+      { test: /\.(png|jpg)$/, loader: 'url-loader?limit=8192', },
     ]
-  }
+  },
+  devtool: 'cheap-module-eval-source-map',
 };
