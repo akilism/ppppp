@@ -73,7 +73,7 @@ window.onload = function() {
   var matrix = initialMatrix(rlen, clen);
   var drops = initialDrops(rlen, clen);
 
-  var initial = Performance.now();
+  var initial = performance.now();
   function main(current) {
     var now = current - inital;
     console.log(now);
