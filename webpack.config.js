@@ -1,20 +1,25 @@
+var os = require('os');
+
 module.exports = {
   entry: {
-    './react-svg/packed': './react-svg/index.js',
-    './canvas/packed': './canvas/index.js',
+    'canvas': './canvas/index.js',
   },
   output: {
     path: __dirname,
-    filename: '[name].js'
+    filename: 'output/[name].js',
   },
   module: {
     loaders: [
       { test: /\.js$/,
         exclude: /(node_modules)/,
         loader: 'babel', },
-      { test: /\.css$/, loader: 'style-loader!css-loader', },
-      { test: /\.(png|jpg)$/, loader: 'url-loader?limit=8192', },
+      { test: /\.css$/,
+        loader: 'style-loader!css-loader', },
+      { test: /\.(png|jpg)$/,
+        loader: 'url-loader?limit=8192', },
+      { test: /\.(ttf)$/,
+        loader: 'file-loader?name=output/[path][name].[ext]', },
     ]
   },
-  devtool: 'cheap-module-eval-source-map',
+  devtool: 'cheap-source-map',
 };

@@ -1,6 +1,6 @@
-var $ = require('jquery');
-var React = require('react');
 var {List, Repeat, Map} = require('immutable');
+
+var appleColor = require('./apple_color_emoji.ttf');
 
 function randomEmoji() {
   var emojis = "😀😁😂😃😄😅😆😇😈👿😉😊😋😌😍😎😏😐😑😒😓😔😕😖😗😘😙😚😛😜😝😞😟😠😡😢😣😤😥😦😧😨😩😪😫😬😭😮😯😰😱😲😳";
@@ -11,46 +11,52 @@ function randomEmoji() {
 var blotchProb = 0.3;
 var freshDropProb = 0.4;
 
+var initialCell = Map({content: '', opacity: 0});
+
 function initialMatrix(rlen, clen) {
-  var initialCell = Map({content: '', opacity: 0});
   var cols = List(Repeat(initialCell, clen));
-  return List(Repeat(cols, rlen));
+  return List(Repeat(cols, rlen)).toJS();
 }
 
 function initialDrops(rlen, clen) {
+  var ret = [];
   return List().setSize(clen).map(_ => {
     return Math.floor(Math.random() * rlen);
-  });
+  }).toJS();
 }
 
 function ageCells(matrix) {
   return matrix.map(row => {
     return row.map(col => {
-      return col.set('opacity', 0).update('content', content => {
-        if (Math.random() < blotchProb) {
-          return 'f';
-        } else {
-          return content;
-        }
-      });
+      var content;
+      if (Math.random() < blotchProb) {
+        content = 'f';
+      } else {
+        content = col.content;
+      }
+      return {
+        opacity: 0,
+        content: content,
+      };
     });
   });
 }
 
-function fillDrops(drops, matrix) {
+function fillDrops(clen, drops, matrix) {
   return matrix.map((row, rowIndex) => {
-    return row.withMutations(mutRow => {
-      drops.forEach((rowIndex1, colIndex) => {
-        if (rowIndex === rowIndex1) {
-          mutRow.set(colIndex, Map({content: 'a', opacity: 1}));
-        }
-      });
-    });
+    var mutRow = [];
+    for (var i = 0; i < clen; i++) {
+      var rowIndex1 = drops[i];
+      if (rowIndex  ===  rowIndex1) {
+        mutRow.push({content: 'f', 'opacity': 1});
+      }
+    }
+    return mutRow;
   });
 }
 
-function stepMatrix(drops, matrix) {
-  return fillDrops(drops, ageCells(matrix));
+function stepMatrix(clen, drops, matrix) {
+  return fillDrops(clen, drops, ageCells(matrix));
 }
 
 function stepDrops(rlen, drops) {
@@ -67,6 +73,9 @@ function stepDrops(rlen, drops) {
   });
 }
 
+function renderMatrix(matrix) {
+}
+
 window.onload = function() {
   var rlen = 100;
   var clen = 100;
@@ -78,16 +87,15 @@ window.onload = function() {
   var elapsedCurrent = 0;
   var elapsedTotal = 0;
   function main(_current) {
-    /* RAF measurement utility */
     elapsedCurrent = _current - _prev;
     elapsedTotal = _current - initial;
-    if (elapsedCurrent > 20) {
+    if (elapsedCurrent > 25) {
       console.warn(`RAF loop took longer than 20ms (${elapsedCurrent})`);
     }
     _prev = _current;
-
-    matrix = stepMatrix(drops, matrix);
+    matrix = stepMatrix(clen, drops, matrix);
     drops = stepDrops(rlen, drops);
+    renderMatrix(matrix);
     requestAnimationFrame(main);
   }
   requestAnimationFrame(main);
