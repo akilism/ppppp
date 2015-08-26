@@ -1,0 +1,22 @@
+[
+  {
+    "scanimations": [
+      {
+        "start": 0,
+        "end": 50,
+        "animation": "pan"
+      },
+      {
+        "start": 25,
+        "end": 75,
+        "animation": "zoom"
+      }
+    ],
+    "text": "The village of Holcomb stands on the high wheat plains of western Kansas, a lonesome area that other Kansans call “out there.” Some seventy miles east of the Colorado border, the countryside, with its hard blue skies and desert-clear air, has an atmosphere that is rather more Far West than Middle West. The local accent is barbed with a prairie twang, a ranch-hand nasalness, and the men, many of them, wear narrow frontier trousers, Stetsons, and high-heeled boots with pointed toes. The land is flat, and the views are awesomely extensive; horses, herds of cattle, a white cluster of grain elevators rising as gracefully as Greek temples are visible long before a traveller reaches them."
+  },
+  {
+    "scanimations": [
+    ],
+    "text": "Holcomb, too, can be seen from great distances. Not that there is much to see—simply an aimless congregation of buildings divided in the center by the main-line tracks of the Santa Fe Railway, a haphazard hamlet bounded on the south by a brown stretch of the Arkansas (pronounced “Ar-kan-sas”) River, on the north by a highway, Route 50, and on the east and west by prairie lands and wheat fields. After rain, or when snowfalls thaw, the streets, unnamed, unshaded, unpaved, turn from the thickest dust into the direst mud. At one end of the town stands a stark old stucco structure, the roof of which supports an electric sign—“DANCE”—but the dancing has ceased and the advertisement has been dark for several years. Nearby is another building with an irrelevant sign, this one in flaking gold on a dirty window—“HOLCOMB BANK.” The bank failed in 1933, and its former counting rooms have been converted into apartments. It is one of the town’s two “apartment houses,” the second being a ramshackle mansion known, because a good part of the local school’s faculty lives there, as the Teacherage. But the majority of Holcomb’s homes are one-story frame affairs, with front porches."
+  }
+]

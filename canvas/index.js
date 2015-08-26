@@ -1,15 +1,36 @@
 var {List, Repeat, Map} = require('immutable');
+var punycode = require('punycode');
+var path = require('path');
+var async = require('async');
+var emoji = require('apple-color-emoji');
 
-var appleColor = require('./apple_color_emoji.ttf');
+
+var emojis = "😀😁😂😃😄😅😆😇😈👿😉😊😋😌😍😎😏😐😑😒😓😔😕😖😗😘😙😚😛😜😝😞😟😠😡😢😣😤😥😦😧😨😩😪😫😬😭😮😯😰😱😲😳";
+
+function loadEmoji(ch, cb) {
+  var image = new Image(20, 20);
+  image.src = emoji.getImage(ch);
+  if (cb != null) {
+    image.addEventListener('load', () => {
+      cb(null, image);
+    }, false);
+  }
+}
+
+function loadEmojis(str, cb) {
+  var chars = punycode.ucs2.decode(str).map((codePoint) => {
+    return String.fromCodePoint(codePoint);
+  });
+  async.map(chars, loadEmoji, cb);
+}
 
 function randomEmoji() {
-  var emojis = "😀😁😂😃😄😅😆😇😈👿😉😊😋😌😍😎😏😐😑😒😓😔😕😖😗😘😙😚😛😜😝😞😟😠😡😢😣😤😥😦😧😨😩😪😫😬😭😮😯😰😱😲😳";
   var randIndex = Math.floor(Math.floor(Math.random() * emojis.length/2) * 2);
   return emojis[randIndex] + emojis[randIndex+1];
 }
 
 var blotchProb = 0.3;
-var freshDropProb = 0.4;
+var freshDropProb = 0.1;
 
 var initialCell = Map({content: '', opacity: 0});
 
@@ -20,6 +41,7 @@ function initialMatrix(rlen, clen) {
 
 function initialDrops(rlen, clen) {
   var ret = [];
+  return List(Repeat(0, clen)).toJS();
   return List().setSize(clen).map(_ => {
     return Math.floor(Math.random() * rlen);
   }).toJS();
@@ -27,16 +49,10 @@ function initialDrops(rlen, clen) {
 
 function ageCells(matrix) {
   return matrix.map(row => {
-    return row.map(col => {
-      var content;
-      if (Math.random() < blotchProb) {
-        content = 'f';
-      } else {
-        content = col.content;
-      }
+    return row.map(cell => {
       return {
-        opacity: 0,
-        content: content,
+        opacity: Math.max(0, cell.opacity / 1.05 - 0.05),
+        content: Math.random() < blotchProb ? randomEmoji() : cell.content,
       };
     });
   });
@@ -47,8 +63,11 @@ function fillDrops(clen, drops, matrix) {
     var mutRow = [];
     for (var i = 0; i < clen; i++) {
       var rowIndex1 = drops[i];
+      var cell = row[i];
       if (rowIndex  ===  rowIndex1) {
-        mutRow.push({content: 'f', 'opacity': 1});
+        mutRow.push({content: randomEmoji(), opacity: 1});
+      } else {
+        mutRow.push(row[i]);
       }
     }
     return mutRow;
@@ -73,30 +92,43 @@ function stepDrops(rlen, drops) {
   });
 }
 
-function renderMatrix(matrix) {
+var image = new Image(14, 14);
+image.src = emoji.getImage('😈');
+function renderMatrix(canvas, ctx, matrix) {
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  //ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#0f0';
+  matrix.forEach((row, ri) => {
+    row.forEach((cell, ci) => {
+      ctx.globalAlpha = cell.opacity;
+      //ctx.fillRect(ci * 14, ri * 14, 14, 14);
+      ctx.drawImage(image, ci * 20, ri * 20);
+      //ctx.fillText(cell.content, ci * 14 + 7, ri * 14 + 7);
+    });
+  });
 }
 
 window.onload = function() {
-  var rlen = 100;
-  var clen = 100;
+  var canvas = document.createElement('canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#0f0';
+  var rlen = Math.ceil(canvas.height/20);
+  var clen = Math.ceil(canvas.width/20);
   var drops = initialDrops(rlen, clen);
   var matrix = initialMatrix(rlen, clen);
 
-  var initial = performance.now();
-  var _prev = initial;
-  var elapsedCurrent = 0;
-  var elapsedTotal = 0;
-  function main(_current) {
-    elapsedCurrent = _current - _prev;
-    elapsedTotal = _current - initial;
-    if (elapsedCurrent > 25) {
-      console.warn(`RAF loop took longer than 20ms (${elapsedCurrent})`);
-    }
-    _prev = _current;
-    matrix = stepMatrix(clen, drops, matrix);
-    drops = stepDrops(rlen, drops);
-    renderMatrix(matrix);
-    requestAnimationFrame(main);
-  }
-  requestAnimationFrame(main);
+  loadEmojis(emojis, (_, emojiImages) => { 
+    setInterval(function main() {
+      matrix = stepMatrix(clen, drops, matrix);
+      drops = stepDrops(rlen, drops);
+      renderMatrix(canvas, ctx, matrix);
+    }, 100);
+  });
+  document.body.appendChild(canvas);
 };

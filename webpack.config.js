@@ -2,24 +2,31 @@ var os = require('os');
 
 module.exports = {
   entry: {
-    'canvas': './canvas/index.js',
+    'holcomb': './holcomb/index.js',
   },
-  output: {
-    path: __dirname,
-    filename: 'output/[name].js',
+  externals: {
+    'google': 'google',
   },
   module: {
     loaders: [
       { test: /\.js$/,
         exclude: /(node_modules)/,
         loader: 'babel', },
+      { test: /\.json$/,
+        loader: 'json' },
       { test: /\.css$/,
         loader: 'style-loader!css-loader', },
       { test: /\.(png|jpg)$/,
         loader: 'url-loader?limit=8192', },
       { test: /\.(ttf)$/,
         loader: 'file-loader?name=output/[path][name].[ext]', },
+      { test: /\.txt/,
+        loader: 'raw-loader', },
     ]
   },
-  devtool: 'cheap-source-map',
+  output: {
+    path: __dirname,
+    filename: 'output/[name].js',
+  },
+  devtool: 'cheap-module-source-map',
 };

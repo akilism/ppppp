@@ -1,0 +1,75 @@
+{
+  "locations": [
+    {
+      "name": "12 Chairs Café",
+      "type": "food",
+      "latLng": [40.7163213,-73.9536048],
+      "children": [
+        {
+          "text": "We just moved to a new office, which is in a different part of the neighborhood than we are used to. In New York, even something as small as a few blocks can change everything. To show us around, we hooked up with VICE veteran, Ben Kammerle, to show us all the spots."
+        },
+        {
+          "text": "He first took us to 12 chairs. One of the best new restaurants in the neighborhood and right next door to the office."
+        },
+        {
+          "type": "bleeder",
+          "description": "12 Chairs Café"
+        },
+        {
+          "type": "audio",
+          "text": "It’s run by some badass Israelis - we talked to the owner and got his story",
+          "description": "Audio story of restaurant owner and his personal story"
+        },
+        {
+          "type": "gif",
+          "text": "He ordered us some hummus and falafel. It was awesome but Ben was extremely rude to the staff.",
+          "description": "GIF of full table with food to all hands in the shot to empty plates"
+        },
+        {
+          "text": "Ben was being a total jerk, but thank goodness 12 Chairs has some incredible mint lemonade to calm us down."
+        },
+        {
+          "type": "video",
+          "description": "Looped video of Erik drinking lemonade"
+        }
+      ]
+    },
+    {
+      "name": "Crown Victoria",
+      "type": "drink",
+      "latLng": [40.7141756,-73.9656712],
+      "children": [
+        {
+          "text": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\"\nHe took us to one of the best backyards, Crown Victoria. Probably because he’s cheap."
+        },
+        {
+          "type": "image",
+          "description": "Happy Hour image"
+        },
+        {
+          "type": "image",
+          "description": "Picture of taco stand and food",
+          "caption": "Picture of taco stand and food"
+        },
+        {
+          "type": "image",
+          "description": "Picture of slushy stand",
+          "caption": "Great drinks..."
+        },
+        {
+          "type": "list",
+          "description": "And tons of space to waste away your day. In brooklyn, day drinking is encouraged.",
+          "elements": [
+            "Cornholing. I don’t know why they call it that.",
+            "Horseshoes."
+          ]
+        },
+        {
+          "type": "image",
+          "description": "picture of crown vic pig roast (see: internet)",
+          "caption": "Not to mention, on sundays they roast an entire pig"
+        }
+      ]
+    }
+  ]
+}
