@@ -3,6 +3,7 @@ var os = require('os');
 module.exports = {
   entry: {
     'holcomb': './holcomb/index.js',
+    'scroll': './scroll/index.js',
   },
   externals: {
     'google': 'google',
