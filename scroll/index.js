@@ -2,19 +2,16 @@ var $ = require('jquery');
 var React = require('react');
 
 function getEmbeddableComponent(Component, container, dimensions) {
-  var [width, height] = dimensions;
+  var [width, height] = dimensions || [];
   class Spy extends React.Component {
     constructor() {
       super();
-      this.state = {
-        width: width,
-        height: height,
-      };
+      this.state = {width: width, height: height};
     }
 
     render() {
-      var width  = this.state.width  || width;
-      var height = this.state.height || height;
+      var width  = this.state.width || 0;
+      var height = this.state.height || 0;
 
       var initialStyle = {
         width: `${width}`,
@@ -45,8 +42,7 @@ function getEmbeddableComponent(Component, container, dimensions) {
 }
 
 function getDefaultDimensions(container, dimensions) {
-  var dimensions = dimensions || [];
-  var [width, height] = dimensions;
+  var [width, height] = dimensions || [];
   if (width == null) {
     width = $(container).width();
   }
@@ -56,12 +52,11 @@ function getDefaultDimensions(container, dimensions) {
   return [width, height];
 }
 
-// Do not call this before window loading;
-function embedComponent(Component, container, dimensions) {
+function embedComponent(Component, container, dimensions, callback) {
   $(window).load(function() {
     dimensions = getDefaultDimensions(container, dimensions);
     Component = getEmbeddableComponent(Component, container, dimensions);
-    React.render(<Component/>, container);
+    React.render(<Component/>, container, callback);
   });
 }
 
@@ -72,3 +67,8 @@ class HelloWorld extends React.Component {
     );
   }
 }
+
+var container = document.body;
+
+$(container).on('scroll', function() {
+});
