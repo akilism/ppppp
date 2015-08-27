@@ -57,10 +57,11 @@ function getDefaultDimensions(container, dimensions) {
   return [width, height];
 }
 
+// Do not call this before window loading;
 function embedComponent(Component, container, dimensions) {
-  dimensions = getDefaultDimensions(container, dimensions);
-  Component = getEmbeddableComponent(Component, container, dimensions);
-  $(function() {
+  $(window).load(function() {
+    dimensions = getDefaultDimensions(container, dimensions);
+    Component = getEmbeddableComponent(Component, container, dimensions);
     React.render(<Component/>, container);
   });
 }
@@ -73,8 +74,3 @@ class HelloWorld extends React.Component {
   }
 }
 
-$(function() {
-  var initialWidth = $(document.body).width();
-  var initialHeight = $(document.body).height();
-  embedComponent(HelloWorld, document.body);//[10000, 10000]);
-});
