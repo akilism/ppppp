@@ -1,6 +1,5 @@
 var $ = require('jquery');
 var React = require('react');
-var {maps} = require('google');
 
 function getEmbeddableComponent(Component, container, dimensions) {
   var [width, height] = dimensions;
@@ -73,4 +72,3 @@ class HelloWorld extends React.Component {
     );
   }
 }
-
