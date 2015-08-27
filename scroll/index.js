@@ -10,7 +10,7 @@ function getEmbeddableComponent(Component, container, dimensions) {
     }
 
     render() {
-      var width  = this.state.width || 0;
+      var width  = this.state.width  || 0;
       var height = this.state.height || 0;
 
       var initialStyle = {
