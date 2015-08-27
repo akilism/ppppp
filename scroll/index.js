@@ -2,8 +2,8 @@ var $ = require('jquery');
 var React = require('react');
 var {maps} = require('google');
 
-function getEmbeddedComponent(Component, [width, height], container) {
-
+function getEmbeddableComponent(Component, container, dimensions) {
+  var [width, height] = dimensions;
   class Spy extends React.Component {
     constructor() {
       super();
@@ -14,14 +14,13 @@ function getEmbeddedComponent(Component, [width, height], container) {
     }
 
     render() {
-      var width = this.state.width || 10000;
-      var height = this.state.height || 10000;
+      var width  = this.state.width  || width;
+      var height = this.state.height || height;
+
       var initialStyle = {
         width: `${width}`,
         height: `${height}`,
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
+        position: 'relative',
         overflow: 'scroll',
       };
       return (
@@ -37,7 +36,6 @@ function getEmbeddedComponent(Component, [width, height], container) {
         width: $container.width,
         height: $container.height,
       });
-      $(window).on('scroll', this.handleScroll);
     }
 
     handleScroll(ev) {
@@ -45,6 +43,26 @@ function getEmbeddedComponent(Component, [width, height], container) {
     }
   }
   return Spy;
+}
+
+function getDefaultDimensions(container, dimensions) {
+  var dimensions = dimensions || [];
+  var [width, height] = dimensions;
+  if (width == null) {
+    width = $(container).width();
+  }
+  if (height == null) {
+    height = $(container).height();
+  }
+  return [width, height];
+}
+
+function embedComponent(Component, container, dimensions) {
+  dimensions = getDefaultDimensions(container, dimensions);
+  Component = getEmbeddableComponent(Component, container, dimensions);
+  $(function() {
+    React.render(<Component/>, container);
+  });
 }
 
 class HelloWorld extends React.Component {
@@ -58,6 +76,5 @@ class HelloWorld extends React.Component {
 $(function() {
   var initialWidth = $(document.body).width();
   var initialHeight = $(document.body).height();
-  var EmbeddedHelloWorld = getEmbeddedComponent(HelloWorld, [10000, 10000], document.body);
-  React.render(<EmbeddedHelloWorld/>, document.body);
+  embedComponent(HelloWorld, document.body);//[10000, 10000]);
 });
