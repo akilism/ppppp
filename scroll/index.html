@@ -4,16 +4,22 @@
     <meta charset=utf-8>
     <title>Scroll Experiments</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
-    <script src="../output/scroll.js"></script>
     <style>
-body {
-  background-image: url('http://images2.alphacoders.com/390/39060.jpg');
-  background-repeat: repeat;
+.root {
+  height: 10px;
+  width: 10px;
+  border: 1px solid black;
+}
+.hello {
+  height: 10000px;
+  background-image: url(grid.jpg);
+  background-size: 100% 100%;
+  position: relative;
 }
     </style>
   </head>
   <body>
-    <div>
-    </div>
+    <div class="root">Hello</div>
+    <script src="../output/scroll.js"></script>
   </body>
 </html>

@@ -1,61 +1,79 @@
 var $ = require('jquery');
 var React = require('react');
+var techGrid = require('./grid.jpg');
 
-function getEmbeddableComponent(Component, container, dimensions) {
-  var [width, height] = dimensions || [];
+function getEmbeddableComponent(Component, container) {
+  class Tinker extends React.Component {
+    render() {
+      var style = {
+        width: this.props.width,
+        height: this.props.height,
+      };
+      return <div style={style}></div>;
+    }
+  }
+
+  class Tailor extends React.Component {
+    render() {
+      throw new Error('Not Implemented');
+    }
+  }
+
+  class Soldier extends React.Component {
+    render() {
+      throw new Error('Not Implemented');
+    }
+  }
+
   class Spy extends React.Component {
-    constructor() {
-      super();
-      this.state = {width: width, height: height};
+    constructor(props) {
+      super(props);
+      this.state = {
+        viewPortWidth: null,
+        viewPortHeight: null,
+        windowWidth: null,
+        windowHeight: null,
+      };
     }
 
     render() {
-      var width  = this.state.width  || 0;
-      var height = this.state.height || 0;
-
       var initialStyle = {
-        width: `${width}`,
-        height: `${height}`,
+        width: this.state.viewPortWidth,
+        height: this.state.viewPortHeight,
         position: 'relative',
         overflow: 'scroll',
       };
       return (
-        <div onScroll={this.handleScroll} style={initialStyle}>
+        <div
+          className='embedSpy'
+          style={initialStyle}
+          onScroll={this.handleScroll.bind(this)}>
           <Component {...this.props} />
         </div>
       );
     }
 
-    componentDidMount() {
-      var $container = $(container);
+    componentWillMount() {
       this.setState({
-        width: $container.width,
-        height: $container.height,
+        viewPortWidth: this.state.width || $(container).width() * 2,
+        viewPortHeight: this.state.height || $(container).height() * 2,
+        windowWidth: $(window).width(),
+        windowHeight: $(window).height(),
       });
     }
 
     handleScroll(ev) {
-      console.log([$(window).scrollLeft(), $(window).scrollTop()]);
+      console.log([$(ev.target).scrollLeft(), $(ev.target).scrollTop()]);
     }
   }
+
   return Spy;
 }
 
-function getDefaultDimensions(container, dimensions) {
-  var [width, height] = dimensions || [];
-  if (width == null) {
-    width = $(container).width();
-  }
-  if (height == null) {
-    height = $(container).height();
-  }
-  return [width, height];
-}
-
-function embedComponent(Component, container, dimensions, callback) {
-  $(window).load(function() {
-    dimensions = getDefaultDimensions(container, dimensions);
-    Component = getEmbeddableComponent(Component, container, dimensions);
+function embedComponent(Component, container, callback) {
+  $(container).empty();
+  $(window).one('load', function() {
+    Component = getEmbeddableComponent(Component, container);
     React.render(<Component/>, container, callback);
   });
 }
@@ -63,12 +81,9 @@ function embedComponent(Component, container, dimensions, callback) {
 class HelloWorld extends React.Component {
   render() {
     return (
-      <div>Hello World</div>
+      <div className="hello"></div>
     );
   }
 }
 
-var container = document.body;
-
-$(container).on('scroll', function() {
-});
+embedComponent(HelloWorld, $('.root').get(0));
