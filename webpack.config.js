@@ -1,33 +1,66 @@
-var os = require('os');
+var fs   = require('fs');
+var path = require('path');
 
-module.exports = {
+function getDirEntry(dirname) {
+  dirname = path.resolve(dirname);
+  return fs.readdirSync(dirname).filter(function(filename) {
+    return fs.lstatSync(path.join(dirname, filename)).isDirectory();
+  }).reduce(function(entry, subdirname) {
+    entry[subdirname] = path.join(dirname, subdirname, 'main.js');
+    return entry;
+  }, {});
+}
+
+var loaders = [
+  { test: /\.js$/,
+    exclude: /(node_modules)/,
+    loader: 'babel', },
+  { test: /\.json$/,
+    loader: 'json' },
+  { test: /\.css$/,
+    loader: 'style-loader!css-loader', },
+  { test: /\.(png|jpg)$/,
+    loader: 'url-loader?name=../output/[path][name].[ext]&limit=8192', },
+  { test: /\.txt/,
+    loader: 'raw-loader', },
+];
+
+var externals = {
+  'google': 'google',
+};
+
+var devtool = 'cheap-module-source-map';
+
+exports.lib = {
   entry: {
-    'holcomb': './holcomb/index.js',
-    'scroll': './scroll/index.js',
+    'embed': './lib/embedComponent.js'
   },
-  externals: {
-    'google': 'google',
-  },
-  module: {
-    loaders: [
-      { test: /\.js$/,
-        exclude: /(node_modules)/,
-        loader: 'babel', },
-      { test: /\.json$/,
-        loader: 'json' },
-      { test: /\.css$/,
-        loader: 'style-loader!css-loader', },
-      { test: /\.(png|jpg)$/,
-        loader: 'url-loader?name=../output/[path][name].[ext]&limit=8192', },
-      { test: /\.(ttf)$/,
-        loader: 'file-loader?name=../output/[path][name].[ext]', },
-      { test: /\.txt/,
-        loader: 'raw-loader', },
-    ]
-  },
+
+  module: { loaders: loaders },
+
   output: {
     path: __dirname,
-    filename: 'output/[name].js',
+    filename: 'build/main.js'
   },
-  devtool: 'cheap-module-source-map',
+
+  devtool: devtool,
+};
+
+exports.examples = {
+  entry: getDirEntry('examples'),
+
+  resolve: {
+    fallback: ['./lib']
+  },
+
+  module: { loaders: loaders },
+
+  externals: externals,
+
+  output: {
+    path: __dirname,
+    filename: 'examples/[name]/build/main.js',
+  },
+
+  devtool: devtool,
 };
