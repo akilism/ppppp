@@ -5,7 +5,11 @@ function prepareComponent(Component, viewport) {
   class EmbeddableComponent extends React.Component {
     constructor(props) {
       super(props);
-      this.state = {width: null, height: null};
+      this.state = {
+        width: null, height: null,
+        x: null, y: null,
+      };
+
     }
 
     render() {
@@ -22,7 +26,7 @@ function prepareComponent(Component, viewport) {
         <div
           style={style}
           onScroll={this.handleScroll.bind(this)}>
-          <Component {...this.props} />
+          <Component scrollX={this.state.x} scrollY={this.state.y} {...this.props} />
         </div>
       );
     }
@@ -38,7 +42,11 @@ function prepareComponent(Component, viewport) {
     }
 
     handleScroll(ev) {
-      console.log([$(ev.target).scrollLeft(), $(ev.target).scrollTop()]);
+      var $target = $(ev.target);
+      this.setState({
+        x: $target.scrollLeft(),
+        y: $target.scrollTop(),
+      });
     }
   }
 
@@ -46,7 +54,7 @@ function prepareComponent(Component, viewport) {
 }
 
 function embedComponent(Component, viewport, callback) {
-  $(window).one('load', function() {
+  $(window).one('load', () => {
     var $viewport = $(viewport);
     $viewport.empty();
     Component = prepareComponent(Component, viewport);
@@ -55,10 +63,28 @@ function embedComponent(Component, viewport, callback) {
 }
 
 class HelloWorld extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {scrollX: null, scrollY: null, vx: 0, vy: 0};
+  }
+
   render() {
     return (
-      <div className="hello"></div>
+      <div style={{width: 10000, height: 10000}}>
+        <div style={{position: 'fixed', top: '50%', left: '50%',}}>{this.state.vx},{this.state.vy}</div>
+      </div>
     );
+  }
+
+  componentWillReceiveProps(nextProps) {
+    var vx = nextProps.scrollX - this.state.scrollX;
+    var vy = nextProps.scrollY - this.state.scrollY;
+    this.setState({
+      scrollX: nextProps.scrollX,
+      scrollY: nextProps.scrollY,
+      vx: vx,
+      vy: vy,
+    });
   }
 }
 

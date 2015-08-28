@@ -21,6 +21,7 @@
     "immutable": "3.7.4",
     "jquery": "2.1.4",
     "json-loader": "0.5.2",
+    "raf": "3.1.0",
     "react": "0.13.3",
     "react-canvas": "0.0.1",
     "three": "^0.71.0"
