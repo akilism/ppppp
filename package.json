@@ -1,8 +1,6 @@
 {
-  "name": "emoji-rain",
-  "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
+  "name": "embed",
+  "version": "0.0.0",
   "scripts": {
     "build": "./node_modules/.bin/webpack"
   },
@@ -16,7 +14,6 @@
     "webpack": "1.11.0"
   },
   "dependencies": {
-    "apple-color-emoji": "0.1.6",
     "async": "1.4.2",
     "immutable": "3.7.4",
     "jquery": "2.1.4",
@@ -24,6 +21,6 @@
     "raf": "3.1.0",
     "react": "0.13.3",
     "react-canvas": "0.0.1",
-    "three": "^0.71.0"
+    "three": "0.71.0"
   }
 }
