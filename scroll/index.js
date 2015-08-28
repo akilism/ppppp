@@ -55,8 +55,8 @@ function getEmbeddableComponent(Component, container) {
 
     componentWillMount() {
       this.setState({
-        viewPortWidth: this.state.width || $(container).width() * 2,
-        viewPortHeight: this.state.height || $(container).height() * 2,
+        viewPortWidth: this.state.width || $(container).width(),
+        viewPortHeight: this.state.height || $(container).height(),
         windowWidth: $(window).width(),
         windowHeight: $(window).height(),
       });
