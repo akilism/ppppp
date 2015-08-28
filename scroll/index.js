@@ -6,10 +6,10 @@ function prepareComponent(Component, viewport) {
     constructor(props) {
       super(props);
       this.state = {
-        width: null, height: null,
-        x: null, y: null,
+        width: null,    height: null,
+        scrollX: null,  scrollY: null,
+        scrollVX: 0, scrollVY: 0,
       };
-
     }
 
     render() {
@@ -26,7 +26,7 @@ function prepareComponent(Component, viewport) {
         <div
           style={style}
           onScroll={this.handleScroll.bind(this)}>
-          <Component scrollX={this.state.x} scrollY={this.state.y} {...this.props} />
+          <Component {...this.props} {...this.state} />
         </div>
       );
     }
@@ -43,9 +43,15 @@ function prepareComponent(Component, viewport) {
 
     handleScroll(ev) {
       var $target = $(ev.target);
+      var scrollX = $target.scrollLeft();
+      var scrollY = $target.scrollTop();
+      var scrollVX = scrollX - this.state.scrollX;
+      var scrollVY = scrollY - this.state.scrollY;
       this.setState({
-        x: $target.scrollLeft(),
-        y: $target.scrollTop(),
+        scrollX,
+        scrollY,
+        scrollVX,
+        scrollVY,
       });
     }
   }
@@ -55,8 +61,7 @@ function prepareComponent(Component, viewport) {
 
 function embedComponent(Component, viewport, callback) {
   $(window).one('load', () => {
-    var $viewport = $(viewport);
-    $viewport.empty();
+    $(viewport).empty();
     Component = prepareComponent(Component, viewport);
     React.render(<Component/>, viewport, callback);
   });
@@ -65,26 +70,14 @@ function embedComponent(Component, viewport, callback) {
 class HelloWorld extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {scrollX: null, scrollY: null, vx: 0, vy: 0};
   }
 
   render() {
     return (
       <div style={{width: 10000, height: 10000}}>
-        <div style={{position: 'fixed', top: '50%', left: '50%',}}>{this.state.vx},{this.state.vy}</div>
+        <div style={{position: 'fixed', top: '50%', left: '50%',}}>{this.props.scrollVX},{this.props.scrollVY}</div>
       </div>
     );
-  }
-
-  componentWillReceiveProps(nextProps) {
-    var vx = nextProps.scrollX - this.state.scrollX;
-    var vy = nextProps.scrollY - this.state.scrollY;
-    this.setState({
-      scrollX: nextProps.scrollX,
-      scrollY: nextProps.scrollY,
-      vx: vx,
-      vy: vy,
-    });
   }
 }
 
