@@ -15,7 +15,6 @@ function prepareComponent(Component, viewport) {
       var style = {
         width: this.state.width,
         height: this.state.height,
-
         position: 'relative',
         overflow: 'scroll',
       };
@@ -31,11 +30,9 @@ function prepareComponent(Component, viewport) {
     componentWillMount() {
       var width, height;
       if (viewport === document.body) {
-        width  = $(window).width();
-        height = $(window).height();
+        [width, height] = [$(window).width(), $(window).height()];
       } else { 
-        width = $(viewport).width();
-        height = $(viewport).height();
+        [width, height] = [$(viewport).width(), $(viewport).height()];
       }
       this.setState({width, height});
     }
@@ -65,4 +62,4 @@ class HelloWorld extends React.Component {
   }
 }
 
-embedComponent(HelloWorld, document.body);
+embedComponent(HelloWorld, document.getElementById('root'));

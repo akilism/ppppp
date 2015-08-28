@@ -6,7 +6,16 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
     <script async src="../output/scroll.js"></script>
     <style>
-.root {
+body {
+  width: 1000px;
+  height: 1000px;
+}
+#root {
+  position: fixed;
+  width: 100px;
+  height: 100px;
+  top: 500px;
+  left: 500px;
   border: 1px solid black;
 }
 .hello {
@@ -21,7 +30,7 @@
   <body>
     <div>
       Welcome to Vice Interactive
-      <div class="root">Hello</div>
+      <div id="root">Hello</div>
     </div>
   </body>
 </html>
