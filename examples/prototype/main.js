@@ -4,9 +4,28 @@ var $ = require('jquery');
 var _ = require('underscore');
 var PureRenderMixin = require('react/addons').addons.PureRenderMixin;
 
+Math.linearTween = function (t, b, c, d) {
+	return c*t/d + b;
+};
+
 window.TRV = {
     last_scroll: 0,
-    scan_components: []
+    scan_components: [],
+    getPositions: function(scroll_top,window_height){
+        return  _($(".marker-p")).map(function(p){
+          var el_top = $(p).position().top,
+              el_height = $(p).height(),
+              pct_elapsed;
+          if(el_top > scroll_top){
+            pct_elapsed = 0;
+          } else if (el_top + el_height < scroll_top){
+            pct_elapsed = 1.0;
+          } else {
+            pct_elapsed = (scroll_top - el_top) / el_height
+          }
+          return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed}
+        });
+    }
 };
 
 class TestComponent extends React.Component {
@@ -17,9 +36,7 @@ class TestComponent extends React.Component {
   render() {
     return (
       <div>
-        <RedSquare/>
-        <BlueSquare/>
-        <div style={{height: 100000}}></div>
+        <Bg/>
       </div>
     );
   }
@@ -40,43 +57,34 @@ class ScanComponent extends React.Component {
   }
 }
 
-class RedSquare extends ScanComponent {
-  adjust(last_state,pos){
-    last_state.last_scroll = 2 * pos.scroll_y;
-    return last_state;
+class Bg extends ScanComponent {
+  adjust(last_state,d) {
+    var first_graf_elapsed = d.pos[0].pct_elapsed,
+        bg_top = -1 * $(window).height();
+    if(first_graf_elapsed > 0.5){
+        bg_top = Math.linearTween(first_graf_elapsed - 0.5, bg_top, -1 * bg_top, 0.5)
+    }
+    return {bg_top: bg_top}
   }
 
-  render() {
-    return (
-      <div style={{width: 100, height: 100, "backgroundColor": "red", top: this.state.last_scroll, position: "relative"}}>
-      </div>
-    );
+  render(){
+    return(
+        <div className='bg-slide' style={{position: "fixed", top: this.state.bg_top}}/>
+    )
   }
 }
 
-class BlueSquare extends RedSquare {
-  adjust(last_state,pos){
-    var new_state = super.adjust(last_state,pos);
-    //new_state.last_scroll = new_state.last_scroll * 0.8;
-    new_state.last_scroll = 0;
-    return new_state;
-  }
-  render() {
-    return (
-      <div style={{width: 50, height: 50, "backgroundColor": "cyan", top: this.state.last_scroll, position: "relative"}}>
-      </div>
-    );
-  }
-}
 
 $(function(){
     TRV.last_scroll = $(window).scrollTop();
-    TRV.root = React.render(<TestComponent/>, document.body);
+    TRV.root = React.render(<TestComponent/>, document.getElementById('track'));
     $(window).on("scroll",function(){
       var new_scroll = $(window).scrollTop();
+      var window_height = $(window).height();
+      var pos = TRV.getPositions(new_scroll,window_height);
       _(TRV.scan_components).each(function(c){
         var last_state = _(c.state).clone();
-        var new_state = c.adjust(last_state,{scroll_y: new_scroll});
+        var new_state = c.adjust(last_state,{scroll_top: new_scroll, pos: pos});
         c.setState(new_state)        
       })
     })
