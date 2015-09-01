@@ -5,19 +5,6 @@ var {maps} = require('google');
 var viceNorth = new maps.LatLng(40.7211588,-73.9579174);
 var viceSouth = new maps.LatLng(40.7146628,-73.9658753);
 
-// Create the polyline and add the symbol to it via the 'icons' property.
-function animate(scrollStart, scrollEnd, latLngStart, latLngEnd, easeFn) {
-  var latScale = latLngEnd.lat() - latLngStart.lat();
-  var lngScale = latLngEnd.lng() - latLngStart.lng();
-  var distance = scrollEnd - scrollStart;
-  return (pos) => {
-    return new maps.LatLng(
-      easeFn(pos, latLngStart.lat(), latScale, distance),
-      easeFn(pos, latLngStart.lng(), lngScale, distance)
-    );
-  };
-}
-
 class AnimatedScrollMarker extends maps.OverlayView {
   constructor(options) {
     super();
@@ -99,28 +86,6 @@ class AnimatedLine extends maps.OverlayView {
   onRemove() {}
 
 }
-window.onload = function() {
-  var viceNorthMarker = new AnimatedScrollMarker({
-    end: viceNorth,
-    relativeStart: new maps.Point(0, -100),
-    map: map,
-  });
-  var viceSouthMarker = new AnimatedScrollMarker({
-    end: viceSouth,
-    relativeStart: new maps.Point(0, -100),
-    map: map
-  });
-  var flight = new AnimatedLine({
-    start: viceNorth,
-    end: viceSouth,
-    map: map,
-  });
-  maps.event.addListener(map, 'tilesloaded', function(){
-    document.getElementById('map').style.position = 'fixed';
-  });
-  var $text = $('#text').text(source);
-  var startCenter = new maps.LatLng(40.7211128, -73.985336);
-  var endCenter = new maps.LatLng(40.7195235, -73.9609452);
-  var panFn = animate(0, getScrollEnd(), startCenter, endCenter, Ease.inOutCubic);
-  map.setCenter(panFn($(window).scrollTop()));
-}; 
+
+exports.AnimatedScrollMarker = AnimatedScrollMarker;
+exports.AnimatedLine = AnimatedLine;

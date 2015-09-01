@@ -8,6 +8,9 @@ Math.linearTween = function (t, b, c, d) {
   return c*t/d + b;
 };
 
+var viceNorth = new maps.LatLng(40.7211588,-73.9579174);
+var viceSouth = new maps.LatLng(40.7146628,-73.9658753);
+
 window.TRV = {
   last_scroll: 0,
   scan_components: [],
@@ -34,7 +37,7 @@ window.TRV = {
         } else {
           pct_elapsed = (scroll_anchor - el_top) / el_height;
         }
-        console.log($p.attr("id"), anchor, pct_elapsed);
+        //console.log($p.attr("id"), anchor, pct_elapsed);
         return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed};
       };
 
@@ -117,25 +120,25 @@ class MovingMap extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-      bg_top: 0,
+      bg_top: - $(window).height(),
+      path: 'left',
     };
   }
 
   adjust(last_state, d) {
-    var first_graf_elapsed = d.markers["crown-vic"](0.5).pct_elapsed,
+    var first_graf_elapsed = d.markers["intro"](0.5).pct_elapsed,
         window_height = $(window).height(),
-        bg_top;
-    if (first_graf_elapsed > 0.5) {
-      bg_top = Math.linearTween(first_graf_elapsed - 0.5, -window_height, window_height, 0.5);
-    } else {
-      bg_top = -window_height;
-    }
-    return {bg_top: bg_top};
+        bg_top = - $(window).height();
+    bg_top = Math.linearTween(first_graf_elapsed * 0.5, -window_height, window_height, 0.5);
+    return {
+      bg_top: bg_top,
+      markerOpacity: d.markers['12-chairs'](0).pct_elapsed,
+    };
   }
 
   componentDidMount() {
-    this.map = new maps.Map(React.findDOMNode(this.refs.poop), {
-      center: { lat: 40.7211128, lng: -73.985336 },
+    this.map = new maps.Map(React.findDOMNode(this.refs.map), {
+      center: { lat:40.721648, lng:-73.9817507 },
       zoom: 15,
 
       disableDefaultUI: true,
@@ -145,24 +148,45 @@ class MovingMap extends ScanComponent {
       scaleControl: false,
       draggable: false,
     });
+    this.marker = new maps.Marker({
+      position: viceSouth,
+    });
+    this.marker.setMap(this.map);
+  }
+
+  componentDidUpdate() {
+    console.log(this.state);
+    this.marker.setOptions({
+      opacity: this.state.markerOpacity,
+    });
   }
 
   render() {
-    console.log(this.state);
     var style = {
       position: "fixed",
       left: 0,
-      top: this.state.bg_top,
+      top: 0,
       width: $(window).width(),
       height: $(window).height(),
     };
-    var poopStyle = {
+    var mapStyle = {
       width: $(window).width(),
       height: $(window).height(),
+    };
+    var overlayStyle = { 
+      width: $(window).width(),
+      height: $(window).height(),
+      position: 'absolute',
+      top: 0,
+      left: 0,
     };
     return (
       <div style={style}>
-        <div ref="poop" style={poopStyle} />
+        <div ref="map" style={mapStyle} />
+        <div style={overlayStyle}>
+          <button>Left</button>
+          <button>Right</button>
+        </div>
       </div>
     );
   }
@@ -176,11 +200,20 @@ $(function() {
   $(window).on("scroll", _.throttle(function(){
     var new_scroll = $(window).scrollTop(),
         window_height = $(window).height(),
+        window_width = $(window).width(),
         $copy = $('#copy'),
-        new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1);
-    var markers = TRV.getMarkers(new_copy_top, window_height);
+        copy_width = $copy.width(),
+        new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1),
+        markers = TRV.getMarkers(new_copy_top, window_height),
+        new_copy_left = Math.linearTween(
+          markers['intro'](0).pct_elapsed,
+          (window_width - copy_width) / 2,
+          -1 * (window_width - copy_width) / 2,
+          1
+        );
     $copy.css({
       top: new_copy_top,
+      left: new_copy_left,
     });
     _(TRV.scan_components).each(function(c){
       var last_state = _(c.state).clone();
