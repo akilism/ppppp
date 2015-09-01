@@ -1,6 +1,7 @@
 var React = require('react');
 var $ = require('jquery');
 var _ = require('underscore');
+var libgif = require('libgif');
 var PureRenderMixin = require('react/addons').addons.PureRenderMixin;
 
 Math.linearTween = function (t, b, c, d) {
@@ -50,7 +51,7 @@ class TestComponent extends React.Component {
   render() {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
-        <Bg/>
+        <Timelapse/>
       </div>
     );
   }
@@ -85,7 +86,6 @@ class Bg extends ScanComponent {
     this.state = {
       bg_top: 0
     };
-    TRV.scan_components.push(this);
   }
   adjust(last_state, d) {
     var first_graf_elapsed = d.markers["12-chairs"](0.5).pct_elapsed,
@@ -107,6 +107,37 @@ class Bg extends ScanComponent {
         width: $(window).width(),
         height: $(window).height(),
       }}/>
+    )
+  }
+}
+
+class Timelapse extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+        frame: 0
+    };
+  }
+ 
+  componentDidMount(){
+    this.gif = new SuperGif({ gif: $("#timelapse"), auto_play: 0})
+  }
+
+  adjust(last_state, d) {
+    var first_graf_elapsed = d.markers["12-chairs"](0.5).pct_elapsed,
+        window_height = $(window).height(),
+        frames = 10,
+        frame,bg_top;
+    frame = Math.round(frames * first_graf_elapsed);
+    return {frame: frame};
+  }
+
+  render() {
+    if(this.gif)[
+        this.gif.move_to(this.state.frame)
+    ]
+    return(
+        <img id="timelapse" src="timelapse.gif"/>
     )
   }
 }

@@ -33,7 +33,8 @@ var devtool = 'cheap-module-source-map';
 
 exports.lib = {
   entry: {
-    'embed': './lib/embedComponent.js'
+    'embed': './lib/embedComponent.js',
+    'libgif': './lib/libgif.js'
   },
 
   module: { loaders: loaders },
