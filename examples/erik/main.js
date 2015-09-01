@@ -1,7 +1,7 @@
 var React = require('react');
 var $ = require('jquery');
 var _ = require('underscore');
-var libgif = require('libgif');
+var {SuperGif} = require('libgif');
 var PureRenderMixin = require('react/addons').addons.PureRenderMixin;
 
 Math.linearTween = function (t, b, c, d) {
