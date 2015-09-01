@@ -21,10 +21,11 @@ window.TRV = {
         }
 
         var $p = $(p),
-          el_height = $p.height(),
+          el_height = $p.outerHeight(),
           el_top = $p.position().top,
           scroll_anchor = scroll_top + (window_height * anchor),
-          pct_elapsed;
+          pct_elapsed,
+          pct_elapsed_raw;
           
         if (el_top > scroll_anchor) {
           pct_elapsed = 0;
@@ -33,8 +34,8 @@ window.TRV = {
         } else {
           pct_elapsed = (scroll_anchor - el_top) / el_height;
         }
-        console.log($p.attr("id"), scroll_anchor, pct_elapsed);
-        return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed};
+        pct_elapsed_raw = (scroll_anchor - el_top) / el_height; 
+        return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed, pct_elapsed_raw: pct_elapsed_raw};
       };
 
       return acc;
@@ -51,6 +52,7 @@ class TestComponent extends React.Component {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
         <Timelapse/>
+        <Bg/>
       </div>
     );
   }
@@ -87,13 +89,15 @@ class Bg extends ScanComponent {
     };
   }
   adjust(last_state, d) {
-    var first_graf_elapsed = d.markers["12-chairs"](0.5).pct_elapsed,
+    var first_graf_elapsed = d.markers["crown-vic"](0).pct_elapsed,
+        first_graf_elapsed_raw = d.markers["crown-vic"](0).pct_elapsed_raw,
         window_height = $(window).height(),
         bg_top;
-    if (first_graf_elapsed > 0.5) {
-      bg_top = Math.linearTween(first_graf_elapsed - 0.5, -window_height, window_height, 0.5);
+    console.log(first_graf_elapsed_raw,first_graf_elapsed)
+    if (first_graf_elapsed > 0.5977) {
+      bg_top = Math.linearTween(first_graf_elapsed_raw - 0.5977, window_height, -1 * window_height, 1.5972);
     } else {
-      bg_top = -window_height;
+      bg_top = window_height
     }
     return {bg_top: bg_top};
   }
