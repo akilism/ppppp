@@ -17,18 +17,22 @@ body {
 }
 
 #copy {
-  position: fixed;
-  width: 800px;
-  left:50%;
-  margin-left:-400px;
+  /*width: 800px;*/
   padding: 20px;
   background-color: rgba(255,160,122,0.5);
+  position: relative;
+  z-index: 2;
+  display: flex;
+}
+
+#copyholder {
+  flex: 1 2;
+  padding-right: 10px;
 }
 
 p {
   font-size:28px;
   line-height:42px;
-  width:600px;
   margin: 0 auto 100px;
   padding: 20px;
   background-color:rgba(255,255,255,0.8);
@@ -39,9 +43,24 @@ p {
   width:100%;
   height:100%;
   background-image:url('Sonic-Generations.jpg');
+  z-index: 1;
 }
 #page{
   width:100%;
+  display: flex;
+  /*align-items: flex-start;*/
+  justify-content: center;
+}
+
+#mapHolder {
+  height: 1200px;
+  display: absolute;
+  top: 0;
+  width: 40%;
+}
+
+#map {
+  height: 1200px;
 }
     </style>
   </head>
@@ -49,6 +68,7 @@ p {
     <div id="page">
       <div id="track"></div>
       <div id="copy">
+          <div id="copyholder">
           <p class="marker-p" id="intro">
               We just moved to a new office, which is in a different part of the neighborhood than we are used to. In New York, even something as small as a few blocks can change everything. To show us around, we hooked up with VICE veteran, Ben Kammerle, to show us all the spots. 
           </p>
@@ -71,7 +91,14 @@ p {
               Horseshoes. 
               Not to mention, on sundays they roast an entire pig
           </p>
+          </div>
+          <div id="mapHolder">
+            <div id="map"></div>
+          </div>
       </div>
+      
+      </div>
+      
     </div>
     <script async src="./build/main.js"></script>
   </body>
