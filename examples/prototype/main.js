@@ -12,18 +12,20 @@ window.TRV = {
   scan_components: [],
   getMarkers: function(scroll_top, window_height) {
     scroll_top = -1 * scroll_top;
-    return function(anchor){
-      if(typeof(anchor) === "undefined"){
-        var anchor = 0.0;
-      }
-      
-      return _($(".marker-p")).map(function(p) {
+    
+    return _.reduce($(".marker-p"),  function(acc, p) {
+
+      acc[p.id] = function(anchor) {
+        if(typeof(anchor) === "undefined"){
+          var anchor = 0.0; 
+        }
+
         var $p = $(p),
-            el_height = $p.height(),
-            el_top = $p.position().top,
-            scroll_anchor = scroll_top + (window_height * anchor),
-            pct_elapsed;
-            
+          el_height = $p.height(),
+          el_top = $p.position().top,
+          scroll_anchor = scroll_top + (window_height * anchor),
+          pct_elapsed;
+          
         if (el_top > scroll_anchor) {
           pct_elapsed = 0;
         } else if (el_top + el_height < scroll_anchor) {
@@ -33,8 +35,10 @@ window.TRV = {
         }
         console.log($p.attr("id"), scroll_anchor, pct_elapsed);
         return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed};
-      });
-    }
+      };
+
+      return acc;
+    }, {});
   }
 };
 
@@ -57,7 +61,7 @@ class ScanComponent extends React.Component {
     super(props);
     TRV.scan_components.push(this);
   }
-
+ 
   componentDidMount(){
     var new_scroll = $(window).scrollTop(),
         window_height = $(window).height(),
@@ -84,7 +88,7 @@ class Bg extends ScanComponent {
     TRV.scan_components.push(this);
   }
   adjust(last_state, d) {
-    var first_graf_elapsed = d.markers(0.5)[1].pct_elapsed,
+    var first_graf_elapsed = d.markers["12-chairs"](0.5).pct_elapsed,
         window_height = $(window).height(),
         bg_top;
     if (first_graf_elapsed > 0.5) {
