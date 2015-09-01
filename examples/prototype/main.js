@@ -11,10 +11,16 @@ window.TRV = {
   last_scroll: 0,
   scan_components: [],
   getMarkers: function(scroll_top, window_height) {
+    scroll_top = -1 * scroll_top;
     return  _($(".marker-p")).map(function(p) {
-      var el_top = $(p).position().top,
-          el_height = $(p).height(),
+      var $p = $(p),
+          // $copy = $("#copy"),
+          el_top = $p.position().top,
+          el_height = $p.height(),
           pct_elapsed;
+          
+      // console.log(scroll_top, $copy.offset().top);
+      
       if (el_top > scroll_top) {
         pct_elapsed = 0;
       } else if (el_top + el_height < scroll_top) {
@@ -22,6 +28,7 @@ window.TRV = {
       } else {
         pct_elapsed = (scroll_top - el_top) / el_height;
       }
+      console.log($p.attr("id"), scroll_top, el_top, pct_elapsed);
       return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed};
     });
   },
@@ -73,7 +80,7 @@ class Bg extends ScanComponent {
     TRV.scan_components.push(this);
   }
   adjust(last_state, d) {
-    var first_graf_elapsed = d.markers[0].pct_elapsed,
+    var first_graf_elapsed = d.markers[1].pct_elapsed,
         window_height = $(window).height(),
         bg_top;
     if (first_graf_elapsed > 0.5) {
@@ -98,7 +105,7 @@ class Bg extends ScanComponent {
 
 
 $(function() {
-  $("#page").height($(window).height() * 3);
+  $("#page").height($(window).height() * 6);
   TRV.last_scroll = $(window).scrollTop();
   TRV.root = React.render(<TestComponent/>, document.getElementById('track'));
   $(window).on("scroll",_.throttle(function(){
@@ -106,7 +113,7 @@ $(function() {
         window_height = $(window).height(),
         $copy = $('#copy'),
         new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1);
-    var markers = TRV.getMarkers(new_scroll, window_height);
+    var markers = TRV.getMarkers(new_copy_top, window_height);
     $copy.css({
       top: new_copy_top,
     });
