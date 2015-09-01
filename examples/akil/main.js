@@ -1,6 +1,7 @@
 var React = require('react');
 var $ = require('jquery');
 var _ = require('underscore');
+var polyline = require('polyline');
 var PureRenderMixin = require('react/addons').addons.PureRenderMixin;
 
 Math.linearTween = function (t, b, c, d) {
@@ -33,7 +34,7 @@ window.TRV = {
         } else {
           pct_elapsed = (scroll_anchor - el_top) / el_height;
         }
-        console.log($p.attr("id"), scroll_anchor, pct_elapsed);
+        // console.log($p.attr("id"), scroll_anchor, pct_elapsed);
         return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed};
       };
 
@@ -111,27 +112,101 @@ class Bg extends ScanComponent {
   }
 }
 
+// class Map extends ScanComponent {
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+
+//     }
+//   }
+// }
+
+var setMap = function(selector) {
+  var map = new google.maps.Map(document.getElementById(selector), {
+    center: {lat: 40.786858, lng: -73.962468},
+    zoom: 13
+  });
+
+  return map;
+}
+
+var getDirectionsPolyline = function(points) {
+  return new Promise(function(resolve, reject) {
+    var trip1 = {
+      origin: points[0],
+      destination: points[points.length-1],
+      travelMode: google.maps.TravelMode.WALKING
+    };
+
+    var directions = new google.maps.DirectionsService();
+    directions.route(trip1, function(result, status) {
+      // console.log(result, status);
+      if(status !== "OK") {
+        reject(status);
+        return;
+      }
+      var polypoints = polyline.decode(result.routes[0].overview_polyline);
+      resolve(polypoints);
+    });
+  });
+}
+
 
 $(function() {
   $("#page").height($(window).height() * 10);
   TRV.last_scroll = $(window).scrollTop();
   TRV.root = React.render(<TestComponent/>, document.getElementById('track'));
-  $(window).on("scroll",_.throttle(function(){
-    var new_scroll = $(window).scrollTop(),
-        window_height = $(window).height(),
-        $copy = $('#copy'),
-        new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1);
-    var markers = TRV.getMarkers(new_copy_top, window_height);
-    $copy.css({
-      top: new_copy_top,
+
+  var map = setMap('map');
+  map.addListener('click', addLatLng);
+
+  function addLatLng(event) {
+  console.log(event);
+  // debugger;
+  }
+
+  var amyRuths = {lat: 40.8025967, lng: -73.9502753};
+  var amyRuthsMarker = new google.maps.Marker({position: amyRuths,
+    animation: google.maps.Animation.DROP,
+    title: 'Amy Ruth\'s'});
+  amyRuthsMarker.setMap(map);
+
+  var centralPark = {lat: 40.797814, lng: -73.960124};
+  var centralParkMarker = new google.maps.Marker({position: centralPark,
+    animation: google.maps.Animation.DROP,
+    title: 'Secret Smoke Spot'});
+  centralParkMarker.setMap(map);
+
+  getDirectionsPolyline([amyRuths, centralPark]).then(function(polyline) {
+    var poly = new google.maps.Polyline({
+      strokeColor: '#000000',
+      strokeOpacity: 1.0,
+      strokeWeight: 3
     });
-    _(TRV.scan_components).each(function(c){
-      var last_state = _(c.state).clone();
-      var new_state = c.adjust(last_state, {
-        scroll_top: new_scroll,
-        markers: markers,
-      });
-      c.setState(new_state);
-    });
-  },5));
+    poly.setMap(map);
+    var lastIdx = -1;
+
+    $(window).on("scroll",_.throttle(function(){
+      var new_scroll = $(window).scrollTop(),
+          window_height = $(window).height(),
+          $copy = $('#copy'),
+          new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1);
+      var markers = TRV.getMarkers(new_copy_top, window_height);
+      var marker_elapsed = markers['intro'](0).pct_elapsed;
+      
+      var path = poly.getPath();
+      var pointsIdx = Math.round((polyline.length-1) * marker_elapsed);
+      var newPoint = polyline[pointsIdx];
+      console.log(lastIdx, pointsIdx);
+
+      if(pointsIdx > lastIdx) {
+        path.insertAt(pointsIdx, new google.maps.LatLng(newPoint[0], newPoint[1]));  
+      } else if (pointsIdx < lastIdx){
+        path.removeAt(pointsIdx);
+      }
+
+
+      lastIdx = pointsIdx;
+    },5));
+  });
 });

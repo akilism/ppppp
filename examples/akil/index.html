@@ -101,34 +101,5 @@ p {
       
     </div>
     <script async src="./build/main.js"></script>
-    <script>
-      var map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat: 40.786858, lng: -73.962468},
-        zoom: 13
-      });
-
-      var amyRuths = {lat: 40.8025967, lng: -73.9502753};
-      var amyRuthsMarker = new google.maps.Marker({position: amyRuths,
-        animation: google.maps.Animation.DROP,
-        title: 'Amy Ruth\'s'});
-      amyRuthsMarker.setMap(map);
-
-      var centralPark = {lat: 40.797814, lng: -73.960124};
-      var centralParkMarker = new google.maps.Marker({position: centralPark,
-        animation: google.maps.Animation.DROP,
-        title: 'Secret Smoke Spot'});
-      centralParkMarker.setMap(map);
-
-      var trip1 = {
-        origin: amyRuths,
-        destination: centralPark,
-        travelMode: google.maps.TravelMode.WALKING
-      };
-
-      var trip1Directions = new google.maps.DirectionsService();
-      trip1Directions.route(trip1, function(result, status) {
-        console.log(result, status);
-      });
-    </script>
   </body>
 </html>
