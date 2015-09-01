@@ -50,7 +50,7 @@ class TestComponent extends React.Component {
   render() {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
-        <Bg/>
+        <Timelapse/>
       </div>
     );
   }
@@ -85,7 +85,6 @@ class Bg extends ScanComponent {
     this.state = {
       bg_top: 0
     };
-    TRV.scan_components.push(this);
   }
   adjust(last_state, d) {
     var first_graf_elapsed = d.markers["12-chairs"](0.5).pct_elapsed,
@@ -107,6 +106,30 @@ class Bg extends ScanComponent {
         width: $(window).width(),
         height: $(window).height(),
       }}/>
+    )
+  }
+}
+
+class Timelapse extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+        frame: 0
+    };
+  }
+ 
+  adjust(last_state, d) {
+    var first_graf_elapsed = d.markers["12-chairs"](0.5).pct_elapsed,
+        window_height = $(window).height(),
+        frames = 59,
+        frame,bg_top;
+    frame = Math.round(frames * first_graf_elapsed);
+    return {frame: frame};
+  }
+
+  render() {
+    return(
+        <img id="timelapse" src={"timelapse/frame_" + this.state.frame +".gif"}/>
     )
   }
 }
