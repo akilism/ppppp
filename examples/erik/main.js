@@ -1,7 +1,6 @@
 var React = require('react');
 var $ = require('jquery');
 var _ = require('underscore');
-var {SuperGif} = require('libgif');
 var PureRenderMixin = require('react/addons').addons.PureRenderMixin;
 
 Math.linearTween = function (t, b, c, d) {
@@ -119,25 +118,18 @@ class Timelapse extends ScanComponent {
     };
   }
  
-  componentDidMount(){
-    this.gif = new SuperGif({ gif: $("#timelapse"), auto_play: 0})
-  }
-
   adjust(last_state, d) {
     var first_graf_elapsed = d.markers["12-chairs"](0.5).pct_elapsed,
         window_height = $(window).height(),
-        frames = 10,
+        frames = 59,
         frame,bg_top;
     frame = Math.round(frames * first_graf_elapsed);
     return {frame: frame};
   }
 
   render() {
-    if(this.gif)[
-        this.gif.move_to(this.state.frame)
-    ]
     return(
-        <img id="timelapse" src="timelapse.gif"/>
+        <img id="timelapse" src={"timelapse/frame_" + this.state.frame +".gif"}/>
     )
   }
 }
