@@ -12,26 +12,30 @@ window.TRV = {
   scan_components: [],
   getMarkers: function(scroll_top, window_height) {
     scroll_top = -1 * scroll_top;
-    return  _($(".marker-p")).map(function(p) {
-      var $p = $(p),
-          // $copy = $("#copy"),
-          el_top = $p.position().top,
-          el_height = $p.height(),
-          pct_elapsed;
-          
-      // console.log(scroll_top, $copy.offset().top);
-      
-      if (el_top > scroll_top) {
-        pct_elapsed = 0;
-      } else if (el_top + el_height < scroll_top) {
-        pct_elapsed = 1.0;
-      } else {
-        pct_elapsed = (scroll_top - el_top) / el_height;
+    return function(anchor){
+      if(typeof(anchor) === "undefined"){
+        var anchor = 0.0;
       }
-      console.log($p.attr("id"), scroll_top, el_top, pct_elapsed);
-      return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed};
-    });
-  },
+      
+      return _($(".marker-p")).map(function(p) {
+        var $p = $(p),
+            el_height = $p.height(),
+            el_top = $p.position().top,
+            scroll_anchor = scroll_top + (window_height * anchor),
+            pct_elapsed;
+            
+        if (el_top > scroll_anchor) {
+          pct_elapsed = 0;
+        } else if (el_top + el_height < scroll_anchor) {
+          pct_elapsed = 1.0;
+        } else {
+          pct_elapsed = (scroll_anchor - el_top) / el_height;
+        }
+        console.log($p.attr("id"), scroll_anchor, pct_elapsed);
+        return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed};
+      });
+    }
+  }
 };
 
 class TestComponent extends React.Component {
@@ -80,7 +84,7 @@ class Bg extends ScanComponent {
     TRV.scan_components.push(this);
   }
   adjust(last_state, d) {
-    var first_graf_elapsed = d.markers[1].pct_elapsed,
+    var first_graf_elapsed = d.markers(0.5)[1].pct_elapsed,
         window_height = $(window).height(),
         bg_top;
     if (first_graf_elapsed > 0.5) {
@@ -105,7 +109,7 @@ class Bg extends ScanComponent {
 
 
 $(function() {
-  $("#page").height($(window).height() * 6);
+  $("#page").height($(window).height() * 10);
   TRV.last_scroll = $(window).scrollTop();
   TRV.root = React.render(<TestComponent/>, document.getElementById('track'));
   $(window).on("scroll",_.throttle(function(){
