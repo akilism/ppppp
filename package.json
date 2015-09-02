@@ -21,8 +21,7 @@
     "json-loader": "0.5.2",
     "polyline": "^0.2.0",
     "raf": "3.1.0",
-    "react": "0.13.3",
-    "react-canvas": "0.0.1",
+    "react": "0.14.0-beta1",
     "three": "0.71.0",
     "underscore": "1.8.3"
   }

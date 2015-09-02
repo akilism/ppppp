@@ -55,9 +55,7 @@ exports.lib = {
 exports.examples = {
   entry: getDirEntry('examples'),
 
-  resolve: {
-    fallback: ['./lib']
-  },
+  resolve: { fallback: ['./lib'] },
 
   module: { loaders: loaders },
 

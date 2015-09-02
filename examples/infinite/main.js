@@ -64,4 +64,67 @@ function embedComponent(Component, viewport, callback) {
   React.render(<Component/>, viewport, callback);
 }
 
-module.exports = embedComponent;
+
+class Infinite extends React.Component {
+  render() {
+    console.log('infinite', this.context);
+    return (
+      <div style={{height: 2000}}>
+        <Speed>
+          <Position/>
+        </Speed>
+      </div>
+    );
+  }
+}
+
+Infinite.contextTypes = {
+  y: React.PropTypes.number.isRequired,
+};
+
+//Infinite.childContextTypes = {
+//  y: React.PropTypes.number.isRequired,
+//};
+
+class Speed extends React.Component {
+  render() {
+    console.log('speed', this.context);
+    return this.props.children;
+  }
+
+  getChildContext() {
+    return {
+      y: this.context.y * 2,
+    };
+  }
+}
+
+Speed.contextTypes = {
+  y: React.PropTypes.number.isRequired,
+};
+Speed.childContextTypes = {
+  y: React.PropTypes.number.isRequired,
+};
+
+class Position extends React.Component {
+  render() {
+    console.log('position', this.context);
+    var style = {
+      position: 'absolute',
+      top: this.context.y,
+      border: '1px solid black',
+    };
+    return (
+      <div style={style}>{this.context.y}</div>
+    );
+  }
+}
+
+Position.contextTypes = {
+  y: React.PropTypes.number.isRequired,
+};
+
+$(function() {
+  var Infinite1 = prepareComponent(Infinite, document.body);
+  React.render(<Infinite1/>, document.body);
+});
