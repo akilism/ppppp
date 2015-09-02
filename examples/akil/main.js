@@ -142,9 +142,18 @@ class RouteMap extends ScanComponent {
     return { routePoints: this.routes[0].routePoints.slice(0, pointsIdx) };
   }
 
-  toLatLngObj(point) { return {lat: point[0], lng: point[1]}; };
+  toLatLngObj(point) { return {lat: point[0], lng: point[1]}; }
+
   toGoogleLatLng(point) { return new google.maps.LatLng(point[0], point[1]); }
+
   fromGoogleLatLng(point) { return [point.G, point.K]; }
+  
+  toWayPoint(point) {
+    return {
+      location: this.fromGoogleLatLng(point),
+      stopover: true
+    }
+  }
 
   addMidPoints(points, distThreshold, interpolationAmount) {
     for(let len = points.length-1, i = 1; i < len; i++) {
@@ -161,10 +170,12 @@ class RouteMap extends ScanComponent {
     return points;
   }
 
+// (point) => { return {location: that.fromGoogleLatLng(point), stopover: true}; }
   getDirectionsPolyline(points) {
+    var that = this;
     return new Promise((resolve, reject) => {
       var trip = { origin: points[0],
-        waypoints: (points.length > 2) ? points.slice(1, destination.length) : [],
+        waypoints: (points.length > 2) ? points.slice(1, points.length).map(this.toWayPoint) : [],
         destination: points[points.length-1],
         travelMode: google.maps.TravelMode.WALKING
       };
@@ -192,7 +203,16 @@ class RouteMap extends ScanComponent {
       {marker: new google.maps.Marker({ position: { lat: 40.797814, lng: -73.960124}, 
         animation: google.maps.Animation.DROP, 
         title: 'Secret Smoke Spot'}),
-      trigger: null }]}];
+      trigger: null },
+      // {marker: new google.maps.Marker({ position: { lat: 40.805003, lng: -73.964968}, 
+      //   animation: google.maps.Animation.DROP, 
+      //   title: 'Book Cluture'}),
+      // trigger: null },
+      // {marker: new google.maps.Marker({ position: { lat: 40.804440, lng: -73.931690}, 
+      //   animation: google.maps.Animation.DROP, 
+      //   title: 'Crack is Wack'}),
+      // trigger: null }
+      ]}];
 
     return this.getDirectionsPolyline(this.routes[0].markers.map((m) => {
       return m.marker.position;
@@ -208,12 +228,15 @@ class RouteMap extends ScanComponent {
       zoom: 14
     });
 
+    // Add all markers to map.
     _.forEach(this.routes,(rte) => {
       _.forEach(_.where(rte.markers, {trigger: null}), (m) => {
         m.marker.setMap(this.map);
       });
     });
 
+    // Add only first marker to map.
+    // this.routes[0].markers[0].marker.setMap(this.map);
     this.map.setCenter(this.routes[0].markers[0].marker.position);
   }
 
