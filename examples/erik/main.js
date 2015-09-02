@@ -40,6 +40,40 @@ window.TRV = {
 
       return acc;
     }, {});
+  },
+  getMarkersInv: function(scroll_top, window_height) {
+    scroll_top = -1 * scroll_top;
+  
+    return _.reduce($(".marker-p"),  function(acc, p) {
+
+      acc[p.id] = function(anchor) {
+        if(typeof(anchor) === "undefined"){
+          var anchor = 0.0; 
+        }
+
+        var $p = $(p),
+          el_height = $p.outerHeight(),
+          el_top = $p.position().top,
+          el_anchor = el_top + (el_height * anchor),
+          pct_elapsed,
+          pct_elapsed_raw;
+          
+        if (el_anchor > scroll_top + window_height) {
+          pct_elapsed = 0;
+        } else if (el_anchor < scroll_top) {
+          pct_elapsed = 1.0;
+        } else {
+          pct_elapsed = 1 - ((el_anchor - scroll_top) / window_height);
+        }
+        pct_elapsed_raw = 1 - ((el_anchor - scroll_top) / window_height); 
+        return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed, pct_elapsed_raw: pct_elapsed_raw};
+      };
+
+      return acc;
+    }, {});
+  },
+  bot2Top: function(){
+  
   }
 };
 
@@ -68,10 +102,12 @@ class ScanComponent extends React.Component {
     var new_scroll = $(window).scrollTop(),
         window_height = $(window).height(),
         markers = TRV.getMarkers(new_scroll, window_height),
+        inv_markers = TRV.getMarkersInv(new_scroll, window_height),
         last_state = _(this.state).clone(),
         new_state = this.adjust(last_state, {
           scroll_top: new_scroll,
           markers: markers,
+          inv_markers: inv_markers
         });
     this.setState(new_state);
   }
@@ -89,16 +125,10 @@ class Bg extends ScanComponent {
     };
   }
   adjust(last_state, d) {
-    var first_graf_elapsed = d.markers["crown-vic"](0).pct_elapsed,
-        first_graf_elapsed_raw = d.markers["crown-vic"](0).pct_elapsed_raw,
+    var first_graf_elapsed = d.inv_markers["crown-vic-bleed"](0).pct_elapsed,
         window_height = $(window).height(),
         bg_top;
-    console.log(first_graf_elapsed_raw,first_graf_elapsed)
-    if (first_graf_elapsed > 0.5977) {
-      bg_top = Math.linearTween(first_graf_elapsed_raw - 0.5977, window_height, -1 * window_height, 1.5972);
-    } else {
-      bg_top = window_height
-    }
+    bg_top = Math.linearTween(first_graf_elapsed, window_height, -1 * window_height, 1.0);
     return {bg_top: bg_top};
   }
 
@@ -149,6 +179,7 @@ $(function() {
         $copy = $('#copy'),
         new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1);
     var markers = TRV.getMarkers(new_copy_top, window_height);
+    var inv_markers = TRV.getMarkersInv(new_copy_top, window_height);
     $copy.css({
       top: new_copy_top,
     });
@@ -157,6 +188,7 @@ $(function() {
       var new_state = c.adjust(last_state, {
         scroll_top: new_scroll,
         markers: markers,
+        inv_markers: inv_markers
       });
       c.setState(new_state);
     });
