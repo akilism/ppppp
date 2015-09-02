@@ -123,8 +123,8 @@ class RouteMap extends ScanComponent {
 
   adjust(last_state, new_state) {
     var marker_elapsed = new_state.markers["intro"](0).pct_elapsed;
-    var pointsIdx = Math.round(this.routes[0].routePoints.length * marker_elapsed);
-    
+    var pointsIdx = Math.round((this.routes[0].routePoints.length - 1) * marker_elapsed);
+
     var that = this;
     var poly = new google.maps.Polyline({
       path: this.routes[0].routePoints.slice(0, pointsIdx).map(that.toLatLngObj),
@@ -136,7 +136,10 @@ class RouteMap extends ScanComponent {
     poly.setMap(this.map);
     if(this.routes[0].poly) { this.routes[0].poly.setMap(null); }
     this.routes[0].poly = poly;
+
+    
     this.map.setCenter(this.toGoogleLatLng(this.routes[0].routePoints[pointsIdx]));
+    
     this.map.setZoom(15);
     return { routePoints: this.routes[0].routePoints.slice(0, pointsIdx)};
   }
