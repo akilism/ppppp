@@ -137,9 +137,7 @@ class RouteMap extends ScanComponent {
     if(this.routes[0].poly) { this.routes[0].poly.setMap(null); }
     this.routes[0].poly = poly;
 
-    
     this.map.setCenter(this.toGoogleLatLng(this.routes[0].routePoints[pointsIdx]));
-    
     this.map.setZoom(15);
     return { routePoints: this.routes[0].routePoints.slice(0, pointsIdx)};
   }
@@ -148,9 +146,7 @@ class RouteMap extends ScanComponent {
   toGoogleLatLng(point) { return new google.maps.LatLng(point[0], point[1]); }
 
   getDirectionsPolyline(points) {
-    var that = this;
-
-    return new Promise(function(resolve, reject) {
+    return new Promise((resolve, reject) => {
       var trip = { origin: points[0],
         waypoints: (points.length > 2) ? points.slice(1, destination.length) : [],
         destination: points[points.length-1],
@@ -158,7 +154,7 @@ class RouteMap extends ScanComponent {
       };
 
       var directions = new google.maps.DirectionsService();
-      directions.route(trip, function(result, status) {
+      directions.route(trip, (result, status) => {
         if(status === "OK") { 
           var routePoints = polyline.decode(result.routes[0].overview_polyline);
           resolve(routePoints); 
@@ -181,12 +177,11 @@ class RouteMap extends ScanComponent {
         title: 'Secret Smoke Spot'}),
       trigger: null }]}];
 
-    var that = this;
-    return this.getDirectionsPolyline(this.routes[0].markers.map(function(m) {
+    return this.getDirectionsPolyline(this.routes[0].markers.map((m) => {
       return m.marker.position;
-    })).then(function(routePoints) {
-      that.routes[0].routePoints = routePoints;
-      that.state.routePoints = routePoints;
+    })).then((routePoints) => {
+      this.routes[0].routePoints = routePoints;
+      this.state.routePoints = routePoints;
     });
   }
 
@@ -196,10 +191,9 @@ class RouteMap extends ScanComponent {
       zoom: 14
     });
 
-    var that = this;
-    _.forEach(this.routes, function(rte) {
-      _.forEach(_.where(rte.markers, {trigger: null}), function(m) {
-        m.marker.setMap(that.map);
+    _.forEach(this.routes,(rte) => {
+      _.forEach(_.where(rte.markers, {trigger: null}), (m) => {
+        m.marker.setMap(this.map);
       });
     });
 
