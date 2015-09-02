@@ -8,8 +8,9 @@ Math.linearTween = function (t, b, c, d) {
   return c*t/d + b;
 };
 
-var viceNorth = new maps.LatLng(40.7211588,-73.9579174);
-var viceSouth = new maps.LatLng(40.7146628,-73.9658753);
+const viceNorth = new maps.LatLng(40.7211588,-73.9579174);
+const twelveChairs = new maps.LatLng(40.714472, -73.965169);
+const viceSouth = new maps.LatLng(40.7146628,-73.9658753);
 
 window.TRV = {
   last_scroll: 0,
@@ -154,7 +155,7 @@ class MovingMap extends ScanComponent {
       draggable: false,
     });
     this.marker = new maps.Marker({
-      position: viceSouth,
+      position: twelveChairs,
     });
     this.marker.setMap(this.map);
   }
@@ -202,13 +203,24 @@ $(function() {
   $("#page").height($(window).height() * 10);
   TRV.last_scroll = $(window).scrollTop();
   TRV.root = React.render(<TestComponent/>, document.getElementById('track'));
+  const initialScrollTop = $(window).scrollTop();
+
+  function modifyText(copy, scrollTop) {
+    let window_width = $(window).width(),
+        window_height = $(window).height(),
+        copy_height = $(copy).height(),
+        markers = TRV.getMarkers(copy_height, window_height),
+        top = (scrollTop / window_height) * copy_height * -0.1,
+        left = Math.linearTween(markers);
+    $(copy).css({top, left});
+  }
   $(window).on("scroll", _.throttle(function(){
     var new_scroll = $(window).scrollTop(),
         window_height = $(window).height(),
         window_width = $(window).width(),
         $copy = $('#copy'),
         copy_width = $copy.width(),
-        new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1),
+        new_copy_top = (new_scroll / window_height) * ($copy.height() * -0.1),
         markers = TRV.getMarkers(new_copy_top, window_height),
         new_copy_left = Math.linearTween(
           markers['intro'](0).pct_elapsed,
