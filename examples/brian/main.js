@@ -25,10 +25,11 @@ window.TRV = {
         }
 
         var $p = $(p),
-            el_top = $p.position().top,
-            el_height = $p.height(),
-            scroll_anchor = scroll_top + (window_height * anchor),
-            pct_elapsed;
+          el_height = $p.outerHeight(),
+          el_top = $p.position().top,
+          scroll_anchor = scroll_top + (window_height * anchor),
+          pct_elapsed,
+          pct_elapsed_raw;
           
         if (el_top > scroll_anchor) {
           pct_elapsed = 0;
@@ -37,8 +38,12 @@ window.TRV = {
         } else {
           pct_elapsed = (scroll_anchor - el_top) / el_height;
         }
-        //console.log($p.attr("id"), anchor, pct_elapsed);
-        return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed};
+        pct_elapsed_raw = (scroll_anchor - el_top) / el_height; 
+        return {
+          el_id: $(p).attr("id"),
+          pct_elapsed,
+          pct_elapsed_raw,
+        };
       };
 
       return acc;
