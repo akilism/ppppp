@@ -124,7 +124,7 @@ class RouteMap extends ScanComponent {
   adjust(last_state, new_state) {
     var marker_elapsed = new_state.markers["intro"](0).pct_elapsed;
     var pointsIdx = Math.round(this.routes[0].routePoints.length * marker_elapsed);
-    console.log(marker_elapsed);
+    
     var that = this;
     var poly = new google.maps.Polyline({
       path: this.routes[0].routePoints.slice(0, pointsIdx).map(that.toLatLngObj),
