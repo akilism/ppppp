@@ -39,7 +39,7 @@ window.TRV = {
       };
 
       return acc;
-    }, {});
+    }, {}); 
   },
   getMarkersInv: function(scroll_top, window_height) {
     scroll_top = -1 * scroll_top;
@@ -49,7 +49,7 @@ window.TRV = {
       acc[p.id] = function(anchor) {
         if(typeof(anchor) === "undefined"){
           var anchor = 0.0; 
-        }
+        } 
 
         var $p = $(p),
           el_height = $p.outerHeight(),
@@ -85,8 +85,7 @@ class TestComponent extends React.Component {
   render() {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
-        <Timelapse/>
-        <Bg/>
+        <SoundTrigger />
       </div>
     );
   }
@@ -117,54 +116,102 @@ class ScanComponent extends React.Component {
   }
 }
 
-class Bg extends ScanComponent {
+class SoundTrigger extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-      bg_top: 0
-    };
+      playing: false
+    }
+    this.trigger = 'always';  //always, once, n plays
+    this.soundPath = './ambient_city.mp3';
   }
+
+  loadAudioFile() {
+    console.log(this.soundPath);
+
+    return fetch(this.soundPath, {
+      method: "GET"
+    })
+    .then((response) => { return response.arrayBuffer(); })
+    .then((arrayBuff) => {
+      return new Promise((resolve, reject) => {
+        this.audioContext.decodeAudioData(arrayBuff, 
+          function(buffer) { resolve(buffer); }, 
+          function(err) { reject(err); });
+      });
+    })
+    .catch((error) => { console.error(error); });
+  }
+
+  getWindowAudioContext() {
+    try {
+      window.AudioContext = window.AudioContext || window.webkitAudioContext;
+      window.audioctx = window.audioctx || new AudioContext();
+      return window.audioctx;
+    } catch (e) {
+      console.log('No Web Audio API support.');
+      return {};
+    }
+  }
+
+  getSource() {
+    if(!this.source) {
+      this.source = this.audioContext.createBufferSource();
+    }
+
+    return this.source;
+  }
+
+  play() {
+    if(!this.state.playing) {
+      console.log("play");
+      var source = this.getSource();
+      source.buffer = this.soundBuffer;
+      source.connect(this.audioContext.destination);
+      source.loop = false;
+      source.start();
+    }
+  }
+
+  removeSource() {
+    this.source = null;
+  }
+
+  stop() {
+    if(this.source){
+      console.log("stop");
+      var source = this.getSource();
+      source.stop();
+      this.removeSource();
+    }
+  }
+
   adjust(last_state, d) {
-    var first_graf_elapsed = d.inv_markers["crown-vic-bleed"](0).pct_elapsed,
-        window_height = $(window).height(),
-        bg_top;
-    bg_top = Math.linearTween(first_graf_elapsed, window_height, -1 * window_height, 1.0);
-    return {bg_top: bg_top};
+    var marker_elapsed = d.markers["crown-vic"](0.5).pct_elapsed;
+    // console.log("marker elapsed:", marker_elapsed);
+    if(marker_elapsed > 0 && marker_elapsed < 0.25) {
+      this.play();
+      return {playing: true};
+    } else if(marker_elapsed === 1) {
+      this.stop();
+      return {playing: false};
+    } else {
+      return {playing: last_state.playing};
+    }
+    
+  }
+
+  componentWillMount() {
+    this.audioContext = this.getWindowAudioContext();
+    this.loadAudioFile(this.audio).then((audioBuffer) => {
+      this.soundBuffer = audioBuffer;
+    });
   }
 
   render() {
-    return(
-      <div className='bg-slide' style={{
-        position: "fixed",
-        top: this.state.bg_top,
-        width: $(window).width(),
-        height: $(window).height(),
-      }}/>
-    )
-  }
-}
-
-class Timelapse extends ScanComponent {
-  constructor(props) {
-    super(props);
-    this.state = {
-        frame: 0
-    };
-  }
- 
-  adjust(last_state, d) {
-    var first_graf_elapsed = d.markers["12-chairs"](0.5).pct_elapsed,
-        window_height = $(window).height(),
-        frames = 59,
-        frame,bg_top;
-    frame = Math.round(frames * first_graf_elapsed);
-    return {frame: frame};
-  }
-
-  render() {
-    return(
-        <img id="timelapse" src={"timelapse/frame_" + this.state.frame +".gif"}/>
-    )
+    return (
+      <p className="sound-trigger"></p>
+    );
   }
 }
 
