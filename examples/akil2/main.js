@@ -165,7 +165,7 @@ class SoundTrigger extends ScanComponent {
 
   play() {
     if(!this.state.playing) {
-      console.log("play");
+      // console.log("play");
       var source = this.getSource();
       source.buffer = this.soundBuffer;
       source.connect(this.audioContext.destination);
@@ -178,7 +178,7 @@ class SoundTrigger extends ScanComponent {
 
   stop() {
     if(this.source){
-      console.log("stop");
+      // console.log("stop");
       var source = this.getSource();
       source.stop();
       this.removeSource();
@@ -277,4 +277,12 @@ $(function() {
       c.setState(new_state);
     });
   },5));
+
+  function transitionTo(fromEl, toEl) {
+    console.log(fromEl, toEl);
+  }
+      
+  $('#crown-vic').on('click', function(el) {
+    transitionTo($(el), $('#crown-vic-col1'));
+  });
 });
