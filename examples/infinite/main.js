@@ -59,8 +59,8 @@ function createViewport(Component, container) {
 
     render() {
       var style = {
-        width: this.state.width,
-        height: this.state.height,
+        width: this.state.viewportWidth,
+        height: this.state.viewportHeight,
         position: 'relative',
         overflow: 'scroll',
         boxSizing: 'border-box',
@@ -128,7 +128,7 @@ Container.childContextTypes = {
 
 class Root extends React.Component {
   render() {
-    var colorHeight = this.context.viewportHeight * 2 / rainbow.length;
+    var height = this.context.viewportHeight * 2 / rainbow.length;
     var colors = rainbow.map(({label, css}, index) => {
       return (
         <Color
@@ -136,7 +136,7 @@ class Root extends React.Component {
           css={css}
           index={index}
           label={label}
-          height={colorHeight}>
+          height={height}>
           {label}
         </Color>
       );
@@ -152,18 +152,26 @@ Root.contextTypes = {
   viewportHeight: React.PropTypes.number.isRequired,
 };
 
+function fixedToAbsolute(viewportTop, fixed) {
+  return fixed + viewportTop;
+}
+
 class Color extends React.Component {
   render() {
+    var breakpoint = this.props.index * this.props.height;
+    var fixed = this.context.viewportTop < breakpoint
+      ? 0
+      : this.context.viewportTop - breakpoint;
+    var absolute = fixedToAbsolute(this.context.viewportTop, fixed);
     var style = {
       position: 'absolute',
+      top: absolute,
       width: this.context.containerWidth,
       height: this.props.height,
       backgroundColor: this.props.css,
     };
     return (
-      <div style={style}>
-        {this.props.children}
-      </div>
+      <div style={style}>{this.props.children}</div>
     );
   }
 }
