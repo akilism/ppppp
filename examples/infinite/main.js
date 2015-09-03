@@ -1,10 +1,10 @@
 window.$ = require('jquery');
-window._ = require('underscore');
 window.React = require('react');
 window.ReactDOM = require('react-dom');
-window.raf = require('raf');
 
-const COLORS = [
+const identity = a => a;
+
+const rainbow = [
   {
     label: 'red',
     css: '#FF0000',
@@ -35,26 +35,25 @@ const COLORS = [
   }
 ];
 
-function prepareComponent(Component, viewport) {
-  class Container extends React.Component {
+function createViewport(Component, container) {
+  class Viewport extends React.Component {
     getChildContext() {
       return this.state;
     }
 
     componentWillMount() {
-      var width, height;
-      if (viewport === document.body) {
-        [width, height] = [$(window).width(), $(window).height()];
+      var viewportWidth, viewportHeight;
+      if (container === document.body) {
+        [viewportWidth, viewportHeight] = [$(window).width(), $(window).height()];
       } else {
-        [width, height] = [$(viewport).width(), $(viewport).height()];
+        [viewportWidth, viewportHeight] = [$(container).width(), $(container).height()];
       }
-      if (!width || !height) {
+      if (!viewportWidth || !viewportHeight) {
         throw new Error("Viewport must have a non-zero width and height");
       }
       this.setState({
-        width, height,
-        left: 0, top: 0,
-        scrollLeft: 0, scrollTop: 0,
+        viewportWidth, viewportHeight,
+        viewportLeft: 0, viewportTop: 0,
       });
     }
 
@@ -74,72 +73,92 @@ function prepareComponent(Component, viewport) {
     }
 
     handleScroll(ev) {
-      var scrollLeft = $(ev.target).scrollLeft(),
-          scrollTop = $(ev.target).scrollTop();
-      this.setState({scrollLeft, scrollTop});
+      var viewportLeft = $(ev.target).scrollLeft(),
+          viewportTop = $(ev.target).scrollTop();
+      this.setState({viewportLeft, viewportTop});
     }
   }
 
-  Container.childContextTypes = {
-    width: React.PropTypes.number.isRequired,
-    height: React.PropTypes.number.isRequired,
-    left: React.PropTypes.number.isRequired,
-    top: React.PropTypes.number.isRequired,
-    scrollLeft: React.PropTypes.number.isRequired,
-    scrollTop: React.PropTypes.number.isRequired,
+  Viewport.childContextTypes = {
+    viewportWidth: React.PropTypes.number.isRequired,
+    viewportHeight: React.PropTypes.number.isRequired,
+    viewportLeft: React.PropTypes.number.isRequired,
+    viewportTop: React.PropTypes.number.isRequired,
   };
 
-  return Container;
+  return Viewport;
 }
 
-function embedComponent(Component, viewport, callback) {
-  $(viewport).empty();
-  Component = prepareComponent(Component, viewport);
-  ReactDOM.render(<Component/>, viewport, callback);
+function embedComponent(Component, container, callback) {
+  $(container).empty();
+  var Viewport = createViewport(Component, container);
+  ReactDOM.render(<Viewport/>, container, callback);
 }
+
+class Container extends React.Component {
+  getChildContext() {
+    return {
+      containerWidth: this.props.widthFn(this.context.viewportWidth),
+      containerHeight: this.props.heightFn(this.context.viewportHeight),
+    };
+  }
+
+  render() {
+    var style = {
+      width: this.props.widthFn(this.context.viewportWidth),
+      height: this.props.heightFn(this.context.viewportHeight),
+    };
+    return (
+      <div style={style}>{this.props.children}</div>
+    );
+  }
+}
+
+Container.defaultProps = { widthFn: identity, heightFn: identity };
+
+Container.contextTypes = {
+  viewportWidth: React.PropTypes.number.isRequired,
+  viewportHeight: React.PropTypes.number.isRequired,
+};
+
+Container.childContextTypes = {
+  containerWidth: React.PropTypes.number.isRequired,
+  containerHeight: React.PropTypes.number.isRequired,
+};
 
 class Root extends React.Component {
   render() {
-    var colors = COLORS.map(({label, css}, index) => {
+    var colorHeight = this.context.viewportHeight * 2 / rainbow.length;
+    var colors = rainbow.map(({label, css}, index) => {
       return (
         <Color
           key={label}
           css={css}
-          index={index}>
+          index={index}
+          label={label}
+          height={colorHeight}>
           {label}
         </Color>
       );
-    });
+    }).reverse();
     return (
-      <div style={{height: this.context.height * 2}}>
-        {colors}
-      </div>
+      <Container heightFn={h => h * 2}>{colors}</Container>
     );
-  }
-
-  getChildContext() {
-    return {
-      height: (this.context.height * 2) / COLORS.length,
-    }
   }
 }
 
-Root.childContextTypes = {
-  height: React.PropTypes.number.isRequired,
-};
-
 Root.contextTypes = {
-  width: React.PropTypes.number.isRequired,
-  height: React.PropTypes.number.isRequired,
+  viewportWidth: React.PropTypes.number.isRequired,
+  viewportHeight: React.PropTypes.number.isRequired,
 };
 
 class Color extends React.Component {
   render() {
     var style = {
+      position: 'absolute',
+      width: this.context.containerWidth,
+      height: this.props.height,
       backgroundColor: this.props.css,
-      width: this.context.width,
-      height: this.context.height,
-      top: this.context.top * this.context.scrollTop * this.props.index,
     };
     return (
       <div style={style}>
@@ -150,11 +169,9 @@ class Color extends React.Component {
 }
 
 Color.contextTypes = {
-  height: React.PropTypes.number.isRequired,
-  width: React.PropTypes.number.isRequired,
-  top: React.PropTypes.number.isRequired,
-  scrollTop: React.PropTypes.number.isRequired,
-}
+  viewportTop: React.PropTypes.number.isRequired,
+  containerWidth: React.PropTypes.number.isRequired,
+};
 
 $(function() {
   embedComponent(Root, document.body);
