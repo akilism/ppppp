@@ -152,20 +152,63 @@ class Bg extends ScanComponent {
 class PagerL extends ScanComponent {
   constructor(props) {
     super(props);
+
+    var start_left = (-1 * $(window).width());
+
     this.state = {
-      left: -160
+      left: start_left
     };
   }
   adjust(last_state, d) {
     var first_graf_elapsed = d.markers["crown-vic"](0.5).pct_elapsed,
+        start_left = -1 * $(window).width(),
         left;
-    left = Math.easeOutBack(first_graf_elapsed, -160, 145, 1.0);
+
+    left = Math.easeOutBack(first_graf_elapsed, start_left, 145, 1.0);
     return {left: left};
+  }
+  animateIn(i,start_left){
+    var new_left = Math.linearTween(i, start_left, -start_left, 15);
+    this.setState({left: new_left});
+    if(i <= 14){
+      setTimeout(_.bind(function(){
+        requestAnimationFrame(_.bind(function(){
+            this.animateIn(i+1,start_left);
+        },this))
+      },this),33)
+    } else {
+      $("#bye-vid")[0].play(); 
+      setTimeout(_.bind(function(){
+        this.animateOut(0,start_left) 
+        $("#bye-vid")[0].pause(); 
+      },this),3000);
+    }
+  }
+  animateOut(i,end_left){
+    var new_left = Math.linearTween(i, 0, end_left, 15);
+    this.setState({left: new_left});
+    if(i <= 14){
+      setTimeout(_.bind(function(){
+        requestAnimationFrame(_.bind(function(){
+          this.animateOut(i+1,end_left);
+        },this))
+      },this),33)
+    } else {
+        $("body").css({overflow:"scroll"});
+    }
+  }
+  leftPage(){
+    $("body").css({overflow:"hidden"});
+    this.animateIn(0, this.state.left);
   }
 
   render() {
     return(
-      <div id="left-pager" style={{left: this.state.left}}></div>
+      <div id="left-pager" style={{left: this.state.left}} onClick={_.bind(this.leftPage,this)} >
+        <video id="bye-vid" width="1450" height="801">
+          <source src="/bye.mp4" type="video/mp4"/>
+        </video>
+      </div>
     )
   }
 }
