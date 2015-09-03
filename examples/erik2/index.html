@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang=en>
+  <head>
+    <meta charset=utf-8>
+    <title>Scroll Experiments</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
+    <style>
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#track {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+#copy {
+  position: fixed;
+  width: 700px;
+  left:50%;
+  margin-left:-400px;
+  padding: 20px;
+  background-color: rgba(255,255,255,0.8);
+}
+
+p {
+  font-size:28px;
+  line-height:42px;
+  width:600px;
+  margin: 0 auto 100px;
+  padding: 20px;
+  background-color:rgba(255,255,255,0);
+}
+
+.bg-slide{
+  left:0;
+  width:100%;
+  height:100%;
+}
+#page{
+  width:100%;
+}
+#timelapse{
+  position:fixed;
+  left:0;
+  top:0;
+  width:100%;
+}
+#left-pager, #right-pager{
+    width:150px;
+    cursor:pointer;
+    background-color:red;
+    height:100%;
+    position:fixed;
+}
+#left-pager{
+    width:100%;
+    border-right:10px solid black;
+    background-color:black;
+    background-size:cover;
+    background-position:-10px 0;
+    z-index:300;
+}
+#right-pager{
+    right:0;
+    border-left:10px solid black;
+    background-image:url('http://i.bnet.com/blogs/empire-state-build-777631.jpeg');
+    background-size:cover;
+    background-position:-180px 0;
+}
+    </style>
+  </head>
+  <body>
+    <div id="page">
+      <div id="track"></div>
+      <div id="copy">
+          <p class="marker-p" id="intro">
+              We just moved to a new office, which is in a different part of the neighborhood than we are used to. In New York, even something as small as a few blocks can change everything. To show us around, we hooked up with VICE veteran, Ben Kammerle, to show us all the spots. 
+          </p>
+
+          <p class="marker-p" id="12-chairs">
+              He first took us to 12 chairs. One of the best new restaurants in the neighborhood and right next door to the office. 
+              It’s run by some badass Israelis - we talked to the owner and got his story.
+              He ordered us some hummus and falafel. It was awesome but Ben was extremely rude to the staff.
+              Ben was being a total jerk, but thank goodness 12 Chairs has some incredible mint lemonade to calm us down.
+          </p>
+
+          <p class="marker-p" id="crown-vic">
+              To Ben, Brooklyn in the summer means bars with backyards. "Don’t even mess around with ones that don’t.” he says, "No one will be there."
+              He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap.
+              In the back of the bar was a great taco truck...
+              Great drinks...
+              And tons of space to waste away your day. In brooklyn, day drinking is encouraged.
+              There’s a tone of games to wile away the day.
+              Cornholing. I don’t know why they call it that.
+              Horseshoes. 
+              Not to mention, on sundays they roast an entire pig
+          </p>
+
+          <p class="marker-p" id="crown-vic-2">
+              To Ben, Brooklyn in the summer means bars with backyards. "Don’t even mess around with ones that don’t.” he says, "No one will be there."
+              He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap.
+              In the back of the bar was a great taco truck...
+              Great drinks...
+              And tons of space to waste away your day. In brooklyn, day drinking is encouraged.
+              There’s a tone of games to wile away the day.
+              Cornholing. I don’t know why they call it that.
+              Horseshoes. 
+              Not to mention, on sundays they roast an entire pig
+          </p>
+      </div>
+    </div>
+    <script src="/lib/libgif.js"></script>
+    <script src="./build/main.js"></script>
+  </body>
+</html>
