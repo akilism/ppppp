@@ -5,7 +5,7 @@ window.ReactDOM = require('react-dom');
 window.raf = require('raf');
 
 function prepareComponent(Component, viewport) {
-  class Embedder extends React.Component {
+  class Container extends React.Component {
     constructor(props) {
       super(props);
     }
@@ -15,7 +15,6 @@ function prepareComponent(Component, viewport) {
     }
 
     componentWillMount() {
-      $(viewport).empty();
       var width, height;
       if (viewport === document.body) {
         [width, height] = [$(window).width(), $(window).height()];
@@ -25,49 +24,43 @@ function prepareComponent(Component, viewport) {
       if (!width || !height) {
         throw new Error("Viewport must have a non-zero width and height");
       }
-      $(viewport).css({
-        width,
-        height,
-        position: 'relative',
-        overflow: 'scroll',
-      });
       this.setState({width, height, x: 0, y: 0});
     }
 
-    componentDidMount() {
-      if (viewport === document.body) {
-        $(window).on('scroll mousewheel', _.throttle(this.handleScroll.bind(this), 10));
-      } else {
-        $(viewport).on('scroll mousewheel', _.throttle(this.handleScroll.bind(this), 10));
-      }
-    }
-
-    componentWillUnmount() {
-      // TODO(brian)
-    }
-
     render() {
-      return <Component />;
+      var style = {
+        width: this.state.width,
+        height: this.state.height,
+        position: 'relative',
+        overflow: 'scroll',
+        boxSizing: 'border-box',
+      };
+      return (
+        <div style={style} onScroll={this.handleScroll.bind(this)}>
+          <Component />
+        </div>
+      );
     }
 
     handleScroll(ev) {
-      var x = $(ev.target).scrollLeft();
-      var y = $(ev.target).scrollTop();
-      this.setState({x,y});
+      var x = $(ev.target).scrollLeft(),
+          y = $(ev.target).scrollTop();
+      this.setState({x, y});
     }
   }
 
-  Embedder.childContextTypes = {
+  Container.childContextTypes = {
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
     x: React.PropTypes.number.isRequired,
     y: React.PropTypes.number.isRequired,
   };
 
-  return Embedder;
+  return Container;
 }
 
 function embedComponent(Component, viewport, callback) {
+  $(viewport).empty();
   Component = prepareComponent(Component, viewport);
   ReactDOM.render(<Component/>, viewport, callback);
 }
@@ -75,11 +68,17 @@ function embedComponent(Component, viewport, callback) {
 class Root extends React.Component {
   render() {
     return (
-      <div style={{height: this.context.height * 2}}>
+      <div style={{width: this.context.width, height: this.context.height * 2}}>
         <Position>
           <div style={{backgroundColor: 'red', width: this.context.width, height: 300, border: '1px solid black'}}>
           </div>
         </Position>
+        <Speed>
+          <Position>
+            <div style={{backgroundColor: 'blue', width: this.context.width, height: 300, border: '1px solid black'}}>
+            </div>
+          </Position>
+        </Speed>
       </div>
     );
   }
