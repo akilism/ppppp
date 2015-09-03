@@ -4,12 +4,39 @@ window.React = require('react');
 window.ReactDOM = require('react-dom');
 window.raf = require('raf');
 
+const COLORS = [
+  {
+    label: 'red',
+    css: '#FF0000',
+  },
+  {
+    label: 'orange',
+    css: '#FF7F00',
+  },
+  {
+    label: 'yellow',
+    css: '#FFFF00',
+  },
+  {
+    label: 'green',
+    css: '#00FF00',
+  },
+  {
+    label: 'blue',
+    css: '#0000FF',
+  },
+  {
+    label: 'indigo',
+    css: '#4B0082',
+  },
+  {
+    label: 'violet',
+    css: '#8B00FF',
+  }
+];
+
 function prepareComponent(Component, viewport) {
   class Container extends React.Component {
-    constructor(props) {
-      super(props);
-    }
-
     getChildContext() {
       return this.state;
     }
@@ -73,69 +100,61 @@ function embedComponent(Component, viewport, callback) {
 
 class Root extends React.Component {
   render() {
+    var colors = COLORS.map(({label, css}, index) => {
+      return (
+        <Color
+          key={label}
+          css={css}
+          index={index}>
+          {label}
+        </Color>
+      );
+    });
     return (
       <div style={{height: this.context.height * 2}}>
-        <Speed>
-          <Positioner>
-            <div style={{backgroundColor: 'blue', width: this.context.width, height: 300, border: '1px solid black'}}>
-            </div>
-          </Positioner>
-        </Speed>
-        <Positioner>
-          <div style={{backgroundColor: 'red', width: this.context.width, height: 300, border: '1px solid black'}}>
-          </div>
-        </Positioner>
+        {colors}
       </div>
     );
   }
-  componentDidUpdate() {
-    console.log($(ReactDOM.findDOMNode(this)).height());
+
+  getChildContext() {
+    return {
+      height: (this.context.height * 2) / COLORS.length,
+    }
   }
 }
+
+Root.childContextTypes = {
+  height: React.PropTypes.number.isRequired,
+};
 
 Root.contextTypes = {
   width: React.PropTypes.number.isRequired,
   height: React.PropTypes.number.isRequired,
 };
 
-class Speed extends React.Component {
-  render() {
-    return this.props.children;
-  }
-
-  getChildContext() {
-    var top = this.context.scrollTop;
-    return {
-      top
-    };
-  }
-}
-
-Speed.contextTypes = {
-  height: React.PropTypes.number.isRequired,
-  top: React.PropTypes.number.isRequired,
-  scrollTop: React.PropTypes.number.isRequired,
-};
-
-Speed.childContextTypes = {
-  top: React.PropTypes.number.isRequired,
-};
-
-class Positioner extends React.Component {
+class Color extends React.Component {
   render() {
     var style = {
-      top: this.context.top,
-      position: 'absolute',
+      backgroundColor: this.props.css,
+      width: this.context.width,
+      height: this.context.height,
+      top: this.context.top * this.context.scrollTop * this.props.index,
     };
     return (
-      <div style={style}>{this.props.children}</div>
+      <div style={style}>
+        {this.props.children}
+      </div>
     );
   }
 }
 
-Positioner.contextTypes = {
+Color.contextTypes = {
+  height: React.PropTypes.number.isRequired,
+  width: React.PropTypes.number.isRequired,
   top: React.PropTypes.number.isRequired,
-};
+  scrollTop: React.PropTypes.number.isRequired,
+}
 
 $(function() {
   embedComponent(Root, document.body);
