@@ -157,7 +157,7 @@ class Color extends React.Component {
     var breakpoint = this.props.index * this.context.viewportHeight;
     var fixed = this.context.viewportTop < breakpoint
       ? 0
-      : this.context.viewportTop - breakpoint;
+      : -1 * (this.context.viewportTop - breakpoint);
     var absolute = fixedToAbsolute(this.context.viewportTop, fixed);
     var style = {
       position: 'absolute',
