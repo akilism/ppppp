@@ -156,7 +156,12 @@ class PagerL extends ScanComponent {
     var start_left = (-1 * $(window).width());
 
     this.state = {
-      left: start_left
+      left: start_left,
+      width: $(window).width(),
+      height: $(window).height(),
+      line1: false,
+      line2: false,
+      line3: false
     };
   }
   adjust(last_state, d) {
@@ -178,10 +183,22 @@ class PagerL extends ScanComponent {
       },this),33)
     } else {
       $("#bye-vid")[0].play(); 
+      $("#left-pager-audio")[0].play(); 
+      setTimeout(function(){
+        TRV.scan_components[1].setState({line1: true});
+      },1000)
+      setTimeout(function(){
+        TRV.scan_components[1].setState({line1: false, line2: true});
+      },5000)
+      setTimeout(function(){
+        TRV.scan_components[1].setState({line2: false, line3: true});
+      },10000)
       setTimeout(_.bind(function(){
+        TRV.scan_components[0].setState({dir: "timelapse2", frames: 20, frame: 20, loop: true})
         this.animateOut(0,start_left) 
         $("#bye-vid")[0].pause(); 
-      },this),3000);
+        $("#left-pager-audio")[0].pause(); 
+      },this),15000);
     }
   }
   animateOut(i,end_left){
@@ -195,6 +212,7 @@ class PagerL extends ScanComponent {
       },this),33)
     } else {
         $("body").css({overflow:"scroll"});
+        TRV.scan_components[1].setState({line3: false});
     }
   }
   leftPage(){
@@ -205,9 +223,15 @@ class PagerL extends ScanComponent {
   render() {
     return(
       <div id="left-pager" style={{left: this.state.left}} onClick={_.bind(this.leftPage,this)} >
-        <video id="bye-vid" width="1450" height="801">
+        <video id="bye-vid" width={this.state.width} height={this.state.height}>
           <source src="/bye.mp4" type="video/mp4"/>
         </video>
+        <audio id="left-pager-audio">
+          <source src="/train.wav" type="audio/wav"/>
+        </audio>
+        <h3 className="vid-title" style={{display: this.state.line1 ? 'block' : 'none'}}>THE TRAIN NEVER CAME</h3>
+        <h3 className="vid-title" style={{display: this.state.line2 ? 'block' : 'none'}}>ABANDONED, I BEGAN WEEPING</h3>
+        <h3 className="vid-title" style={{display: this.state.line3 ? 'block' : 'none'}}>THEN UBER SAVED MY LIFE</h3>
       </div>
     )
   }
@@ -238,22 +262,31 @@ class Timelapse extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-        frame: 0
+        dir: "timelapse",
+        frames: 59,
+        frame: 0,
+        loop: false
     };
   }
  
   adjust(last_state, d) {
     var first_graf_elapsed = d.markers["12-chairs"](0.5).pct_elapsed,
+        first_graf_elapsed_raw = d.markers["12-chairs"](0.5).pct_elapsed_raw,
         window_height = $(window).height(),
-        frames = 59,
+        frames = this.state.frames,
         frame,bg_top;
-    frame = Math.round(frames * first_graf_elapsed);
+    if(this.state.loop){
+        frame = Math.round((frames * first_graf_elapsed_raw) % frames);
+        if(frame < 0){frame = 0}
+    } else {
+        frame = Math.round(frames * first_graf_elapsed);
+    }
     return {frame: frame};
   }
 
   render() {
     return(
-        <img id="timelapse" src={"timelapse/frame_" + this.state.frame +".gif"}/>
+        <img id="timelapse" src={this.state.dir + "/frame_" + this.state.frame +".gif"}/>
     )
   }
 }
