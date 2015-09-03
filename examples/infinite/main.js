@@ -37,9 +37,7 @@ const rainbow = [
 
 function createViewport(Component, container) {
   class Viewport extends React.Component {
-    getChildContext() {
-      return this.state;
-    }
+    getChildContext() { return this.state; }
 
     componentWillMount() {
       var viewportWidth, viewportHeight;
@@ -128,21 +126,19 @@ Container.childContextTypes = {
 
 class Root extends React.Component {
   render() {
-    var height = this.context.viewportHeight * 2 / rainbow.length;
     var colors = rainbow.map(({label, css}, index) => {
       return (
         <Color
           key={label}
           css={css}
           index={index}
-          label={label}
-          height={height}>
+          label={label}>
           {label}
         </Color>
       );
     }).reverse();
     return (
-      <Container heightFn={h => h * 2}>{colors}</Container>
+      <Container heightFn={h => h * colors.length}>{colors}</Container>
     );
   }
 }
@@ -158,7 +154,7 @@ function fixedToAbsolute(viewportTop, fixed) {
 
 class Color extends React.Component {
   render() {
-    var breakpoint = this.props.index * this.props.height;
+    var breakpoint = this.props.index * this.context.viewportHeight;
     var fixed = this.context.viewportTop < breakpoint
       ? 0
       : this.context.viewportTop - breakpoint;
@@ -167,7 +163,7 @@ class Color extends React.Component {
       position: 'absolute',
       top: absolute,
       width: this.context.containerWidth,
-      height: this.props.height,
+      height: this.context.viewportHeight,
       backgroundColor: this.props.css,
     };
     return (
@@ -178,6 +174,7 @@ class Color extends React.Component {
 
 Color.contextTypes = {
   viewportTop: React.PropTypes.number.isRequired,
+  viewportHeight: React.PropTypes.number.isRequired,
   containerWidth: React.PropTypes.number.isRequired,
 };
 
