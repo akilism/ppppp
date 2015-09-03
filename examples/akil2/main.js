@@ -281,8 +281,9 @@ $(function() {
     var parentFrom = fromEl.parent();
     var parentTo = toEl.parent();
 
-    $("html, body").animate({ scrollTop: toEl.position().top }, duration);
-
+    // console.log(toEl.offset(), toEl.position(), toEl.height());
+    
+    $("#copy").animate({ top: (toEl.position().top * -1) }, duration);
     if(direction === "left") {
       parentFrom.css('position', 'relative');
       parentTo.animate({left: parentFrom.offset().left}, duration, function() {
@@ -301,6 +302,8 @@ $(function() {
         // fromEl.css('position', 'fixed');
       });
     }
+
+    
   }
       
   $('#crown-vic').on('click', function(evt) {
