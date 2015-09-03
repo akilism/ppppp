@@ -24,7 +24,11 @@ function prepareComponent(Component, viewport) {
       if (!width || !height) {
         throw new Error("Viewport must have a non-zero width and height");
       }
-      this.setState({width, height, x: 0, y: 0});
+      this.setState({
+        width, height,
+        left: 0, top: 0,
+        scrollLeft: 0, scrollTop: 0,
+      });
     }
 
     render() {
@@ -43,17 +47,19 @@ function prepareComponent(Component, viewport) {
     }
 
     handleScroll(ev) {
-      var x = $(ev.target).scrollLeft(),
-          y = $(ev.target).scrollTop();
-      this.setState({x, y});
+      var scrollLeft = $(ev.target).scrollLeft(),
+          scrollTop = $(ev.target).scrollTop();
+      this.setState({scrollLeft, scrollTop});
     }
   }
 
   Container.childContextTypes = {
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
-    x: React.PropTypes.number.isRequired,
-    y: React.PropTypes.number.isRequired,
+    left: React.PropTypes.number.isRequired,
+    top: React.PropTypes.number.isRequired,
+    scrollLeft: React.PropTypes.number.isRequired,
+    scrollTop: React.PropTypes.number.isRequired,
   };
 
   return Container;
@@ -68,19 +74,22 @@ function embedComponent(Component, viewport, callback) {
 class Root extends React.Component {
   render() {
     return (
-      <div style={{width: this.context.width, height: this.context.height * 2}}>
-        <Position>
-          <div style={{backgroundColor: 'red', width: this.context.width, height: 300, border: '1px solid black'}}>
-          </div>
-        </Position>
+      <div style={{height: this.context.height * 2}}>
         <Speed>
-          <Position>
+          <Positioner>
             <div style={{backgroundColor: 'blue', width: this.context.width, height: 300, border: '1px solid black'}}>
             </div>
-          </Position>
+          </Positioner>
         </Speed>
+        <Positioner>
+          <div style={{backgroundColor: 'red', width: this.context.width, height: 300, border: '1px solid black'}}>
+          </div>
+        </Positioner>
       </div>
     );
+  }
+  componentDidUpdate() {
+    console.log($(ReactDOM.findDOMNode(this)).height());
   }
 }
 
@@ -95,25 +104,28 @@ class Speed extends React.Component {
   }
 
   getChildContext() {
+    var top = this.context.scrollTop;
     return {
-      y: this.context.y * 2,
+      top
     };
   }
 }
 
 Speed.contextTypes = {
-  y: React.PropTypes.number.isRequired,
+  height: React.PropTypes.number.isRequired,
+  top: React.PropTypes.number.isRequired,
+  scrollTop: React.PropTypes.number.isRequired,
 };
 
 Speed.childContextTypes = {
-  y: React.PropTypes.number.isRequired,
+  top: React.PropTypes.number.isRequired,
 };
 
-class Position extends React.Component {
+class Positioner extends React.Component {
   render() {
     var style = {
+      top: this.context.top,
       position: 'absolute',
-      top: this.context.y,
     };
     return (
       <div style={style}>{this.props.children}</div>
@@ -121,8 +133,8 @@ class Position extends React.Component {
   }
 }
 
-Position.contextTypes = {
-  y: React.PropTypes.number.isRequired,
+Positioner.contextTypes = {
+  top: React.PropTypes.number.isRequired,
 };
 
 $(function() {
