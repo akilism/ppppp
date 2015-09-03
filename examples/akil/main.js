@@ -137,13 +137,29 @@ class RouteMap extends ScanComponent {
     if(this.routes[0].poly) { this.routes[0].poly.setMap(null); }
     this.routes[0].poly = poly;
 
-    this.map.setCenter(this.toGoogleLatLng(this.routes[0].routePoints[pointsIdx]));
+    // this.map.setCenter(this.toGoogleLatLng(this.routes[0].routePoints[pointsIdx]));
     this.map.setZoom(15);
-    return { routePoints: this.routes[0].routePoints.slice(0, pointsIdx)};
+    return { routePoints: this.routes[0].routePoints.slice(0, pointsIdx) };
   }
 
   toLatLngObj(point) { return {lat: point[0], lng: point[1]}; };
   toGoogleLatLng(point) { return new google.maps.LatLng(point[0], point[1]); }
+  fromGoogleLatLng(point) { return [point.G, point.K]; }
+
+  addMidPoints(points, distThreshold, interpolationAmount) {
+    for(let len = points.length-1, i = 1; i < len; i++) {
+      let pointA = this.toGoogleLatLng(points[i-1]),
+        pointB = this.toGoogleLatLng(points[i]),
+        distanceBetween = google.maps.geometry.spherical.computeDistanceBetween(pointA, pointB);
+
+        if(distanceBetween >= distThreshold) {
+          let newPoint = this.fromGoogleLatLng(google.maps.geometry.spherical.interpolate(pointA, pointB, interpolationAmount));
+          // console.log("distGreater: ", distanceBetween, newPoint);
+          points.splice(i, 0, newPoint);
+        }
+    }
+    return points;
+  }
 
   getDirectionsPolyline(points) {
     return new Promise((resolve, reject) => {
@@ -157,10 +173,11 @@ class RouteMap extends ScanComponent {
       directions.route(trip, (result, status) => {
         if(status === "OK") { 
           var routePoints = polyline.decode(result.routes[0].overview_polyline);
-          resolve(routePoints); 
+          // console.log(routePoints);
+          // console.table(routePoints);
+          resolve(this.addMidPoints(routePoints, 50, 0.5)); 
           return; 
         }
-
         reject(status); 
       });
     });

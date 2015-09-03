@@ -4,7 +4,12 @@ var path = require('path');
 function getDirEntry(dirname) {
   dirname = path.resolve(dirname);
   return fs.readdirSync(dirname).filter(function(filename) {
-    return fs.lstatSync(path.join(dirname, filename)).isDirectory();
+    var subdirname = path.join(dirname, filename);
+    var mainfile = path.join(subdirname, 'main.js');
+    return (
+      fs.lstatSync(subdirname).isDirectory() &&
+      fs.existsSync(mainfile)
+    );
   }).reduce(function(entry, subdirname) {
     entry[subdirname] = path.join(dirname, subdirname, 'main.js');
     return entry;
