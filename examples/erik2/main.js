@@ -3,6 +3,8 @@ var $ = require('jquery');
 var _ = require('underscore');
 var PureRenderMixin = require('react/addons').addons.PureRenderMixin;
 
+window.jQ = $;
+
 Math.linearTween = function (t, b, c, d) {
 	return c*t/d + b;
 };
@@ -194,6 +196,8 @@ class PagerL extends ScanComponent {
         TRV.scan_components[1].setState({line2: false, line3: true});
       },10000)
       setTimeout(_.bind(function(){
+        $("#train-natch").show();
+        $(window).scrolltop(4200);
         TRV.scan_components[0].setState({dir: "timelapse2", frames: 20, frame: 20, loop: true})
         this.animateOut(0,start_left) 
         $("#bye-vid")[0].pause(); 
