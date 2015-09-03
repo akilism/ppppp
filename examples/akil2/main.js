@@ -17,7 +17,7 @@ window.TRV = {
 
       acc[p.id] = function(anchor) {
         if(typeof(anchor) === "undefined"){
-          var anchor = 0.0; 
+          anchor = 0.0; 
         }
 
         var $p = $(p),
@@ -48,7 +48,7 @@ window.TRV = {
 
       acc[p.id] = function(anchor) {
         if(typeof(anchor) === "undefined"){
-          var anchor = 0.0; 
+          anchor = 0.0; 
         } 
 
         var $p = $(p),
