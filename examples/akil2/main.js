@@ -86,6 +86,7 @@ class TestComponent extends React.Component {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
         <SoundTrigger />
+        <HotSpot/>
       </div>
     );
   }
@@ -123,7 +124,7 @@ class SoundTrigger extends ScanComponent {
       playing: false
     }
     this.trigger = 'always';  //always, once, n plays
-    this.soundPath = './ambient_city.mp3';
+    this.soundPath = 'ambient_city.mp3';
   }
 
   loadAudioFile() {
@@ -173,9 +174,7 @@ class SoundTrigger extends ScanComponent {
     }
   }
 
-  removeSource() {
-    this.source = null;
-  }
+  removeSource() { this.source = null; }
 
   stop() {
     if(this.source){
@@ -189,16 +188,15 @@ class SoundTrigger extends ScanComponent {
   adjust(last_state, d) {
     var marker_elapsed = d.markers["crown-vic"](0.5).pct_elapsed;
     // console.log("marker elapsed:", marker_elapsed);
-    if(marker_elapsed > 0 && marker_elapsed < 0.25) {
+    if(marker_elapsed > 0 && marker_elapsed < 0.75) {
       this.play();
       return {playing: true};
-    } else if(marker_elapsed === 1) {
+    } else if(marker_elapsed === 1 || marker_elapsed === 0) {
       this.stop();
       return {playing: false};
     } else {
       return {playing: last_state.playing};
     }
-    
   }
 
   componentWillMount() {
@@ -215,12 +213,50 @@ class SoundTrigger extends ScanComponent {
   }
 }
 
+class HotSpot extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      visible: false
+    };
+  }
+
+  isTouched() {
+    debugger;
+  }
+
+  adjust(last_state, d) {
+    var marker_elapsed = d.markers["crown-vic"](0.5).pct_elapsed;
+    // console.log("marker elapsed:", marker_elapsed);
+    if(marker_elapsed > 0 && marker_elapsed < 0.75) {
+      return {visible: true};
+    } else if(marker_elapsed === 1) {
+      return {visible: false};
+    }
+    return {visible: false};
+  }
+
+  getVis() {
+    if(this.state.visible) {
+      return {visibility: "visible"};
+    } else {
+      return {visibility: "hidden"};
+    }
+  }
+
+  render() {
+    return (
+      <p className="hot-spot" style={this.getVis()}></p>
+    );
+  }
+}
+
 
 $(function() {
   $("#page").height($(window).height() * 10);
   TRV.last_scroll = $(window).scrollTop();
   TRV.root = React.render(<TestComponent/>, document.getElementById('track'));
-  $(window).on("scroll",_.throttle(function(){
+  $(window).on("scroll",_.throttle(function(evt){
     var new_scroll = $(window).scrollTop(),
         window_height = $(window).height(),
         $copy = $('#copy'),
@@ -235,7 +271,8 @@ $(function() {
       var new_state = c.adjust(last_state, {
         scroll_top: new_scroll,
         markers: markers,
-        inv_markers: inv_markers
+        inv_markers: inv_markers,
+        evt: evt
       });
       c.setState(new_state);
     });
