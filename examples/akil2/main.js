@@ -85,8 +85,7 @@ class TestComponent extends React.Component {
   render() {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
-        <SoundTrigger />
-        <HotSpot/>
+        
       </div>
     );
   }
@@ -165,7 +164,7 @@ class SoundTrigger extends ScanComponent {
 
   play() {
     if(!this.state.playing) {
-      console.log("play");
+      // console.log("play");
       var source = this.getSource();
       source.buffer = this.soundBuffer;
       source.connect(this.audioContext.destination);
@@ -178,7 +177,7 @@ class SoundTrigger extends ScanComponent {
 
   stop() {
     if(this.source){
-      console.log("stop");
+      // console.log("stop");
       var source = this.getSource();
       source.stop();
       this.removeSource();
@@ -277,4 +276,49 @@ $(function() {
       c.setState(new_state);
     });
   },5));
+
+  function transitionTo(fromEl, toEl, duration, direction) {
+    var parentFrom = fromEl.parent();
+    var parentTo = toEl.parent();
+
+    // console.log(toEl.offset(), toEl.position(), toEl.height());
+    
+    $("#copy").animate({ top: (toEl.position().top * -1) }, duration);
+    if(direction === "left") {
+      parentFrom.css('position', 'relative');
+      parentTo.animate({left: parentFrom.offset().left}, duration, function() {
+        parentTo.css('position', 'initial');
+      });
+      parentFrom.animate({left: "300%"}, duration, function() {
+        parentFrom.css('position', 'fixed');
+      });
+    } else if (direction === "right") {
+      parentTo.css('position', 'relative');
+      parentFrom.css('position', 'fixed');
+      parentTo.animate({left: 0}, duration, function() {
+        parentTo.css('position', 'initial');
+      });
+      parentFrom.animate({left: "-300%"}, duration, function() {
+        // fromEl.css('position', 'fixed');
+      });
+    }
+
+    
+  }
+      
+  $('#crown-vic').on('click', function(evt) {
+    transitionTo($(this), $('#intro-col1'), 1500, "left");
+  });
+
+  $('#crown-vic-2').on('click', function(evt) {
+    transitionTo($(this), $('#intro-col3'), 1500, "right");
+  });
+
+  $('#intro-col1').on('click', function(evt) {
+    transitionTo($(this), $('#crown-vic'), 1500, "right");
+  });
+
+  $('#intro-col3').on('click', function(evt) {
+    transitionTo($(this), $('#crown-vic-2'), 1500, "left");
+  });
 });
