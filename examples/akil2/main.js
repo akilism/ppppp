@@ -125,10 +125,10 @@ class CopyComponent extends React.Component {
   }
 
   componentDidMount() {
-    $(window).on("scroll",_.throttle(function(evt){
+    $(window).on("scroll",_.throttle((evt) => {
       var new_scroll = $(window).scrollTop(),
           window_height = $(window).height(),
-          $copy = $('.copy'),
+          $copy = $(React.findDOMNode(this.refs.copy)),
           new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1);
       var markers = TRV.getMarkers(new_copy_top, window_height);
       var inv_markers = TRV.getMarkersInv(new_copy_top, window_height);
@@ -145,40 +145,70 @@ class CopyComponent extends React.Component {
         });
         c.setState(new_state);
       });
-    },5));
+    },5).bind(this));
   }
 
-  transitionArc(node) {
-    console.log('transitionTo:', node);
+  transitionArc(fromNode, toNode) {
+    console.log('transitionTo:', toNode.to, " from:", fromNode);
+    var duration = toNode.duration,
+      direction = toNode.direction;
     var newActive = this.props.arcs.filter((a) => {
-      return a.markers.filter((m) => {
-        return m.name === node.to;
-      }).length > 0;
-    });
+        return a.markers.filter((m) => {
+          return m.name === toNode.to;
+        }).length > 0;
+      });
+    
 
-    console.log("newActive:", newActive[0].name);
+    var refTo = this.refs[newActive[0].name],
+      refFrom = this.refs[this.state.activeArc], 
+      parentFrom = $(React.findDOMNode(refFrom)),
+      parentTo = $(React.findDOMNode(refTo)),
+      toEl = $(React.findDOMNode(refTo.refs[toNode.to])),
+      fromEl = $(React.findDOMNode(refFrom.refs[fromNode]));
+    
+    $(".copy").animate({ top: (toEl.position().top * -1) }, duration);
+    if(direction === "left") {
+      // parentTo.css('position', 'relative');
+      parentFrom.css('position', 'fixed');
+      parentTo.animate({left: parentFrom.offset().left}, duration, function() {
+        parentTo.css('position', 'initial');
+      });
+      parentFrom.animate({left: "200%"}, duration, function() {
+        parentFrom.css('position', 'fixed');
+      });
+    } else if (direction === "right") {
+      // parentTo.css('position', 'relative');
+      parentFrom.css('position', 'fixed');
+      parentTo.animate({left: 0}, duration, function() {
+        parentTo.css('position', 'initial');
+      });
+      parentFrom.animate({left: "-200%"}, duration, function() {
+        // fromEl.css('position', 'fixed');
+      });
+    }
+    this.setState({activeArc: newActive[0].name});
   }
 
   setActive(i, marker) {
     if(marker.left && marker.right) {
       if(Math.random() >= 0.5) {
-        this.transitionArc(marker.left);
+        this.transitionArc(marker.name, marker.left);
       } else {
-        this.transitionArc(marker.right);
+        this.transitionArc(marker.name, marker.right);
       }
     } else if(marker.left) {
-      this.transitionArc(marker.left);
+      this.transitionArc(marker.name, marker.left);
     } else if(marker.right) {
-      this.transitionArc(marker.right);
+      this.transitionArc(marker.name, marker.right);
     }
   }
 
   render() {
     var arcs = this.props.arcs.map((a, i) => {
-      return <ArcComponent setActive={this.setActive.bind(this, i)} markers={a.markers} name={a.name} idx={i} key={a.name} />;
+      return <ArcComponent setActive={this.setActive.bind(this, i)} ref={a.name} markers={a.markers} name={a.name} idx={i} key={a.name} />;
     })
    return ( 
-      <div className="copy">
+      <div className="copy" ref="copy">
         {arcs}
       </div>
     );
@@ -197,11 +227,11 @@ class ArcComponent extends React.Component {
 
   render() {
     var markers = this.props.markers.map((m, i) => {
-        return <MarkerComponent clickHandler={this.handleClick.bind(this, i)} copy={m.copy} name={m.name} key={m.name} idx={i} left={_.extend(m.left, {'direction': 'left'})} right={_.extend(m.right, {'direction': 'right'})} />;
+        return <MarkerComponent clickHandler={this.handleClick.bind(this, i)} copy={m.copy} ref={m.name} key={m.name} idx={i} left={_.extend(m.left, {'direction': 'left'})} right={_.extend(m.right, {'direction': 'right'})} />;
       });
     var classes = "arc-" + this.props.idx + " " + this.props.name;
     return (
-      <div ref={this.props.name} className={classes}>
+      <div className={classes}>
         {markers}
       </div>
     );
@@ -215,7 +245,7 @@ class MarkerComponent extends React.Component {
 
   render() {
     return (
-      <p className="marker-p" onClick={this.props.clickHandler} ref={this.props.name}>
+      <p className="marker-p" onClick={this.props.clickHandler}>
         {this.props.copy}
       </p>
     );
@@ -356,7 +386,6 @@ class HotSpot extends ScanComponent {
   }
 }
 
-
 var arcs = [
     { "name": "Williamsburg",
       "markers": [
@@ -366,15 +395,15 @@ var arcs = [
           "right": null},
         { "name": "12-chairs",
           "copy": "He first took us to 12 chairs. One of the best new restaurants in the neighborhood and right next door to the office. It’s run by some badass Israelis - we talked to the owner and got his story. He ordered us some hummus and falafel. It was awesome but Ben was extremely rude to the staff. Ben was being a total jerk, but thank goodness 12 Chairs has some incredible mint lemonade to calm us down.",
-          "left": {"to": "ss-crown-vic", "duration": 1500},
+          "left": {"to": "ss-crown-vic", "duration": 1000},
           "right": null},
         { "name": "crown-vic",
           "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
-          "left": null,
+          "left": {"to": "ss-intro", "duration": 2000},
           "right": null},
         { "name": "crown-vic-2",
           "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
-          "left": {"to": "ss-12-chairs", "duration": 1500},
+          "left": null,
           "right": {"to": "e-crown-vic", "duration": 1500}}
       ]},
     { "name": "Southside Williamsburg",
@@ -386,15 +415,15 @@ var arcs = [
         { "name": "ss-12-chairs",
           "copy": "He first took us to 12 chairs. One of the best new restaurants in the neighborhood and right next door to the office. It’s run by some badass Israelis - we talked to the owner and got his story. He ordered us some hummus and falafel. It was awesome but Ben was extremely rude to the staff. Ben was being a total jerk, but thank goodness 12 Chairs has some incredible mint lemonade to calm us down.",
           "left": null,
-          "right": null},
+          "right": {"to": "crown-vic", "duration": 1500}},
         { "name": "ss-crown-vic",
           "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
           "left": null,
-          "right": null},
+          "right": {"to": "intro", "duration": 250}},
         { "name": "ss-crown-vic-2",
           "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
           "left": null,
-          "right": null}
+          "right": {"to": "12-chairs", "duration": 5000}}
       ]},
     { "name": "East Williamsburg",
       "markers": [
@@ -404,18 +433,17 @@ var arcs = [
           "right": null},
         { "name": "e-12-chairs",
           "copy": "He first took us to 12 chairs. One of the best new restaurants in the neighborhood and right next door to the office. It’s run by some badass Israelis - we talked to the owner and got his story. He ordered us some hummus and falafel. It was awesome but Ben was extremely rude to the staff. Ben was being a total jerk, but thank goodness 12 Chairs has some incredible mint lemonade to calm us down.",
-          "left": null,
+          "left": {"to": "intro", "duration": 2500},
           "right": null},
         { "name": "e-crown-vic",
           "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
-          "left": null,
+          "left": {"to": "crown-vic", "duration": 1000},
           "right": null},
         { "name": "e-crown-vic-2",
           "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
-          "left": null,
+          "left": {"to": "crown-vic-2", "duration": 500},
           "right": null}
       ]}];
-
 
 $(function() {
   $("#page").height($(window).height() * 10);
@@ -450,19 +478,5 @@ $(function() {
     }
   }
       
-  // $('#crown-vic').on('click', function(evt) {
-  //   transitionTo($(this), $('#intro-col1'), 1500, "left");
-  // });
 
-  // $('#crown-vic-2').on('click', function(evt) {
-  //   transitionTo($(this), $('#intro-col3'), 1500, "right");
-  // });
-
-  // $('#intro-col1').on('click', function(evt) {
-  //   transitionTo($(this), $('#crown-vic'), 1500, "right");
-  // });
-
-  // $('#intro-col3').on('click', function(evt) {
-  //   transitionTo($(this), $('#crown-vic-2'), 1500, "left");
-  // });
 });
