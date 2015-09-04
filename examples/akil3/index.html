@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang=en>
+  <head>
+    <meta charset=utf-8>
+    <title>Scroll Experiments</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
+    <style>
+body {
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#track {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.copy {
+  position: fixed;
+  width: 700px;
+  left:50%;
+  margin-left:-400px;
+  padding: 20px;
+  background-color: rgba(255,255,255,0.8);
+}
+
+p {
+  font-size:28px;
+  line-height:42px;
+  width:600px;
+  margin: 0 auto 100px;
+  padding: 20px;
+  background-color:rgba(255,255,255,0);
+}
+
+.bg-slide{
+  left:0;
+  width:100%;
+  height:100%;
+  background-color:black;
+}
+
+#page{
+  width:100%;
+}
+
+.hot-spot {
+  border: 1px solid #000;
+  height: 100%;
+  width: 25%;
+  top: 0;
+  right: 10px;
+  cursor: pointer;
+  position: fixed;
+  z-index: 10000;
+}
+
+.arc-0 {
+  background-color: gold;
+  width: 700px;
+}
+
+.arc-1 {
+  background-color: red;
+  position: absolute;
+  left: -200%;
+  width: 700px;
+}
+
+.arc-2 {
+  background-color: green;
+  position: absolute;
+  left: 200%;
+  width: 700px;
+}
+
+.transition {
+  position: relative;
+  z-index: 1;
+}
+    </style>
+  </head>
+  <body>
+    <div id="page">
+      <div id="track"></div>
+      <div id="copyHolder"></div>
+    </div>
+    <script src="./build/main.js"></script>
+  </body>
+</html>
