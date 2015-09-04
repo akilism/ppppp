@@ -4,7 +4,7 @@ var _ = require('underscore');
 var PureRenderMixin = require('react/addons').addons.PureRenderMixin;
 
 Math.linearTween = function (t, b, c, d) {
-	return c*t/d + b;
+  return c*t/d + b;
 };
 
 window.TRV = {
@@ -12,11 +12,12 @@ window.TRV = {
   scan_components: [],
   getMarkers: function(scroll_top, window_height) {
     scroll_top = -1 * scroll_top;
+    // return _.reduce(_.filter($(".marker-p"), (el) => { console.log(el.getAttribute("data-activate")); return true;}),  function(acc, p) {
     return _.reduce($(".marker-p"),  function(acc, p) {
 
       acc[p.id] = function(anchor) {
         if(typeof(anchor) === "undefined"){
-          anchor = 0.0; 
+          anchor = 0.0;
         }
 
         var $p = $(p),
@@ -24,8 +25,8 @@ window.TRV = {
           el_top = $p.position().top,
           scroll_anchor = scroll_top + (window_height * anchor),
           pct_elapsed,
-          pct_elapsed_raw;
-          
+          pct_elapsed_raw,
+          isActive = ($p.attr("data-activate") === "true") ? true : false;
         if (el_top > scroll_anchor) {
           pct_elapsed = 0;
         } else if (el_top + el_height < scroll_anchor) {
@@ -33,30 +34,31 @@ window.TRV = {
         } else {
           pct_elapsed = (scroll_anchor - el_top) / el_height;
         }
-        pct_elapsed_raw = (scroll_anchor - el_top) / el_height; 
-        return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed, pct_elapsed_raw: pct_elapsed_raw};
+        pct_elapsed_raw = (scroll_anchor - el_top) / el_height;
+        return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed, pct_elapsed_raw: pct_elapsed_raw, isActive: isActive};
       };
 
       return acc;
-    }, {}); 
+    }, {});
   },
   getMarkersInv: function(scroll_top, window_height) {
     scroll_top = -1 * scroll_top;
-  
+
     return _.reduce($(".marker-p"),  function(acc, p) {
 
       acc[p.id] = function(anchor) {
         if(typeof(anchor) === "undefined"){
-          anchor = 0.0; 
-        } 
+          anchor = 0.0;
+        }
 
         var $p = $(p),
           el_height = $p.outerHeight(),
           el_top = $p.position().top,
           el_anchor = el_top + (el_height * anchor),
           pct_elapsed,
-          pct_elapsed_raw;
-          
+          pct_elapsed_raw,
+          isActive = $p.attr("data-activate");
+
         if (el_anchor > scroll_top + window_height) {
           pct_elapsed = 0;
         } else if (el_anchor < scroll_top) {
@@ -64,15 +66,15 @@ window.TRV = {
         } else {
           pct_elapsed = 1 - ((el_anchor - scroll_top) / window_height);
         }
-        pct_elapsed_raw = 1 - ((el_anchor - scroll_top) / window_height); 
-        return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed, pct_elapsed_raw: pct_elapsed_raw};
+        pct_elapsed_raw = 1 - ((el_anchor - scroll_top) / window_height);
+        return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed, pct_elapsed_raw: pct_elapsed_raw, isActive: isActive};
       };
 
       return acc;
     }, {});
   },
   bot2Top: function(){
-  
+
   }
 };
 
@@ -84,7 +86,7 @@ class TestComponent extends React.Component {
   render() {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
-        <SoundTrigger />
+        <SoundTrigger marker="crown-vic" trigger="always" soundPath="ambient_city.mp3" />
       </div>
     );
   }
@@ -95,7 +97,7 @@ class ScanComponent extends React.Component {
     super(props);
     TRV.scan_components.push(this);
   }
- 
+
   componentDidMount(){
     var new_scroll = $(window).scrollTop(),
         window_height = $(window).height(),
@@ -156,28 +158,29 @@ class CopyComponent extends React.Component {
           return m.name === toNode.to;
         }).length > 0;
       });
-    
+
 
     var refTo = this.refs[newActive[0].name],
-      refFrom = this.refs[this.state.activeArc], 
+      refFrom = this.refs[this.state.activeArc],
       parentFrom = $(React.findDOMNode(refFrom)),
       parentTo = $(React.findDOMNode(refTo)),
       toEl = $(React.findDOMNode(refTo.refs[toNode.to])),
       fromEl = $(React.findDOMNode(refFrom.refs[fromNode]));
-    
+
+    //might need to adjust scrollTop here also.
     $(".copy").animate({ top: (toEl.position().top * -1) }, duration);
     if(direction === "left") {
       // parentTo.css('position', 'relative');
-      parentFrom.css('position', 'fixed');
+      parentFrom.css('position', 'absolute');
       parentTo.animate({left: parentFrom.offset().left}, duration, function() {
         parentTo.css('position', 'initial');
       });
       parentFrom.animate({left: "200%"}, duration, function() {
-        parentFrom.css('position', 'fixed');
+        parentFrom.css('position', 'absolute');
       });
     } else if (direction === "right") {
       // parentTo.css('position', 'relative');
-      parentFrom.css('position', 'fixed');
+      parentFrom.css('position', 'absolute');
       parentTo.animate({left: 0}, duration, function() {
         parentTo.css('position', 'initial');
       });
@@ -204,9 +207,9 @@ class CopyComponent extends React.Component {
 
   render() {
     var arcs = this.props.arcs.map((a, i) => {
-      return <ArcComponent setActive={this.setActive.bind(this, i)} ref={a.name} markers={a.markers} name={a.name} idx={i} key={a.name} />;
+      return <ArcComponent isActive={(a.name === this.state.activeArc)} setActive={this.setActive.bind(this, i)} ref={a.name} markers={a.markers} name={a.name} idx={i} key={a.name} />;
     })
-   return ( 
+   return (
       <div className="copy" ref="copy">
         {arcs}
       </div>
@@ -226,7 +229,7 @@ class ArcComponent extends React.Component {
 
   render() {
     var markers = this.props.markers.map((m, i) => {
-        return <MarkerComponent clickHandler={this.handleClick.bind(this, i)} id={m.name} copy={m.copy} ref={m.name} key={m.name} idx={i} left={_.extend(m.left, {'direction': 'left'})} right={_.extend(m.right, {'direction': 'right'})} />;
+        return <MarkerComponent isActive={this.props.isActive} clickHandler={this.handleClick.bind(this, i)} id={m.name} copy={m.copy} ref={m.name} key={m.name} idx={i} left={_.extend(m.left, {'direction': 'left'})} right={_.extend(m.right, {'direction': 'right'})} />;
       });
     var classes = "arc-" + this.props.idx + " " + this.props.name;
     return (
@@ -244,7 +247,7 @@ class MarkerComponent extends React.Component {
 
   render() {
     return (
-      <p className="marker-p" id={this.props.id}  onClick={this.props.clickHandler}>
+      <p className="marker-p" id={this.props.id}  onClick={this.props.clickHandler} data-activate={this.props.isActive}>
         {this.props.copy}
       </p>
     );
@@ -257,21 +260,21 @@ class SoundTrigger extends ScanComponent {
     this.state = {
       playing: false
     }
-    this.trigger = 'always';  //always, once, n plays
-    this.soundPath = 'ambient_city.mp3';
+    // this.trigger = 'always';  //always, once, n plays
+    // this.soundPath = 'ambient_city.mp3';
   }
 
   loadAudioFile() {
-    console.log(this.soundPath);
+    console.log(this.props.soundPath);
 
-    return fetch(this.soundPath, {
+    return fetch(this.props.soundPath, {
       method: "GET"
     })
     .then((response) => { return response.arrayBuffer(); })
     .then((arrayBuff) => {
       return new Promise((resolve, reject) => {
-        this.audioContext.decodeAudioData(arrayBuff, 
-          function(buffer) { resolve(buffer); }, 
+        this.audioContext.decodeAudioData(arrayBuff,
+          function(buffer) { resolve(buffer); },
           function(err) { reject(err); });
       });
     })
@@ -320,17 +323,20 @@ class SoundTrigger extends ScanComponent {
   }
 
   adjust(last_state, d) {
-    var marker_elapsed = d.markers["crown-vic"](0.5).pct_elapsed;
+    var marker = d.markers[this.props.marker](0.5);
+    var marker_elapsed = marker.pct_elapsed;
     // console.log("marker elapsed:", marker_elapsed);
-    if(marker_elapsed > 0 && marker_elapsed < 0.75) {
-      this.play();
-      return {playing: true};
-    } else if(marker_elapsed === 1 || marker_elapsed === 0) {
-      this.stop();
-      return {playing: false};
-    } else {
-      return {playing: last_state.playing};
+    if(marker.isActive) {
+      if(marker_elapsed > 0 && marker_elapsed < 0.75) {
+        this.play();
+        return {playing: true};
+      } else if(marker_elapsed === 1 || marker_elapsed === 0) {
+        this.stop();
+        return {playing: false};
+      }
     }
+
+    return {playing: last_state.playing};
   }
 
   componentWillMount() {
@@ -449,5 +455,5 @@ $(function() {
   React.render(<CopyComponent arcs={arcs} />, document.getElementById('copyHolder'));
   TRV.last_scroll = $(window).scrollTop();
   TRV.root = React.render(<TestComponent/>, document.getElementById('track'));
-  
+
 });
