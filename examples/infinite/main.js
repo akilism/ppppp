@@ -4,7 +4,7 @@ window.ReactDOM = require('react-dom');
 
 const identity = a => a;
 
-const rainbow = [
+var rainbow = [
   {
     label: 'red',
     css: '#FF0000',
@@ -34,6 +34,8 @@ const rainbow = [
     css: '#8B00FF',
   }
 ];
+
+rainbow = rainbow.concat(rainbow);
 
 function createViewport(Component, container) {
   class Viewport extends React.Component {
@@ -127,7 +129,7 @@ class Root extends React.Component {
     var {viewportWidth, viewportHeight, viewportTop} = this.context,
         trackWidth = viewportWidth,
         // NOTE(brian): Infinite scroll never been so easy
-        trackHeight = viewportHeight + viewportTop + 100,
+        trackHeight = viewportHeight * 2 + viewportTop,
         colorsHeight = rainbow.length * viewportHeight;
     return { trackWidth, trackHeight };
   }
@@ -169,10 +171,10 @@ class Color extends React.Component {
   render() {
     var elTop = this.props.index * this.context.viewportHeight;
     var colorHeight = this.context.viewportHeight;
-    var colorsHeight = colorHeight * 7;
+    var colorsHeight = colorHeight * rainbow.length;
     var viewportTop = this.context.viewportTop % colorsHeight;
     var repetitions = Math.floor(this.context.viewportTop / colorsHeight);
-    var currentIndex = Math.floor(this.context.viewportTop / colorHeight) % 7;
+    var currentIndex = Math.floor(this.context.viewportTop / colorHeight) % rainbow.length;
     if (this.props.label === 'red') {
       console.log({
         repetitions,
