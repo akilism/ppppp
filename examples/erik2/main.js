@@ -186,6 +186,8 @@ class PagerL extends ScanComponent {
     } else {
       $("#bye-vid")[0].play(); 
       $("#left-pager-audio")[0].play(); 
+      $("#train-natch").show();
+      TRV.scan_components[0].setState({dir: "timelapse2", frames: 20, frame: 20, loop: true})
       setTimeout(function(){
         TRV.scan_components[1].setState({line1: true});
       },1000)
@@ -196,9 +198,6 @@ class PagerL extends ScanComponent {
         TRV.scan_components[1].setState({line2: false, line3: true});
       },10000)
       setTimeout(_.bind(function(){
-        $("#train-natch").show();
-        $(window).scrolltop(4200);
-        TRV.scan_components[0].setState({dir: "timelapse2", frames: 20, frame: 20, loop: true})
         this.animateOut(0,start_left) 
         $("#bye-vid")[0].pause(); 
         $("#left-pager-audio")[0].pause(); 
