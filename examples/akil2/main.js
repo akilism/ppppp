@@ -57,7 +57,7 @@ window.TRV = {
           el_anchor = el_top + (el_height * anchor),
           pct_elapsed,
           pct_elapsed_raw,
-          isActive = $p.attr("data-activate");
+          isActive = ($p.attr("data-activate") === "true") ? true : false;
 
         if (el_anchor > scroll_top + window_height) {
           pct_elapsed = 0;
