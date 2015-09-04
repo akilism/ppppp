@@ -93,18 +93,16 @@ function embedComponent(Component, container, callback) {
   ReactDOM.render(<Viewport/>, container, callback);
 }
 
-class Container extends React.Component {
+class Track extends React.Component {
   getChildContext() {
-    return {
-      containerWidth: this.props.widthFn(this.context.viewportWidth),
-      containerHeight: this.props.heightFn(this.context.viewportHeight),
-    };
+    return this.props.adjust();
   }
 
   render() {
+    var {trackWidth, trackHeight, viewportTop} = this.getChildContext();
     var style = {
-      width: this.props.widthFn(this.context.viewportWidth),
-      height: this.props.heightFn(this.context.viewportHeight),
+      width: trackWidth,
+      height: trackHeight,
     };
     return (
       <div style={style}>{this.props.children}</div>
@@ -112,33 +110,47 @@ class Container extends React.Component {
   }
 }
 
-Container.defaultProps = { widthFn: identity, heightFn: identity };
-
-Container.contextTypes = {
-  viewportWidth: React.PropTypes.number.isRequired,
-  viewportHeight: React.PropTypes.number.isRequired,
+Track.childContextTypes = {
+  trackWidth: React.PropTypes.number.isRequired,
+  trackHeight: React.PropTypes.number.isRequired,
 };
 
-Container.childContextTypes = {
-  containerWidth: React.PropTypes.number.isRequired,
-  containerHeight: React.PropTypes.number.isRequired,
-};
+function shift(arr, index) {
+  var left = arr.slice(0, index);
+  var right = arr.slice(index, arr.length);
+  return right.concat(left);
+}
+window.shift = shift;
 
 class Root extends React.Component {
+  adjustTrackContext() {
+    var {viewportWidth, viewportHeight, viewportTop} = this.context,
+        trackWidth = viewportWidth,
+        // NOTE(brian): Infinite scroll never been so easy
+        trackHeight = viewportHeight + viewportTop + 100,
+        colorsHeight = rainbow.length * viewportHeight;
+    return { trackWidth, trackHeight };
+  }
+
   render() {
+    var currentIndex = Math.floor(this.context.viewportTop / this.context.viewportHeight) % rainbow.length;
     var colors = rainbow.map(({label, css}, index) => {
       return (
         <Color
-          key={label}
+          key={index}
           css={css}
           index={index}
           label={label}>
-          {label}
+          <div style={{position: 'absolute', left: '45%', top: '45%', fontSize: '50px'}}>
+            {label}
+          </div>
         </Color>
       );
     }).reverse();
     return (
-      <Container heightFn={h => h * colors.length}>{colors}</Container>
+      <Track adjust={this.adjustTrackContext.bind(this)}>
+        {colors}
+      </Track>
     );
   }
 }
@@ -146,23 +158,38 @@ class Root extends React.Component {
 Root.contextTypes = {
   viewportWidth: React.PropTypes.number.isRequired,
   viewportHeight: React.PropTypes.number.isRequired,
+  viewportTop: React.PropTypes.number.isRequired,
 };
 
-function fixedToAbsolute(viewportTop, fixed) {
-  return fixed + viewportTop;
+function fixedToAbsolute(viewportTop, trackTop, fixed) {
+  return fixed + viewportTop - trackTop;
 }
 
 class Color extends React.Component {
   render() {
-    var breakpoint = this.props.index * this.context.viewportHeight;
-    var fixed = this.context.viewportTop < breakpoint
-      ? 0
-      : -1 * (this.context.viewportTop - breakpoint);
-    var absolute = fixedToAbsolute(this.context.viewportTop, fixed);
+    var elTop = this.props.index * this.context.viewportHeight;
+    var colorHeight = this.context.viewportHeight;
+    var colorsHeight = colorHeight * 7;
+    var viewportTop = this.context.viewportTop % colorsHeight;
+    var repetitions = Math.floor(this.context.viewportTop / colorsHeight);
+    var currentIndex = Math.floor(this.context.viewportTop / colorHeight) % 7;
+    if (this.props.label === 'red') {
+      console.log({
+        repetitions,
+        viewportTop,
+        elTop,
+        currentIndex,
+      });
+    }
+    var fixed = viewportTop > elTop || viewportTop < -elTop
+      ? elTop - viewportTop
+      : 0;
+    //NOTE(brian): Assuming track top is always 0 for now
+    var absolute = fixedToAbsolute(this.context.viewportTop, 0, fixed);
     var style = {
       position: 'absolute',
       top: absolute,
-      width: this.context.containerWidth,
+      width: this.context.viewportWidth,
       height: this.context.viewportHeight,
       backgroundColor: this.props.css,
     };
@@ -175,7 +202,7 @@ class Color extends React.Component {
 Color.contextTypes = {
   viewportTop: React.PropTypes.number.isRequired,
   viewportHeight: React.PropTypes.number.isRequired,
-  containerWidth: React.PropTypes.number.isRequired,
+  viewportWidth: React.PropTypes.number.isRequired,
 };
 
 $(function() {
