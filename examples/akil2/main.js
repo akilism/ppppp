@@ -12,7 +12,6 @@ window.TRV = {
   scan_components: [],
   getMarkers: function(scroll_top, window_height) {
     scroll_top = -1 * scroll_top;
-    
     return _.reduce($(".marker-p"),  function(acc, p) {
 
       acc[p.id] = function(anchor) {
@@ -85,7 +84,7 @@ class TestComponent extends React.Component {
   render() {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
-        
+        <SoundTrigger />
       </div>
     );
   }
@@ -149,7 +148,7 @@ class CopyComponent extends React.Component {
   }
 
   transitionArc(fromNode, toNode) {
-    console.log('transitionTo:', toNode.to, " from:", fromNode);
+    // console.log('transitionTo:', toNode.to, " from:", fromNode);
     var duration = toNode.duration,
       direction = toNode.direction;
     var newActive = this.props.arcs.filter((a) => {
@@ -227,7 +226,7 @@ class ArcComponent extends React.Component {
 
   render() {
     var markers = this.props.markers.map((m, i) => {
-        return <MarkerComponent clickHandler={this.handleClick.bind(this, i)} copy={m.copy} ref={m.name} key={m.name} idx={i} left={_.extend(m.left, {'direction': 'left'})} right={_.extend(m.right, {'direction': 'right'})} />;
+        return <MarkerComponent clickHandler={this.handleClick.bind(this, i)} id={m.name} copy={m.copy} ref={m.name} key={m.name} idx={i} left={_.extend(m.left, {'direction': 'left'})} right={_.extend(m.right, {'direction': 'right'})} />;
       });
     var classes = "arc-" + this.props.idx + " " + this.props.name;
     return (
@@ -245,7 +244,7 @@ class MarkerComponent extends React.Component {
 
   render() {
     return (
-      <p className="marker-p" onClick={this.props.clickHandler}>
+      <p className="marker-p" id={this.props.id}  onClick={this.props.clickHandler}>
         {this.props.copy}
       </p>
     );
@@ -447,36 +446,8 @@ var arcs = [
 
 $(function() {
   $("#page").height($(window).height() * 10);
+  React.render(<CopyComponent arcs={arcs} />, document.getElementById('copyHolder'));
   TRV.last_scroll = $(window).scrollTop();
   TRV.root = React.render(<TestComponent/>, document.getElementById('track'));
-  React.render(<CopyComponent arcs={arcs} />, document.getElementById('page'));
-
-  function transitionTo(fromEl, toEl, duration, direction) {
-    var parentFrom = fromEl.parent();
-    var parentTo = toEl.parent();
-
-    // console.log(toEl.offset(), toEl.position(), toEl.height());
-    
-    $("#copy").animate({ top: (toEl.position().top * -1) }, duration);
-    if(direction === "left") {
-      parentFrom.css('position', 'relative');
-      parentTo.animate({left: parentFrom.offset().left}, duration, function() {
-        parentTo.css('position', 'initial');
-      });
-      parentFrom.animate({left: "300%"}, duration, function() {
-        parentFrom.css('position', 'fixed');
-      });
-    } else if (direction === "right") {
-      parentTo.css('position', 'relative');
-      parentFrom.css('position', 'fixed');
-      parentTo.animate({left: 0}, duration, function() {
-        parentTo.css('position', 'initial');
-      });
-      parentFrom.animate({left: "-300%"}, duration, function() {
-        // fromEl.css('position', 'fixed');
-      });
-    }
-  }
-      
-
+  
 });
