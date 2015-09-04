@@ -20,7 +20,7 @@ body {
   height: 100%;
 }
 
-#copy {
+.copy {
   position: fixed;
   width: 700px;
   left:50%;
@@ -44,6 +44,7 @@ p {
   height:100%;
   background-color:black;
 }
+
 #page{
   width:100%;
 }
@@ -59,19 +60,19 @@ p {
   z-index: 10000;
 }
 
-.col-1 {
+.arc-0 {
+  background-color: gold;
+  width:640px;
+}
+
+.arc-1 {
   background-color: red;
   position: fixed;
   left: -200%;
   width:640px;
 }
 
-.col-2 {
-  background-color: gold;
-  width:640px;
-}
-
-.col-3 {
+.arc-2 {
   background-color: green;
   position: fixed;
   left: 200%;
@@ -82,7 +83,7 @@ p {
   <body>
     <div id="page">
       <div id="track"></div>
-      <div id="copy">
+<!--       <div id="copy">
           <div class="col-1" id="col1">
             <p class="marker-p" id="intro-col1">
                 We just moved to a new office, which is in a different part of the neighborhood than we are used to. In New York, even something as small as a few blocks can change everything. To show us around, we hooked up with VICE veteran, Ben Kammerle, to show us all the spots. 
@@ -191,7 +192,7 @@ p {
                 Not to mention, on sundays they roast an entire pig
             </p>
           </div>
-      </div>
+      </div> -->
     </div>
     <script src="./build/main.js"></script>
   </body>

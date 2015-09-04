@@ -17,7 +17,7 @@ window.TRV = {
 
       acc[p.id] = function(anchor) {
         if(typeof(anchor) === "undefined"){
-          var anchor = 0.0; 
+          anchor = 0.0; 
         }
 
         var $p = $(p),
@@ -48,7 +48,7 @@ window.TRV = {
 
       acc[p.id] = function(anchor) {
         if(typeof(anchor) === "undefined"){
-          var anchor = 0.0; 
+          anchor = 0.0; 
         } 
 
         var $p = $(p),
@@ -113,6 +113,142 @@ class ScanComponent extends React.Component {
 
   adjust() {
     throw "You must override adjust"
+  }
+}
+
+class CopyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeArc: this.props.arcs[0].name
+    }
+  }
+
+  componentDidMount() {
+    $(window).on("scroll",_.throttle((evt) => {
+      var new_scroll = $(window).scrollTop(),
+          window_height = $(window).height(),
+          $copy = $(React.findDOMNode(this.refs.copy)),
+          new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1);
+      var markers = TRV.getMarkers(new_copy_top, window_height);
+      var inv_markers = TRV.getMarkersInv(new_copy_top, window_height);
+      $copy.css({
+        top: new_copy_top,
+      });
+      _(TRV.scan_components).each(function(c){
+        var last_state = _(c.state).clone();
+        var new_state = c.adjust(last_state, {
+          scroll_top: new_scroll,
+          markers: markers,
+          inv_markers: inv_markers,
+          evt: evt
+        });
+        c.setState(new_state);
+      });
+    },5).bind(this));
+  }
+
+  transitionArc(fromNode, toNode) {
+    console.log('transitionTo:', toNode.to, " from:", fromNode);
+    var duration = toNode.duration,
+      direction = toNode.direction;
+    var newActive = this.props.arcs.filter((a) => {
+        return a.markers.filter((m) => {
+          return m.name === toNode.to;
+        }).length > 0;
+      });
+    
+
+    var refTo = this.refs[newActive[0].name],
+      refFrom = this.refs[this.state.activeArc], 
+      parentFrom = $(React.findDOMNode(refFrom)),
+      parentTo = $(React.findDOMNode(refTo)),
+      toEl = $(React.findDOMNode(refTo.refs[toNode.to])),
+      fromEl = $(React.findDOMNode(refFrom.refs[fromNode]));
+    
+    $(".copy").animate({ top: (toEl.position().top * -1) }, duration);
+    if(direction === "left") {
+      // parentTo.css('position', 'relative');
+      parentFrom.css('position', 'fixed');
+      parentTo.animate({left: parentFrom.offset().left}, duration, function() {
+        parentTo.css('position', 'initial');
+      });
+      parentFrom.animate({left: "200%"}, duration, function() {
+        parentFrom.css('position', 'fixed');
+      });
+    } else if (direction === "right") {
+      // parentTo.css('position', 'relative');
+      parentFrom.css('position', 'fixed');
+      parentTo.animate({left: 0}, duration, function() {
+        parentTo.css('position', 'initial');
+      });
+      parentFrom.animate({left: "-200%"}, duration, function() {
+        // fromEl.css('position', 'fixed');
+      });
+    }
+    this.setState({activeArc: newActive[0].name});
+  }
+
+  setActive(i, marker) {
+    if(marker.left && marker.right) {
+      if(Math.random() >= 0.5) {
+        this.transitionArc(marker.name, marker.left);
+      } else {
+        this.transitionArc(marker.name, marker.right);
+      }
+    } else if(marker.left) {
+      this.transitionArc(marker.name, marker.left);
+    } else if(marker.right) {
+      this.transitionArc(marker.name, marker.right);
+    }
+  }
+
+  render() {
+    var arcs = this.props.arcs.map((a, i) => {
+      return <ArcComponent setActive={this.setActive.bind(this, i)} ref={a.name} markers={a.markers} name={a.name} idx={i} key={a.name} />;
+    })
+   return ( 
+      <div className="copy" ref="copy">
+        {arcs}
+      </div>
+    );
+  }
+}
+
+class ArcComponent extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  handleClick(i) {
+    var marker = this.props.markers[i];
+    this.props.setActive(marker);
+  }
+
+  render() {
+    var markers = this.props.markers.map((m, i) => {
+        return <MarkerComponent clickHandler={this.handleClick.bind(this, i)} copy={m.copy} ref={m.name} key={m.name} idx={i} left={_.extend(m.left, {'direction': 'left'})} right={_.extend(m.right, {'direction': 'right'})} />;
+      });
+    var classes = "arc-" + this.props.idx + " " + this.props.name;
+    return (
+      <div className={classes}>
+        {markers}
+      </div>
+    );
+  }
+}
+
+class MarkerComponent extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <p className="marker-p" onClick={this.props.clickHandler}>
+        {this.props.copy}
+      </p>
+    );
   }
 }
 
@@ -250,32 +386,70 @@ class HotSpot extends ScanComponent {
   }
 }
 
+var arcs = [
+    { "name": "Williamsburg",
+      "markers": [
+        { "name": "intro",
+          "copy": "We just moved to a new office, which is in a different part of the neighborhood than we are used to. In New York, even something as small as a few blocks can change everything. To show us around, we hooked up with VICE veteran, Ben Kammerle, to show us all the spots.",
+          "left": null,
+          "right": null},
+        { "name": "12-chairs",
+          "copy": "He first took us to 12 chairs. One of the best new restaurants in the neighborhood and right next door to the office. It’s run by some badass Israelis - we talked to the owner and got his story. He ordered us some hummus and falafel. It was awesome but Ben was extremely rude to the staff. Ben was being a total jerk, but thank goodness 12 Chairs has some incredible mint lemonade to calm us down.",
+          "left": {"to": "ss-crown-vic", "duration": 1000},
+          "right": null},
+        { "name": "crown-vic",
+          "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
+          "left": {"to": "ss-intro", "duration": 2000},
+          "right": null},
+        { "name": "crown-vic-2",
+          "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
+          "left": null,
+          "right": {"to": "e-crown-vic", "duration": 1500}}
+      ]},
+    { "name": "Southside Williamsburg",
+      "markers": [
+        { "name": "ss-intro",
+          "copy": "We just moved to a new office, which is in a different part of the neighborhood than we are used to. In New York, even something as small as a few blocks can change everything. To show us around, we hooked up with VICE veteran, Ben Kammerle, to show us all the spots.",
+          "left": null,
+          "right": null},
+        { "name": "ss-12-chairs",
+          "copy": "He first took us to 12 chairs. One of the best new restaurants in the neighborhood and right next door to the office. It’s run by some badass Israelis - we talked to the owner and got his story. He ordered us some hummus and falafel. It was awesome but Ben was extremely rude to the staff. Ben was being a total jerk, but thank goodness 12 Chairs has some incredible mint lemonade to calm us down.",
+          "left": null,
+          "right": {"to": "crown-vic", "duration": 1500}},
+        { "name": "ss-crown-vic",
+          "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
+          "left": null,
+          "right": {"to": "intro", "duration": 250}},
+        { "name": "ss-crown-vic-2",
+          "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
+          "left": null,
+          "right": {"to": "12-chairs", "duration": 5000}}
+      ]},
+    { "name": "East Williamsburg",
+      "markers": [
+        { "name": "e-intro",
+          "copy": "We just moved to a new office, which is in a different part of the neighborhood than we are used to. In New York, even something as small as a few blocks can change everything. To show us around, we hooked up with VICE veteran, Ben Kammerle, to show us all the spots.",
+          "left": null,
+          "right": null},
+        { "name": "e-12-chairs",
+          "copy": "He first took us to 12 chairs. One of the best new restaurants in the neighborhood and right next door to the office. It’s run by some badass Israelis - we talked to the owner and got his story. He ordered us some hummus and falafel. It was awesome but Ben was extremely rude to the staff. Ben was being a total jerk, but thank goodness 12 Chairs has some incredible mint lemonade to calm us down.",
+          "left": {"to": "intro", "duration": 2500},
+          "right": null},
+        { "name": "e-crown-vic",
+          "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
+          "left": {"to": "crown-vic", "duration": 1000},
+          "right": null},
+        { "name": "e-crown-vic-2",
+          "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
+          "left": {"to": "crown-vic-2", "duration": 500},
+          "right": null}
+      ]}];
 
 $(function() {
   $("#page").height($(window).height() * 10);
   TRV.last_scroll = $(window).scrollTop();
   TRV.root = React.render(<TestComponent/>, document.getElementById('track'));
-  $(window).on("scroll",_.throttle(function(evt){
-    var new_scroll = $(window).scrollTop(),
-        window_height = $(window).height(),
-        $copy = $('#copy'),
-        new_copy_top = (new_scroll / window_height) * (- $copy.height() * 0.1);
-    var markers = TRV.getMarkers(new_copy_top, window_height);
-    var inv_markers = TRV.getMarkersInv(new_copy_top, window_height);
-    $copy.css({
-      top: new_copy_top,
-    });
-    _(TRV.scan_components).each(function(c){
-      var last_state = _(c.state).clone();
-      var new_state = c.adjust(last_state, {
-        scroll_top: new_scroll,
-        markers: markers,
-        inv_markers: inv_markers,
-        evt: evt
-      });
-      c.setState(new_state);
-    });
-  },5));
+  React.render(<CopyComponent arcs={arcs} />, document.getElementById('page'));
 
   function transitionTo(fromEl, toEl, duration, direction) {
     var parentFrom = fromEl.parent();
@@ -302,23 +476,7 @@ $(function() {
         // fromEl.css('position', 'fixed');
       });
     }
-
-    
   }
       
-  $('#crown-vic').on('click', function(evt) {
-    transitionTo($(this), $('#intro-col1'), 1500, "left");
-  });
 
-  $('#crown-vic-2').on('click', function(evt) {
-    transitionTo($(this), $('#intro-col3'), 1500, "right");
-  });
-
-  $('#intro-col1').on('click', function(evt) {
-    transitionTo($(this), $('#crown-vic'), 1500, "right");
-  });
-
-  $('#intro-col3').on('click', function(evt) {
-    transitionTo($(this), $('#crown-vic-2'), 1500, "left");
-  });
 });
