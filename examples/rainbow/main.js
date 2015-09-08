@@ -128,22 +128,13 @@ class Color extends React.Component {
   }
 }
 
-class Track extends React.Component {
-  render() {
-    var style = {width: this.props.width, height: this.props.height};
-    return (
-      <div style={style}>{this.props.children}</div>
-    );
-  }
-}
-
 class Rainbow extends React.Component {
   render() {
     var {colors} = this.props,
-        {viewportWidth, viewportHeight, viewportTop} = this.context,
+        {viewportHeight, viewportTop} = this.context,
         colorHeight = viewportHeight,
         colorsHeight = colorHeight * colors.length,
-        trackHeight = colorsHeight * (Math.round(viewportTop / colorsHeight) + 1),
+        rainbowHeight = colorsHeight * (Math.round(viewportTop / colorsHeight) + 1),
         currentIndex = Math.floor(viewportTop / viewportHeight) % colors.length,
         repetitions = Math.floor(viewportTop / colorsHeight),
         children = colors
@@ -160,7 +151,7 @@ class Rainbow extends React.Component {
                 key={name}
                 name={name}
                 top={absolute}
-                width={viewportWidth}
+                width={this.props.width}
                 height={colorHeight}
                 />
             );
@@ -168,26 +159,94 @@ class Rainbow extends React.Component {
           .rotate(currentIndex)
           .reverse();
     return (
-      <Track width={viewportWidth} height={trackHeight}>
+      <div
+        style={{
+          position: 'absolute',
+          left: this.props.left,
+          width: this.props.width,
+          height: rainbowHeight,
+        }}>
         {children}
-      </Track>
+      </div>
     );
   }
 }
 
 Rainbow.contextTypes = {
-  viewportWidth: React.PropTypes.number.isRequired,
   viewportHeight: React.PropTypes.number.isRequired,
   viewportTop: React.PropTypes.number.isRequired,
 };
 
-class Root extends React.Component {
+class DoubleRainbow extends React.Component {
   render() {
+    var {colors} = this.props,
+        {viewportHeight, viewportTop} = this.context,
+        colorHeight = viewportHeight,
+        colorsHeight = colorHeight * colors.length,
+        rainbowHeight = colorsHeight * (Math.round(viewportTop / colorsHeight) + 1),
+        currentIndex = Math.floor(viewportTop / viewportHeight) % colors.length,
+        repetitions = Math.floor(viewportTop / colorsHeight),
+        children = colors
+          .map(({name, css}, index) => {
+            var absolute;
+            if (index === currentIndex) {
+              absolute = index * colorHeight + repetitions * colorsHeight;
+              // NOTE(brian): this is dumb
+              var fixed = absolute - viewportTop;
+              absolute = fixed * 2 + viewportTop;
+            } else {
+              absolute = viewportTop;
+            }
+            return (
+              <Color
+                css={css}
+                key={name}
+                name={name}
+                top={absolute}
+                width={this.props.width}
+                height={colorHeight}
+                />
+            );
+          })
+          .rotate(currentIndex)
+          .reverse();
     return (
-      <Rainbow colors={colors} />
+      <div
+        style={{
+          position: 'absolute',
+          left: this.props.left,
+          width: this.props.width,
+          height: rainbowHeight,
+        }}>
+        {children}
+      </div>
     );
   }
 }
+
+DoubleRainbow.contextTypes = {
+  viewportHeight: React.PropTypes.number.isRequired,
+  viewportTop: React.PropTypes.number.isRequired,
+};
+
+
+class Root extends React.Component {
+  render() {
+    var width = this.context.viewportWidth / 2;
+    return (
+      <div>
+        <Rainbow colors={colors} left='0%' width={width} />
+        <DoubleRainbow colors={colors} left='50%' width={width} />
+      </div>
+    );
+  }
+}
+
+Root.contextTypes = {
+  viewportWidth: React.PropTypes.number.isRequired,
+  viewportHeight: React.PropTypes.number.isRequired,
+  viewportTop: React.PropTypes.number.isRequired,
+};
 
 $(function() {
   embedComponent(Root, document.body);
