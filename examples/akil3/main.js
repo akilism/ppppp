@@ -86,7 +86,7 @@ class TestComponent extends React.Component {
   render() {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
-        <SoundTrigger marker="crown-vic" anchor="0.75" trigger="always" soundPath="../akil2/ambient_city.mp3" />
+        <SoundTrigger marker="12-chairs" anchor="0.15" trigger="always" soundPath="../akil2/ambient_city.mp3" />
       </div>
     );
   }
@@ -442,8 +442,8 @@ var arcs = [{ "name": "Williamsburg",
           "right": null},
          { "name": "timelapse",
           "type": "timelapse",
-          "marker": "crown-vic",
-          "anchor": 0.75},
+          "marker": "12-chairs",
+          "anchor": 0.1},
         { "name": "crown-vic",
           "copy": "To Ben, Brooklyn in the summer means bars with backyards. \"Don’t even mess around with ones that don’t.\" he says, \"No one will be there.\" He took us to one of the best backyards, Crown Victoria. Probably because he’s cheap. In the back of the bar was a great taco truck... Great drinks... And tons of space to waste away your day. In brooklyn, day drinking is encouraged. There’s a tone of games to wile away the day. Cornholing. I don’t know why they call it that. Horseshoes. Not to mention, on sundays they roast an entire pig",
           "type": "marker",
