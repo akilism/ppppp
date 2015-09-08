@@ -1,36 +1,47 @@
-window.$ = require('jquery');
-window.React = require('react');
-window.ReactDOM = require('react-dom');
+var $ = require('jquery');
+var React = require('react');
+var ReactDOM = require('react-dom');
+
+// NOTE(brian): sorry for mutating global Array.prototype;
+Array.prototype.rotate = function(index) {
+  if (!index) {
+    return this;
+  } else {
+    var left = this.slice(0, index);
+    var right = this.slice(index, this.length);
+    return right.concat(left);
+  }
+};
 
 const identity = a => a;
 
-const rainbow = [
+const colors = [
   {
-    label: 'red',
+    name: 'red',
     css: '#FF0000',
   },
   {
-    label: 'orange',
+    name: 'orange',
     css: '#FF7F00',
   },
   {
-    label: 'yellow',
+    name: 'yellow',
     css: '#FFFF00',
   },
   {
-    label: 'green',
+    name: 'green',
     css: '#00FF00',
   },
   {
-    label: 'blue',
+    name: 'blue',
     css: '#0000FF',
   },
   {
-    label: 'indigo',
+    name: 'indigo',
     css: '#4B0082',
   },
   {
-    label: 'violet',
+    name: 'violet',
     css: '#8B00FF',
   }
 ];
@@ -119,16 +130,6 @@ Track.childContextTypes = {
 };
 
 
-Array.prototype.rotate = function(index) {
-  if (!index) {
-    return this;
-  } else {
-    var left = this.slice(0, index);
-    var right = this.slice(index, this.length);
-    return right.concat(left);
-  }
-};
-
 function fixedToAbsolute(viewportTop, trackTop, fixed) {
   return fixed + viewportTop - trackTop;
 }
@@ -136,7 +137,7 @@ function fixedToAbsolute(viewportTop, trackTop, fixed) {
 class Rainbow extends React.Component {
   adjustTrackContext() {
     var {viewportWidth, viewportHeight, viewportTop} = this.context,
-        colorsHeight = rainbow.length * viewportHeight,
+        colorsHeight = colors.length * viewportHeight,
         trackWidth = viewportWidth,
         trackHeight = colorsHeight * (Math.round(viewportTop / colorsHeight) + 1);
     return { trackWidth, trackHeight };
@@ -145,11 +146,11 @@ class Rainbow extends React.Component {
   render() {
     var {viewportWidth, viewportHeight, viewportTop} = this.context,
         colorHeight = viewportHeight,
-        colorsHeight = colorHeight * rainbow.length,
-        currentIndex = Math.floor(viewportTop / viewportHeight) % rainbow.length,
+        colorsHeight = colorHeight * colors.length,
+        currentIndex = Math.floor(viewportTop / viewportHeight) % colors.length,
         repetitions = Math.floor(viewportTop / colorsHeight),
-        children = rainbow
-          .map(({label, css}, index) => {
+        children = colors
+          .map(({name, css}, index) => {
             var absolute;
             if (index === currentIndex) {
               absolute = index * colorHeight + repetitions * colorsHeight;
@@ -159,8 +160,8 @@ class Rainbow extends React.Component {
             return (
               <Color
                 css={css}
-                key={label}
-                label={label}
+                key={name}
+                name={name}
                 absolute={absolute}
                 width={this.context.viewportWidth}
                 height={this.context.viewportHeight}
@@ -177,7 +178,7 @@ class Rainbow extends React.Component {
   }
 }
 
-Root.contextTypes = {
+Rainbow.contextTypes = {
   viewportWidth: React.PropTypes.number.isRequired,
   viewportHeight: React.PropTypes.number.isRequired,
   viewportTop: React.PropTypes.number.isRequired,
@@ -193,9 +194,16 @@ class Color extends React.Component {
       height: this.props.height,
     };
     return (
-      <div style={style} id={this.props.label}>
-        <div style={{position: 'absolute', left: '45%', top: '45%', fontSize: '50px'}}>
-          {this.props.label}
+      <div style={style}>
+        <div style={{
+          position: 'relative',
+          textAlign: 'center',
+          width: this.props.width,
+          top: '50%',
+          fontSize: '50px',
+          fontFamily: 'sans-serif',
+        }}>
+          {this.props.name}
         </div>
       </div>
     );
@@ -203,5 +211,5 @@ class Color extends React.Component {
 }
 
 $(function() {
-  embedComponent(Root, document.body);
+  embedComponent(Rainbow, document.body);
 });
