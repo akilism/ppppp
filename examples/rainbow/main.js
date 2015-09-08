@@ -184,14 +184,14 @@ class DoubleRainbow extends React.Component {
         colorHeight = viewportHeight,
         colorsHeight = colorHeight * colors.length,
         rainbowHeight = colorsHeight * (Math.round(viewportTop / colorsHeight) + 1),
-        currentIndex = Math.floor(viewportTop / viewportHeight) % colors.length,
-        repetitions = Math.floor(viewportTop / colorsHeight),
+        currentIndex = Math.floor(viewportTop * 2 / viewportHeight) % colors.length,
+        repetitions = Math.floor(viewportTop * 2 / colorsHeight),
         children = colors
           .map(({name, css}, index) => {
             var absolute;
             if (index === currentIndex) {
-              absolute = index * colorHeight + repetitions * colorsHeight;
-              // NOTE(brian): this is dumb
+              // NOTE(brian): I have yet to figure out the actual math!
+              absolute = index * (colorHeight / 2) + repetitions * (colorsHeight / 2);
               var fixed = absolute - viewportTop;
               absolute = fixed * 2 + viewportTop;
             } else {
