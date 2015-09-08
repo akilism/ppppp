@@ -2,18 +2,16 @@ var $ = require('jquery');
 var React = require('react');
 var ReactDOM = require('react-dom');
 
-// NOTE(brian): sorry for mutating global Array.prototype;
+// NOTE(brian): sorry for mutating global Array.prototype
 Array.prototype.rotate = function(index) {
   if (!index) {
-    return this;
+    return this.slice(0);
   } else {
     var left = this.slice(0, index);
     var right = this.slice(index, this.length);
     return right.concat(left);
   }
 };
-
-const identity = a => a;
 
 const colors = [
   {
@@ -106,47 +104,20 @@ function embedComponent(Component, container, callback) {
 }
 
 class Track extends React.Component {
-  getChildContext() {
-    return this.props.adjust();
-  }
-
   render() {
-    var {trackWidth, trackHeight} = this.getChildContext();
-    var style = {
-      width: trackWidth,
-      height: trackHeight,
-    };
+    var style = {width: this.props.width, height: this.props.height};
     return (
-      <div style={style}>
-        {this.props.children}
-      </div>
+      <div style={style}>{this.props.children}</div>
     );
   }
 }
 
-Track.childContextTypes = {
-  trackWidth: React.PropTypes.number.isRequired,
-  trackHeight: React.PropTypes.number.isRequired,
-};
-
-
-function fixedToAbsolute(viewportTop, trackTop, fixed) {
-  return fixed + viewportTop - trackTop;
-}
-
 class Rainbow extends React.Component {
-  adjustTrackContext() {
-    var {viewportWidth, viewportHeight, viewportTop} = this.context,
-        colorsHeight = colors.length * viewportHeight,
-        trackWidth = viewportWidth,
-        trackHeight = colorsHeight * (Math.round(viewportTop / colorsHeight) + 1);
-    return { trackWidth, trackHeight };
-  }
-
   render() {
     var {viewportWidth, viewportHeight, viewportTop} = this.context,
         colorHeight = viewportHeight,
         colorsHeight = colorHeight * colors.length,
+        trackHeight = colorsHeight * (Math.round(viewportTop / colorsHeight) + 1),
         currentIndex = Math.floor(viewportTop / viewportHeight) % colors.length,
         repetitions = Math.floor(viewportTop / colorsHeight),
         children = colors
@@ -162,16 +133,16 @@ class Rainbow extends React.Component {
                 css={css}
                 key={name}
                 name={name}
-                absolute={absolute}
-                width={this.context.viewportWidth}
-                height={this.context.viewportHeight}
+                top={absolute}
+                width={viewportWidth}
+                height={colorHeight}
                 />
             );
           })
           .rotate(currentIndex)
           .reverse();
     return (
-      <Track adjust={this.adjustTrackContext.bind(this)}>
+      <Track width={viewportWidth} height={trackHeight}>
         {children}
       </Track>
     );
@@ -188,7 +159,7 @@ class Color extends React.Component {
   render() {
     var style = {
       position: 'absolute',
-      top: this.props.absolute,
+      top: this.props.top,
       backgroundColor: this.props.css,
       width: this.props.width,
       height: this.props.height,
@@ -199,7 +170,7 @@ class Color extends React.Component {
           position: 'relative',
           textAlign: 'center',
           width: this.props.width,
-          top: '50%',
+          top: '45%',
           fontSize: '50px',
           fontFamily: 'sans-serif',
         }}>
