@@ -181,10 +181,36 @@ Rainbow.contextTypes = {
   viewportTop: React.PropTypes.number.isRequired,
 };
 
+class DoubleTime extends React.Component {
+  render() {
+    return (
+      <div>
+        {this.props.children}
+      </div>
+    );
+  }
+
+  getChildContext() {
+    return {
+      viewportTop: this.context.viewportTop * 2,
+    };
+  }
+}
+
+DoubleTime.contextTypes = {
+  viewportTop: React.PropTypes.number.isRequired,
+};
+
+DoubleTime.childContextTypes = {
+  viewportTop: React.PropTypes.number.isRequired,
+};
+
 class Root extends React.Component {
   render() {
     return (
-      <Rainbow colors={colors} />
+      <DoubleTime>
+        <Rainbow colors={colors} />
+      </DoubleTime>
     );
   }
 }
