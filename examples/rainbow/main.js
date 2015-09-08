@@ -71,7 +71,6 @@ function createViewport(Component, container) {
         position: 'relative',
         overflow: 'scroll',
         WebkitOverflowScrolling: 'touch',
-        boxSizing: 'border-box',
       };
       return (
         <div style={style} onScroll={this.handleScroll.bind(this)}>
@@ -103,6 +102,32 @@ function embedComponent(Component, container, callback) {
   ReactDOM.render(<Viewport/>, container, callback);
 }
 
+class Color extends React.Component {
+  render() {
+    var style = {
+      position: 'absolute',
+      top: this.props.top,
+      backgroundColor: this.props.css,
+      width: this.props.width,
+      height: this.props.height,
+    };
+    return (
+      <div style={style}>
+        <div style={{
+          position: 'relative',
+          textAlign: 'center',
+          width: this.props.width,
+          top: '45%',
+          fontSize: '50px',
+          fontFamily: 'sans-serif',
+        }}>
+          {this.props.name}
+        </div>
+      </div>
+    );
+  }
+}
+
 class Track extends React.Component {
   render() {
     var style = {width: this.props.width, height: this.props.height};
@@ -114,7 +139,8 @@ class Track extends React.Component {
 
 class Rainbow extends React.Component {
   render() {
-    var {viewportWidth, viewportHeight, viewportTop} = this.context,
+    var {colors} = this.props,
+        {viewportWidth, viewportHeight, viewportTop} = this.context,
         colorHeight = viewportHeight,
         colorsHeight = colorHeight * colors.length,
         trackHeight = colorsHeight * (Math.round(viewportTop / colorsHeight) + 1),
@@ -155,32 +181,14 @@ Rainbow.contextTypes = {
   viewportTop: React.PropTypes.number.isRequired,
 };
 
-class Color extends React.Component {
+class Root extends React.Component {
   render() {
-    var style = {
-      position: 'absolute',
-      top: this.props.top,
-      backgroundColor: this.props.css,
-      width: this.props.width,
-      height: this.props.height,
-    };
     return (
-      <div style={style}>
-        <div style={{
-          position: 'relative',
-          textAlign: 'center',
-          width: this.props.width,
-          top: '45%',
-          fontSize: '50px',
-          fontFamily: 'sans-serif',
-        }}>
-          {this.props.name}
-        </div>
-      </div>
+      <Rainbow colors={colors} />
     );
   }
 }
 
 $(function() {
-  embedComponent(Rainbow, document.body);
+  embedComponent(Root, document.body);
 });
