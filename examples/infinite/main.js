@@ -4,7 +4,7 @@ window.ReactDOM = require('react-dom');
 
 const identity = a => a;
 
-var rainbow = [
+const rainbow = [
   {
     label: 'red',
     css: '#FF0000',
@@ -35,8 +35,6 @@ var rainbow = [
   }
 ];
 
-rainbow = rainbow.concat(rainbow);
-
 function createViewport(Component, container) {
   class Viewport extends React.Component {
     getChildContext() { return this.state; }
@@ -63,6 +61,7 @@ function createViewport(Component, container) {
         height: this.state.viewportHeight,
         position: 'relative',
         overflow: 'scroll',
+        WebkitOverflowScrolling: 'touch',
         boxSizing: 'border-box',
       };
       return (
@@ -101,13 +100,15 @@ class Track extends React.Component {
   }
 
   render() {
-    var {trackWidth, trackHeight, viewportTop} = this.getChildContext();
+    var {trackWidth, trackHeight} = this.getChildContext();
     var style = {
       width: trackWidth,
       height: trackHeight,
     };
     return (
-      <div style={style}>{this.props.children}</div>
+      <div style={style}>
+        {this.props.children}
+      </div>
     );
   }
 }
@@ -117,41 +118,60 @@ Track.childContextTypes = {
   trackHeight: React.PropTypes.number.isRequired,
 };
 
-function shift(arr, index) {
-  var left = arr.slice(0, index);
-  var right = arr.slice(index, arr.length);
-  return right.concat(left);
-}
-window.shift = shift;
 
-class Root extends React.Component {
+Array.prototype.rotate = function(index) {
+  if (!index) {
+    return this;
+  } else {
+    var left = this.slice(0, index);
+    var right = this.slice(index, this.length);
+    return right.concat(left);
+  }
+};
+
+function fixedToAbsolute(viewportTop, trackTop, fixed) {
+  return fixed + viewportTop - trackTop;
+}
+
+class Rainbow extends React.Component {
   adjustTrackContext() {
     var {viewportWidth, viewportHeight, viewportTop} = this.context,
+        colorsHeight = rainbow.length * viewportHeight,
         trackWidth = viewportWidth,
-        // NOTE(brian): Infinite scroll never been so easy
-        trackHeight = viewportHeight * 2 + viewportTop,
-        colorsHeight = rainbow.length * viewportHeight;
+        trackHeight = colorsHeight * (Math.round(viewportTop / colorsHeight) + 1);
     return { trackWidth, trackHeight };
   }
 
   render() {
-    var currentIndex = Math.floor(this.context.viewportTop / this.context.viewportHeight) % rainbow.length;
-    var colors = rainbow.map(({label, css}, index) => {
-      return (
-        <Color
-          key={index}
-          css={css}
-          index={index}
-          label={label}>
-          <div style={{position: 'absolute', left: '45%', top: '45%', fontSize: '50px'}}>
-            {label}
-          </div>
-        </Color>
-      );
-    }).reverse();
+    var {viewportWidth, viewportHeight, viewportTop} = this.context,
+        colorHeight = viewportHeight,
+        colorsHeight = colorHeight * rainbow.length,
+        currentIndex = Math.floor(viewportTop / viewportHeight) % rainbow.length,
+        repetitions = Math.floor(viewportTop / colorsHeight),
+        children = rainbow
+          .map(({label, css}, index) => {
+            var absolute;
+            if (index === currentIndex) {
+              absolute = index * colorHeight + repetitions * colorsHeight;
+            } else {
+              absolute = viewportTop;
+            }
+            return (
+              <Color
+                css={css}
+                key={label}
+                label={label}
+                absolute={absolute}
+                width={this.context.viewportWidth}
+                height={this.context.viewportHeight}
+                />
+            );
+          })
+          .rotate(currentIndex)
+          .reverse();
     return (
       <Track adjust={this.adjustTrackContext.bind(this)}>
-        {colors}
+        {children}
       </Track>
     );
   }
@@ -163,49 +183,24 @@ Root.contextTypes = {
   viewportTop: React.PropTypes.number.isRequired,
 };
 
-function fixedToAbsolute(viewportTop, trackTop, fixed) {
-  return fixed + viewportTop - trackTop;
-}
-
 class Color extends React.Component {
   render() {
-    var elTop = this.props.index * this.context.viewportHeight;
-    var colorHeight = this.context.viewportHeight;
-    var colorsHeight = colorHeight * rainbow.length;
-    var viewportTop = this.context.viewportTop % colorsHeight;
-    var repetitions = Math.floor(this.context.viewportTop / colorsHeight);
-    var currentIndex = Math.floor(this.context.viewportTop / colorHeight) % rainbow.length;
-    if (this.props.label === 'red') {
-      console.log({
-        repetitions,
-        viewportTop,
-        elTop,
-        currentIndex,
-      });
-    }
-    var fixed = viewportTop > elTop || viewportTop < -elTop
-      ? elTop - viewportTop
-      : 0;
-    //NOTE(brian): Assuming track top is always 0 for now
-    var absolute = fixedToAbsolute(this.context.viewportTop, 0, fixed);
     var style = {
       position: 'absolute',
-      top: absolute,
-      width: this.context.viewportWidth,
-      height: this.context.viewportHeight,
+      top: this.props.absolute,
       backgroundColor: this.props.css,
+      width: this.props.width,
+      height: this.props.height,
     };
     return (
-      <div style={style}>{this.props.children}</div>
+      <div style={style} id={this.props.label}>
+        <div style={{position: 'absolute', left: '45%', top: '45%', fontSize: '50px'}}>
+          {this.props.label}
+        </div>
+      </div>
     );
   }
 }
-
-Color.contextTypes = {
-  viewportTop: React.PropTypes.number.isRequired,
-  viewportHeight: React.PropTypes.number.isRequired,
-  viewportWidth: React.PropTypes.number.isRequired,
-};
 
 $(function() {
   embedComponent(Root, document.body);
