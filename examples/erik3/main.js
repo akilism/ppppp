@@ -209,7 +209,7 @@ class Slide1 extends ScanComponent {
     };
   }
   isActive(d){
-    if(d.pct_scroll >- 0.1 && d.pct_scroll < 0.35){
+    if(d.pct_scroll >= 0.1 && d.pct_scroll < 0.35){
         return true;
     } else {
         return false;
@@ -224,26 +224,56 @@ class Slide1 extends ScanComponent {
     }
 
     if(d.pct_scroll < 0.1){
+        $("#shopping-mp3")[0].play();
         var new_pitch = 64.9837616957764;
+        var new_volume = 0;
     } else if (d.pct_scroll >= 0.1 && d.pct_scroll < 0.2) {
+        $("#shopping-mp3")[0].play();
         var clamped_pct = (d.pct_scroll - 0.1) / 0.1;
         var new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1);
-    } else {
+        var new_volume = Math.linearTween(clamped_pct,0,0.6,1);
+    } else if (d.pct_scroll >= 0.2 && d.pct_scroll < 0.35) {
+        $("#shopping-mp3")[0].play();
         var new_pitch = 0;
+        var new_volume = 0.6
+    } else if (d.pct_scroll >= 0.35 && d.pct_scroll < 0.45) {
+        $("#shopping-mp3")[0].play();
+        var new_pitch = 0;
+        var clamped_pct = (d.pct_scroll - 0.35) / 0.1;
+        var new_volume = Math.linearTween(clamped_pct,0.6,-0.6,1);
+        console.log("fadeout",new_volume)
+    } else if (d.pct_scroll >= 0.45) {
+        $("#shopping-mp3")[0].pause();
+        var new_pitch = 0;
+        var new_volume = 0;
     }
-
+    console.log("v",new_volume)
+    $("#shopping-mp3")[0].volume = new_volume;
 
     var caption = false;
     if (d.pct_scroll < 0.15) {
         caption = false
     } else if ((d.pct_scroll >= 0.15 && d.pct_scroll < 0.2)){
         caption = "I woke up in the middle of the promenade.";
+        if(caption !== this.state.caption){
+          $("#shopping-mp3-1")[0].play();
+        }
     } else if ((d.pct_scroll >= 0.2 && d.pct_scroll < 0.25)){
         caption = "Traffic had stopped, my head spinning.";
+        if(caption !== this.state.caption){
+          $("#shopping-mp3-2")[0].play();
+        }
     } else if ((d.pct_scroll >= 0.25 && d.pct_scroll < 0.3)) {
         caption = "Yung TourGuide was laughing.<br/>'First time, eh?'";
+        if(caption !== this.state.caption){
+          console.log(caption,this.state.caption)
+          $("#shopping-mp3-4")[0].play();
+        }
     } else {
         caption = "My hand was clutching a bottle of magic juice. My night had just started."
+        if(caption !== this.state.caption){
+          $("#shopping-mp3-3")[0].play();
+        }
     }
 
     if(d.pct_scroll < 0.1){
@@ -292,7 +322,7 @@ class Slide1 extends ScanComponent {
                 this.togglePov();
                 $(".v-white-glow").css({opacity:1});
                 setTimeout(function(){
-                $(".v-white-glow").css({opacity:0});
+                    $(".v-white-glow").css({opacity:0});
                 },500)
                 return false;
             }
@@ -318,6 +348,23 @@ class Slide1 extends ScanComponent {
         <div className="v-white">
             <div className="v-red" style={{height: this.state.redh}}/>
         </div>
+
+        <audio id="shopping-mp3" loop>
+          <source src="/shopping-square-1.mp3" type="audio/mp3"/>
+        </audio>
+
+        <audio id="shopping-mp3-1">
+          <source src="clip1.wav" type="audio/wav"/>
+        </audio>
+        <audio id="shopping-mp3-2">
+          <source src="clip2.wav" type="audio/wav"/>
+        </audio>
+        <audio id="shopping-mp3-3">
+          <source src="clip3.wav" type="audio/wav"/>
+        </audio>
+        <audio id="shopping-mp3-4">
+          <source src="clip4.wav" type="audio/wav"/>
+        </audio>
       </div>
     )
   }
