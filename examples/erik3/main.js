@@ -104,7 +104,6 @@ TRV.animatePov = function(sv,pov){
             new_heading = Math.easeInOutQuad(i,start_pov.heading,heading_d,ticks),
             new_pitch = Math.easeInOutQuad(i,start_pov.pitch,pitch_d,ticks),
             new_zoom = Math.easeInOutQuad(i,start_pov.zoom,zoom_d,ticks);
-        console.log(new_heading)
         sv.setPov({heading: new_heading, pitch: new_pitch, zoom: new_zoom});
         i++;
         if(i < ticks){
@@ -171,10 +170,8 @@ class Title extends ScanComponent {
   adjust(last_state, d) {
     var dest_top = -1 * $(window).height();
     if(d.pct_scroll < 0.1){
-        console.log("a",this.state.bg_top)
         var new_top = Math.linearTween(d.pct_scroll, 0, dest_top, 0.1);
     } else if (d.pct_scroll) { 
-        console.log("t",this.state.bg_top)
         var new_top = dest_top;
     }
     return {bg_top: new_top};
@@ -205,6 +202,7 @@ class Slide1 extends ScanComponent {
       height: $(window).height(),
       caption: false,
       active: false,
+      black: 0,
       redh: 0
     };
   }
@@ -241,13 +239,12 @@ class Slide1 extends ScanComponent {
         var new_pitch = 0;
         var clamped_pct = (d.pct_scroll - 0.35) / 0.1;
         var new_volume = Math.linearTween(clamped_pct,0.6,-0.6,1);
-        console.log("fadeout",new_volume)
     } else if (d.pct_scroll >= 0.45) {
         $("#shopping-mp3")[0].pause();
         var new_pitch = 0;
         var new_volume = 0;
     }
-    console.log("v",new_volume)
+
     $("#shopping-mp3")[0].volume = new_volume;
 
     var caption = false;
@@ -266,7 +263,6 @@ class Slide1 extends ScanComponent {
     } else if ((d.pct_scroll >= 0.25 && d.pct_scroll < 0.3)) {
         caption = "Yung TourGuide was laughing.<br/>'First time, eh?'";
         if(caption !== this.state.caption){
-          console.log(caption,this.state.caption)
           $("#shopping-mp3-4")[0].play();
         }
     } else {
@@ -276,20 +272,34 @@ class Slide1 extends ScanComponent {
         }
     }
 
+    var card_pct;
     if(d.pct_scroll < 0.1){
-        var card_pct = 0;
+       card_pct = 0;
     } if(d.pct_scroll > 0.35) {
-        var card_pct = 1;
+       card_pct = 1;
     } else {
-        var card_pct = (d.pct_scroll - 0.1) / 0.25;
+       card_pct = (d.pct_scroll - 0.1) / 0.25;
     }
+
+
     var redh = Math.linearTween(card_pct,0,79,1)
+    console.log(new_black,black_pct)
+
+    var black_pct;
+    if (d.pct_scroll < 0.2){
+        black_pct = 0;
+    } else if (d.pct_scroll >= 0.45){
+        black_pct = 0.9;
+    } else {
+        black_pct = (d.pct_scroll - 0.2) / 0.25
+    }
+    var new_black = Math.linearTween(black_pct,0,0.9,1);
 
     var current_pov = TRV.streetView.getPov();
 
     current_pov.pitch = new_pitch;
     TRV.streetView.setPov(current_pov)
-    return {bg_top: 0, caption: caption, redh: redh};
+    return {bg_top: 0, caption: caption, redh: redh, black: new_black};
   }
   togglePov(){
     var current_pov = _.clone(TRV.streetView.getPov());
@@ -348,6 +358,7 @@ class Slide1 extends ScanComponent {
         <div className="v-white">
             <div className="v-red" style={{height: this.state.redh}}/>
         </div>
+        <div className="full-black" style={{opacity: this.state.black}}/>
 
         <audio id="shopping-mp3" loop>
           <source src="/shopping-square-1.mp3" type="audio/mp3"/>
@@ -374,33 +385,39 @@ class Slide2 extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-      bg_top: -1 * $(window).height(),
+      bg_bottom: $(window).height(),
       width: $(window).width(),
       height: $(window).height(),
     };
   }
   adjust(last_state, d) {
-    var otop = -1 * $(window).height()
+    var obot = $(window).height()
     if(d.pct_scoll < 0.35){
-        var bg_top = otop;
+        var bg_bot = obot;
     } else if (d.pct_scroll > 0.45){
-        var bg_top = 0;
+        var bg_bot = 0;
     } else {
         var clamped_scroll = (d.pct_scroll - 0.35) / 0.1 
-        var bg_top = Math.linearTween(clamped_scroll,otop,-1 * otop,1)
+        var bg_bot = Math.linearTween(clamped_scroll,obot,-1 * obot,1)
     }
-    return {bg_top: bg_top};
+    console.log(bg_bot)
+    return {bg_bottom: bg_bot};
   }
   
   render() {
     return(
       <div className='bg-slide' style={{
         position: "fixed",
-        top: this.state.bg_top,
+        top:0,
+        bottom: this.state.bg_bottom,
         width: this.state.width,
-        height: this.state.height,
-        backgroundColor: "white"
+        height: "auto",
+        backgroundColor: "white",
+        overflow: "hidden"
       }}>
+        <div className="text-crop">
+            <h5 className="slide-caption black">My hand was clutching a bottle of magic juice. My night had just started.</h5>
+        </div>
       </div>
     )
   }

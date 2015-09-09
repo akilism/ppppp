@@ -101,8 +101,9 @@ p {
     font-size:45px;
 }
 .slide-caption{
+    z-index:1;
     position:absolute;
-    bottom:1%;
+    bottom:0%;
     width:100%;
     text-align:center;
     color:white;
@@ -113,7 +114,11 @@ p {
     padding: 0 10%;
     box-sizing:border-box;
 }
+.slide-caption.black{
+    color:black;
+}
 .v-white{
+    z-index:1;
     width:90px;
     height:80px;
     background-size:cover;
@@ -126,6 +131,7 @@ p {
     overflow:hidden;
 }
 .v-red{
+    z-index:1;
     height:80px;
     background-size:cover;
     background-image:url('v-red.png');
@@ -148,6 +154,22 @@ p {
     -webkit-transition: opacity 0.5s ease-in-out;
     -moz-transition: opacity 0.5s ease-in-out;
     transition: opacity 0.5s ease-in-out;
+}
+.full-black{
+    position:absolute;
+    left:0;
+    top:0;
+    right:0;
+    bottom:0;
+    background-color:black;
+    opacity:0;
+}
+.text-crop{
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
 }
     </style>
   </head>
