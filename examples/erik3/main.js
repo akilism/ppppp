@@ -12,6 +12,12 @@ Math.easeOutBack = function (t, b, c, d, s) {
 		if (s == undefined) s = 1.70158;
 		return c*((t=t/d-1)*t*((s+1)*t + s) + 1) + b;
 };
+Math.easeInOutQuad = function (t, b, c, d) {
+	t /= d/2;
+	if (t < 1) return c/2*t*t + b;
+	t--;
+	return -c/2 * (t*(t-2) - 1) + b;
+};
 
 window.TRV = {
   last_scroll: 0,
@@ -83,6 +89,33 @@ window.TRV = {
   }
 };
 
+TRV.animatePov = function(sv,pov){
+    var start_pov = sv.getPov(),
+        ticks = 24,
+        heading_d = pov.heading - start_pov.heading,
+        pitch_d = pov.pitch - start_pov.pitch,
+        zoom_d = pov.zoom - start_pov.zoom,
+        i = 0;
+    var next = function(){
+        var pov = sv.getPov(),
+            h = pov.heading,
+            p = pov.pitch,
+            z = pov.zoom,
+            new_heading = Math.easeInOutQuad(i,start_pov.heading,heading_d,ticks),
+            new_pitch = Math.easeInOutQuad(i,start_pov.pitch,pitch_d,ticks),
+            new_zoom = Math.easeInOutQuad(i,start_pov.zoom,zoom_d,ticks);
+        console.log(new_heading)
+        sv.setPov({heading: new_heading, pitch: new_pitch, zoom: new_zoom});
+        i++;
+        if(i < ticks){
+            setTimeout(function(){
+              next();
+            },33)
+        }
+    }
+    next();
+}
+
 class TestComponent extends React.Component {
   constructor(props) {
     super(props);
@@ -104,7 +137,11 @@ class ScanComponent extends React.Component {
     super(props);
     TRV.scan_components.push(this);
   }
- 
+
+  isActive(){
+    return false;
+  }
+
   componentDidMount(){
     var new_scroll = $(window).scrollTop(),
         window_height = $(window).height(),
@@ -167,10 +204,25 @@ class Slide1 extends ScanComponent {
       width: $(window).width(),
       height: $(window).height(),
       caption: false,
+      active: false,
       redh: 0
     };
   }
+  isActive(d){
+    if(d.pct_scroll >- 0.1 && d.pct_scroll < 0.35){
+        return true;
+    } else {
+        return false;
+    }
+  }
   adjust(last_state, d) {
+
+    if(this.isActive(d)){
+        this.state.active = true;    
+    } else {
+        this.state.active = false;    
+    }
+
     if(d.pct_scroll < 0.1){
         var new_pitch = 64.9837616957764;
     } else if (d.pct_scroll >= 0.1 && d.pct_scroll < 0.2) {
@@ -209,6 +261,17 @@ class Slide1 extends ScanComponent {
     TRV.streetView.setPov(current_pov)
     return {bg_top: 0, caption: caption, redh: redh};
   }
+  togglePov(){
+    var current_pov = _.clone(TRV.streetView.getPov());
+    if(!this.pov_toggle){
+        current_pov.heading += 180;
+        this.pov_toggle = true;
+    } else {
+        current_pov.heading -= 180;
+        this.pov_toggle = false;
+    }
+    TRV.animatePov(TRV.streetView,current_pov);
+  }
   componentDidMount(){
     var map = new google.maps.Map(document.getElementById('slide1'));
   // replace "toner" here with "terrain" or "watercolor"
@@ -221,6 +284,20 @@ class Slide1 extends ScanComponent {
     TRV.streetView.setPosition(startPoint)
     TRV.streetView.setPov({heading: 77.68007576992042, pitch: 64.9837616957764, zoom: 1})
     $('#slide1').css({"pointer-events": "none"})
+
+    $(window).on("keydown",_.bind(function(e){
+        if(e.keyCode == 32){
+            if(this.state.active){
+                e.preventDefault();
+                this.togglePov();
+                $(".v-white-glow").css({opacity:1});
+                setTimeout(function(){
+                $(".v-white-glow").css({opacity:0});
+                },500)
+                return false;
+            }
+        }
+    },this))
   }
 
   render() {
@@ -237,6 +314,7 @@ class Slide1 extends ScanComponent {
         }}/>
         <h5 className="slide-caption" style={{display: this.state.caption ? 'block' : 'none'}} dangerouslySetInnerHTML={{ __html: this.state.caption}}>
         </h5>
+        <div className="v-white-glow"/>
         <div className="v-white">
             <div className="v-red" style={{height: this.state.redh}}/>
         </div>
