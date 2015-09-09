@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang=en>
+  <head>
+    <meta charset=utf-8>
+    <title>Scroll Experiments</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
+    <style>
+@font-face {
+  font-family: 'ViceGothic';
+  src: url("/ViceGothic_071514.otf");
+}
+
+@font-face {
+  font-family: 'TradeGothic-Bold';
+  src: url("/TradeGothic-Bold.otf");
+}
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#track {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+#copy {
+  position: fixed;
+  width: 700px;
+  left:50%;
+  margin-left:-400px;
+  padding: 20px;
+}
+
+p {
+  font-size:28px;
+  line-height:42px;
+  width:600px;
+  margin: 0 auto;
+  padding: 20px 40px 100px 40px;
+  background-color:rgba(255,255,255,0);
+}
+
+.bg-slide{
+  left:0;
+  width:100%;
+  height:100%;
+}
+#page{
+  width:100%;
+}
+#timelapse{
+  position:fixed;
+  left:0;
+  top:0;
+  width:100%;
+}
+#left-pager, #right-pager{
+    width:150px;
+    cursor:pointer;
+    background-color:red;
+    height:100%;
+    position:fixed;
+}
+#left-pager{
+    width:100%;
+    border-right:10px solid black;
+    background-color:black;
+    background-size:cover;
+    background-position:-10px 0;
+    z-index:300;
+}
+#right-pager{
+    right:0;
+    border-left:10px solid black;
+    background-image:url('http://i.bnet.com/blogs/empire-state-build-777631.jpeg');
+    background-size:cover;
+    background-position:-180px 0;
+}
+.vid-title{
+    position:absolute;
+    width:100%;
+    text-align:center;
+    left:0;
+    top:0%;
+    font-size:200px;
+    color:white;
+    font-family:'ViceGothic';
+}
+.marker-p{
+  background-color: rgba(255,255,255,0.8);
+}
+#train-natch{
+    color:white;
+    font-family:'ViceGothic';
+    background-color:transparent;
+    padding: 40px;
+    text-transform:uppercase;
+    text-align:center;
+    font-size:45px;
+}
+.slide-caption{
+    position:absolute;
+    bottom:1%;
+    width:100%;
+    text-align:center;
+    color:white;
+    font-family: 'TradeGothic-Bold';
+    text-transform: uppercase;
+    font-weight:bold;
+    font-size:60px;
+    padding: 0 10%;
+    box-sizing:border-box;
+}
+    </style>
+  </head>
+  <body>
+    <div id="page">
+      <div id="track"></div>
+      <div id="copy">
+      </div>
+    </div>
+    <script src="/lib/libgif.js"></script>
+    <script src="./build/main.js"></script>
+  </body>
+</html>
