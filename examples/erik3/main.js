@@ -93,6 +93,7 @@ class TestComponent extends React.Component {
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
         <Title/>
         <Slide1/>
+        <Slide2/>
       </div>
     );
   }
@@ -165,7 +166,8 @@ class Slide1 extends ScanComponent {
       bg_top: 0,
       width: $(window).width(),
       height: $(window).height(),
-      caption: false
+      caption: false,
+      redh: 0
     };
   }
   adjust(last_state, d) {
@@ -192,11 +194,20 @@ class Slide1 extends ScanComponent {
         caption = "My hand was clutching a bottle of magic juice. My night had just started."
     }
 
+    if(d.pct_scroll < 0.1){
+        var card_pct = 0;
+    } if(d.pct_scroll > 0.35) {
+        var card_pct = 1;
+    } else {
+        var card_pct = (d.pct_scroll - 0.1) / 0.25;
+    }
+    var redh = Math.linearTween(card_pct,0,79,1)
+
     var current_pov = TRV.streetView.getPov();
 
     current_pov.pitch = new_pitch;
     TRV.streetView.setPov(current_pov)
-    return {bg_top: 0, caption: caption};
+    return {bg_top: 0, caption: caption, redh: redh};
   }
   componentDidMount(){
     var map = new google.maps.Map(document.getElementById('slide1'));
@@ -226,6 +237,45 @@ class Slide1 extends ScanComponent {
         }}/>
         <h5 className="slide-caption" style={{display: this.state.caption ? 'block' : 'none'}} dangerouslySetInnerHTML={{ __html: this.state.caption}}>
         </h5>
+        <div className="v-white">
+            <div className="v-red" style={{height: this.state.redh}}/>
+        </div>
+      </div>
+    )
+  }
+}
+
+class Slide2 extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      bg_top: -1 * $(window).height(),
+      width: $(window).width(),
+      height: $(window).height(),
+    };
+  }
+  adjust(last_state, d) {
+    var otop = -1 * $(window).height()
+    if(d.pct_scoll < 0.35){
+        var bg_top = otop;
+    } else if (d.pct_scroll > 0.45){
+        var bg_top = 0;
+    } else {
+        var clamped_scroll = (d.pct_scroll - 0.35) / 0.1 
+        var bg_top = Math.linearTween(clamped_scroll,otop,-1 * otop,1)
+    }
+    return {bg_top: bg_top};
+  }
+  
+  render() {
+    return(
+      <div className='bg-slide' style={{
+        position: "fixed",
+        top: this.state.bg_top,
+        width: this.state.width,
+        height: this.state.height,
+        backgroundColor: "white"
+      }}>
       </div>
     )
   }
