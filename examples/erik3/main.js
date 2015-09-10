@@ -204,7 +204,8 @@ class Slide1 extends ScanComponent {
       caption: false,
       active: false,
       black: 0,
-      redh: 0
+      redh: 0,
+      slideWords: "10%"
     };
   }
   isActive(d){
@@ -226,24 +227,29 @@ class Slide1 extends ScanComponent {
         $("#shopping-mp3")[0].play();
         var new_pitch = 64.9837616957764;
         var new_volume = 0;
+        var new_slide = 10
     } else if (d.pct_scroll >= 0.1 && d.pct_scroll < 0.2) {
         $("#shopping-mp3")[0].play();
         var clamped_pct = (d.pct_scroll - 0.1) / 0.1;
         var new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1);
         var new_volume = Math.linearTween(clamped_pct,0,0.6,1);
+        var new_slide = Math.linearTween(clamped_pct,10,-100,1);
     } else if (d.pct_scroll >= 0.2 && d.pct_scroll < 0.35) {
         $("#shopping-mp3")[0].play();
         var new_pitch = 0;
         var new_volume = 0.6
+        var new_slide = -100;
     } else if (d.pct_scroll >= 0.35 && d.pct_scroll < 0.45) {
         $("#shopping-mp3")[0].play();
         var new_pitch = 0;
         var clamped_pct = (d.pct_scroll - 0.35) / 0.1;
         var new_volume = Math.linearTween(clamped_pct,0.6,-0.6,1);
+        var new_slide = -100;
     } else if (d.pct_scroll >= 0.45) {
         $("#shopping-mp3")[0].pause();
         var new_pitch = 0;
         var new_volume = 0;
+        var new_slide = -100;
     }
 
     $("#shopping-mp3")[0].volume = new_volume;
@@ -299,7 +305,7 @@ class Slide1 extends ScanComponent {
 
     current_pov.pitch = new_pitch;
     TRV.streetView.setPov(current_pov)
-    return {bg_top: 0, caption: caption, redh: redh, black: new_black};
+    return {bg_top: 0, caption: caption, redh: redh, black: new_black, slideWords: new_slide + "%"};
   }
   togglePov(){
     var current_pov = _.clone(TRV.streetView.getPov());
@@ -352,6 +358,11 @@ class Slide1 extends ScanComponent {
           width: this.state.width,
           height: this.state.height,
         }}/>
+        <h6 className="slide-words" style={{
+            top: this.state.slideWords
+        }}>
+            At 6:00 PM, I got the text. "Meet Yung Tourguide in the middle of Marseille and take this pill". A pill popped out of my phone, because it was the future. I was gonna have a crazy night in the service of journalism.
+        </h6>
         <h5 className="slide-caption" style={{display: this.state.caption ? 'block' : 'none'}} dangerouslySetInnerHTML={{ __html: this.state.caption}}>
         </h5>
         <div className="v-white-glow"/>
