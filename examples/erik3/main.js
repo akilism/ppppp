@@ -3,6 +3,60 @@ var $ = require('jquery');
 var _ = require('underscore');
 var PureRenderMixin = require('react/addons').addons.PureRenderMixin;
 
+class Conti {
+    constructor(start,end,key,fn){
+        this.start = start;
+        this.end = end;
+        this.key = key;
+        this.fn = fn;
+    }
+
+    isActive(data){
+        return data[this.key] >= this.start && data[this.key] < this.end;
+    }
+
+    process(data, trans_vals){
+        var delta = this.end - this.start;
+        var clamped_pct = (data[this.key] - this.start) / delta;
+        return this.fn(clamped_pct, trans_vals);
+    }
+
+    run(data,trans_vals){
+        if(typeof(trans_vals) === "undefined"){
+            var trans_vals = {};
+        }
+
+        if(this.isActive(data)){
+            return this.process(data, trans_vals);
+        } else {
+            return trans_vals;
+        }
+    }
+
+    abut(next_end,fn){
+        var new_conti = new Conti(this.end, next_end, this.key, fn)        
+        new_conti.isActive = _.bind(function(data){
+            
+            var left_isActive = this.isActive(data),
+                this_isActive = data[this.key] >= new_conti.start && data[this.key] < new_conti.end;
+            return left_isActive || this_isActive;
+        },this);
+
+        new_conti.run = _.bind(function(data, trans_vals){
+            if(this.isActive(data)){
+                return this.run(data, trans_vals);
+            } else if(new_conti.isActive(data)){
+                return new_conti.process(data, trans_vals);
+            } else {
+                return trans_vals;
+            }
+        },this);
+
+        return new_conti;
+    }
+}
+window.Conti = Conti
+
 window.jQ = $;
 
 Math.linearTween = function (t, b, c, d) {
@@ -223,36 +277,42 @@ class Slide1 extends ScanComponent {
         this.state.active = false;    
     }
 
-    if(d.pct_scroll < 0.1){
-        $("#shopping-mp3")[0].play();
-        var new_pitch = 64.9837616957764;
-        var new_volume = 0;
-        var new_slide = 10
-    } else if (d.pct_scroll >= 0.1 && d.pct_scroll < 0.2) {
-        $("#shopping-mp3")[0].play();
-        var clamped_pct = (d.pct_scroll - 0.1) / 0.1;
-        var new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1);
-        var new_volume = Math.linearTween(clamped_pct,0,0.6,1);
-        var new_slide = Math.linearTween(clamped_pct,10,-100,1);
-    } else if (d.pct_scroll >= 0.2 && d.pct_scroll < 0.35) {
-        $("#shopping-mp3")[0].play();
-        var new_pitch = 0;
-        var new_volume = 0.6
-        var new_slide = -100;
-    } else if (d.pct_scroll >= 0.35 && d.pct_scroll < 0.45) {
-        $("#shopping-mp3")[0].play();
-        var new_pitch = 0;
-        var clamped_pct = (d.pct_scroll - 0.35) / 0.1;
-        var new_volume = Math.linearTween(clamped_pct,0.6,-0.6,1);
-        var new_slide = -100;
-    } else if (d.pct_scroll >= 0.45) {
+    var conti = new Conti(0,0.1,"pct_scroll",function(clamped_pct, t){
+        t.new_pitch = 64.9837616957764;
+        t.new_volume = 0
+        t.new_slide = 10;
+        return t;
+    }).abut(0.2, function(clamped_pct, t){
+        t.new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1)
+        t.new_volume = Math.linearTween(clamped_pct,0,0.6,1);
+        t.new_slide = Math.linearTween(clamped_pct,10,-100,1);
+        return t;
+    }).abut(0.35, function(clamped_pct, t){
+        t.new_pitch = 0;
+        t.new_volume = 0.6;
+        t.new_slide = -100;
+        return t;
+    }).abut(0.45, function(clamped_pct, t){
+        t.new_pitch = 0;
+        t.new_volume = Math.linearTween(clamped_pct,0.6,-0.6,1);
+        t.new_slide = -100;
+        return t;
+    }).abut(1, function(clamped_pct,t){
+        t.new_pitch = 0;
+        t.new_volume = 0;
+        t.new_slide = -100;
+        return t;
+    })
+
+    var trans_data = conti.run(d,{})
+
+    if (d.pct_scroll >= 0.45) {
         $("#shopping-mp3")[0].pause();
-        var new_pitch = 0;
-        var new_volume = 0;
-        var new_slide = -100;
+    } else {
+        $("#shopping-mp3")[0].play();
     }
 
-    $("#shopping-mp3")[0].volume = new_volume;
+    $("#shopping-mp3")[0].volume = trans_data.new_volume;
 
     var caption = false;
     if (d.pct_scroll < 0.15) {
@@ -303,10 +363,11 @@ class Slide1 extends ScanComponent {
 
     var current_pov = TRV.streetView.getPov();
 
-    current_pov.pitch = new_pitch;
+    current_pov.pitch = trans_data.new_pitch;
     TRV.streetView.setPov(current_pov)
-    return {bg_top: 0, caption: caption, redh: redh, black: new_black, slideWords: new_slide + "%"};
+    return {bg_top: 0, caption: caption, redh: redh, black: new_black, slideWords: trans_data.new_slide + "%"};
   }
+
   togglePov(){
     var current_pov = _.clone(TRV.streetView.getPov());
     if(!this.pov_toggle){
