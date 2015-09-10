@@ -126,6 +126,7 @@ class TestComponent extends React.Component {
         <Title/>
         <Slide1/>
         <Slide2/>
+        <Slide3/>
       </div>
     );
   }
@@ -481,6 +482,51 @@ class Slide2 extends ScanComponent {
                 </div>
             </div>
         </div>
+      </div>
+    )
+  }
+}
+
+class Slide3 extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      bg_top: -1 * $(window).height(),
+      width: $(window).width(),
+      height: $(window).height(),
+    };
+  }
+  adjust(last_state, d) {
+
+    var otop = -1 * $(window).height();
+
+    var pct_scroll;
+
+    if(d.pct_scroll < 0.45){
+        pct_scroll = 0
+    } else if(d.pct_scroll > 0.5){
+        pct_scroll = 1
+    } else {
+        pct_scroll = (d.pct_scroll - 0.45) / 0.05
+    }
+    
+    var new_top = Math.linearTween(pct_scroll,otop,-otop,1);
+
+    return {bg_top: new_top};
+  }
+
+  componentDidMount() {
+  }
+  
+  render() {
+    return(
+      <div className='bg-slide' style={{
+        position: "fixed",
+        top: this.state.bg_top,
+        width: this.state.width,
+        height: this.state.height,
+        backgroundColor: "black",
+      }}>
       </div>
     )
   }
