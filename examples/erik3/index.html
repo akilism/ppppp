@@ -14,6 +14,11 @@
   font-family: 'TradeGothic-Bold';
   src: url("/TradeGothic-Bold.otf");
 }
+
+@font-face {
+  font-family: 'TradeGothic';
+  src: url("/TradeGothic.otf");
+}
 body {
   margin: 0;
   padding: 0;
@@ -170,6 +175,36 @@ p {
     left:0;
     right:0;
     bottom:0;
+}
+.blackbar{
+    position:absolute;
+    -webkit-transition: left 0.5s ease-in-out, right 0.5s ease-in-out;
+    -moz-transition: left 0.5s ease-in-out, right 0.5s ease-in-out;
+    transition: left 0.5s ease-in-out, right 0.5s ease-in-out;
+    background-color:black;
+    left:0;
+    right:0;
+    overflow:hidden;
+}
+.btext{
+    overflow:hidden;
+    position:absolute;
+    left:0;
+    top:0;
+    right:0;
+    bottom:0;
+}
+.btext-inner{
+    width:60%;
+    margin-left:auto;
+    margin-right:auto;
+    hyphens:auto;
+    text-align: justify;
+    padding-top:20px;
+    font-family: 'TradeGothic';
+    color:white;
+    font-size:24px;
+    line-height:36px;
 }
     </style>
   </head>

@@ -400,8 +400,50 @@ class Slide2 extends ScanComponent {
         var clamped_scroll = (d.pct_scroll - 0.35) / 0.1 
         var bg_bot = Math.linearTween(clamped_scroll,obot,-1 * obot,1)
     }
-    console.log(bg_bot)
-    return {bg_bottom: bg_bot};
+
+    if(d.pct_scroll > 0.35 && d.pct_scroll < 0.5){
+        var active = true;
+    } else {
+        var active = false;
+    }
+    return {bg_bottom: bg_bot, active: active};
+  }
+  toggleBars(){
+    if(this.bars_on){
+        this.bars_on = false;
+        $("#bar1").css({right: $(window).width()}); 
+        setTimeout(function(){
+            $("#bar2").css({left: $(window).width()}); 
+        },500)
+        setTimeout(function(){
+            $("#bar3").css({right: $(window).width()}); 
+        },750)
+    } else {
+        this.bars_on = true;
+        $("#bar1").css({right: 0}); 
+        setTimeout(function(){
+            $("#bar2").css({left: 0}); 
+        },500)
+        setTimeout(function(){
+            $("#bar3").css({right: 0}); 
+        },750)
+    }
+  }
+
+  componentDidMount() {
+    $(window).on("keydown",_.bind(function(e){
+        if(e.keyCode == 32){
+            if(this.state.active){
+                e.preventDefault();
+                this.toggleBars();
+                $(".v-white-glow").css({opacity:1});
+                setTimeout(function(){
+                    $(".v-white-glow").css({opacity:0});
+                },500)
+                return false;
+            }
+        }
+    },this))
   }
   
   render() {
@@ -417,6 +459,27 @@ class Slide2 extends ScanComponent {
       }}>
         <div className="text-crop">
             <h5 className="slide-caption black">My hand was clutching a bottle of magic juice. My night had just started.</h5>
+        </div>
+        <div className="blackbar" id="bar1" style={{height:"22%", top: "20%", right: $(window).width()}}>
+            <div className="btext" style={{width: $(window).width()}}>
+                <div className="btext-inner">
+12 Midnight: Sudden laughter, repeated in short bursts. "I would like to metamorphose into a mouse-mountain.
+                </div>
+            </div>
+        </div>
+        <div className="blackbar" id="bar2" style={{height:"17%", top:"43%", left: $(window).width()}}>
+            <div className="btext" style={{width: $(window).width()}}>
+                <div className="btext-inner">
+1:30: We turn into an alley and ask a stranger to bum a cigarette.
+                </div>
+            </div>
+        </div>
+        <div className="blackbar" id="bar3" style={{height:"28%", top: "63%", right: $(window).width()}}>
+            <div className="btext" style={{width: $(window).width()}}>
+                <div className="btext-inner">
+2:17: I find myself outside a bar. It could be any bar, in any city. Except in most cities, the bar would be closed by now. Here, the bar lively. A woman approaches me.
+                </div>
+            </div>
         </div>
       </div>
     )
