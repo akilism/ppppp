@@ -266,7 +266,7 @@ class Slide1 extends ScanComponent {
         if(caption !== this.state.caption){
           $("#shopping-mp3-4")[0].play();
         }
-    } else {
+    } else if (d.pct_scroll > 0.3 && d.pct_scroll < 0.45) {
         caption = "My hand was clutching a bottle of magic juice. My night had just started."
         if(caption !== this.state.caption){
           $("#shopping-mp3-3")[0].play();
@@ -284,7 +284,6 @@ class Slide1 extends ScanComponent {
 
 
     var redh = Math.linearTween(card_pct,0,79,1)
-    console.log(new_black,black_pct)
 
     var black_pct;
     if (d.pct_scroll < 0.2){
@@ -438,9 +437,15 @@ class Slide2 extends ScanComponent {
                 e.preventDefault();
                 this.toggleBars();
                 $(".v-white-glow").css({opacity:1});
-                setTimeout(function(){
+                setTimeout(_.bind(function(){
                     $(".v-white-glow").css({opacity:0});
-                },500)
+                    if(! this.played){
+                        $("#city")[0].play();
+                        $("#city-v")[0].play();
+                        $("#city")[0].volume = 0.4;
+                        this.played = true;
+                    }
+                },this),500)
                 return false;
             }
         }
@@ -482,6 +487,12 @@ class Slide2 extends ScanComponent {
                 </div>
             </div>
         </div>
+        <audio id="city">
+          <source src="city.mp3" type="audio/mp3"/>
+        </audio>
+        <audio id="city-v">
+          <source src="city-v.wav" type="audio/wav"/>
+        </audio>
       </div>
     )
   }
@@ -494,9 +505,26 @@ class Slide3 extends ScanComponent {
       bg_top: -1 * $(window).height(),
       width: $(window).width(),
       height: $(window).height(),
+      redh: 0,
+      current_slide: 0
     };
   }
+
+  isActive(d){
+    if(d.pct_scroll >= 0.5 && d.pct_scroll < 0.7){
+        return true;
+    } else {
+        return false;
+    }
+  }
+  
   adjust(last_state, d) {
+
+    if(this.isActive(d)){
+        this.state.active = true;    
+    } else {
+        this.state.active = false;    
+    }
 
     var otop = -1 * $(window).height();
 
@@ -512,21 +540,128 @@ class Slide3 extends ScanComponent {
     
     var new_top = Math.linearTween(pct_scroll,otop,-otop,1);
 
-    return {bg_top: new_top};
+    if(d.pct_scroll < 0.45){
+        $("#diner-mp3")[0].play();
+        var new_volume = 0;
+    } else if (d.pct_scroll >= 0.45 && d.pct_scroll < 0.5) {
+        $("#diner-mp3")[0].play();
+        var clamped_pct = (d.pct_scroll - 0.45) / 0.05;
+        var new_volume = Math.linearTween(clamped_pct,0,0.6,1);
+    } else if (d.pct_scroll >= 0.5 && d.pct_scroll < 0.65) {
+        $("#diner-mp3")[0].play();
+        var new_volume = 0.6
+    }
+    
+    if(new_volume || new_volume === 0){
+        $("#diner-mp3")[0].volume = new_volume;
+    }
+
+    var caption = false;
+    if (d.pct_scroll < 0.5) {
+        caption = false
+    } else if ((d.pct_scroll >= 0.5 && d.pct_scroll < 0.55)){
+        caption = "Yung Tourguide took me to his favorite diner, Schmetty's.";
+        if(caption !== this.state.caption){
+          $("#diner-mp3-1")[0].play();
+        }
+    } else if ((d.pct_scroll >= 0.55 && d.pct_scroll < 0.6)){
+        caption = "The deli meats were chopped. I was chopped. I needed extra ketchup but they weren't serving Heinz.";
+        if(caption !== this.state.caption){
+          $("#diner-mp3-2")[0].play();
+        }
+    } else if ((d.pct_scroll >= 0.6 && d.pct_scroll < 0.65)) {
+        caption = "Yung Tourguide said that he ate here 8 times a week, 50 weeks a year.";
+        if(caption !== this.state.caption){
+          $("#diner-mp3-3")[0].play();
+        }
+    }
+
+    var card_pct;
+    if(d.pct_scroll < 0.5){
+       card_pct = 0;
+    } if(d.pct_scroll > 0.65) {
+       card_pct = 1;
+    } else {
+       card_pct = (d.pct_scroll - 0.5) / 0.15;
+    }
+
+
+    var redh = Math.linearTween(card_pct,0,79,1)
+
+    return {bg_top: new_top, redh: redh, caption: caption};
+  }
+  
+  shuffleSlides(){
+    if(this.state.current_slide === 0){
+    
+        this.setState({current_slide: 1})
+    } else if (this.state.current_slide === 1){
+    
+        this.setState({current_slide: 2})
+    } else {
+    
+        this.setState({current_slide: 0})
+    }
   }
 
   componentDidMount() {
+    $(window).on("keydown",_.bind(function(e){
+        if(e.keyCode == 32){
+            if(this.state.active){
+                e.preventDefault();
+                this.shuffleSlides();
+                $(".v-white-glow").css({opacity:1});
+                setTimeout(function(){
+                    $(".v-white-glow").css({opacity:0});
+                },500)
+                return false;
+            }
+        }
+    },this))
   }
   
   render() {
+    var cs = this.state.current_slide,
+        pic_2_left = (cs === 1 ||  cs === 2 ? 0 : -1 * $(window).width()),
+        pic_3_left = (cs === 2 ? 0 : -1 * $(window).width())
     return(
       <div className='bg-slide' style={{
         position: "fixed",
         top: this.state.bg_top,
         width: this.state.width,
         height: this.state.height,
-        backgroundColor: "black",
+        backgroundImage: "url('36.jpg')",
+        backgroundSize: "cover"
       }}>
+        <div id="slide-pic-2" className="slide-slide" style={{
+            backgroundImage: "url('diner-food.jpg')",
+            backgroundPosition: "0 -200px",
+            left: pic_2_left
+        }}></div>
+        <div id="slide-pic-3" className="slide-slide" style={{
+            backgroundImage: "url('36-2.jpg')",
+            left: pic_3_left
+        }}></div>
+        <h5 className="slide-caption" style={{display: this.state.caption ? 'block' : 'none'}} dangerouslySetInnerHTML={{ __html: this.state.caption}}>
+        </h5>
+        <div className="v-white-glow"/>
+        <div className="v-white">
+            <div className="v-red" style={{height: this.state.redh}}/>
+        </div>
+
+        <audio id="diner-mp3" loop>
+          <source src="diner.mp3" type="audio/mp3"/>
+        </audio>
+
+        <audio id="diner-mp3-1">
+          <source src="diner-clip1.wav" type="audio/wav"/>
+        </audio>
+        <audio id="diner-mp3-2">
+          <source src="diner-clip2.wav" type="audio/wav"/>
+        </audio>
+        <audio id="diner-mp3-3">
+          <source src="diner-clip3.wav" type="audio/wav"/>
+        </audio>
       </div>
     )
   }
