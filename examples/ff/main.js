@@ -22,18 +22,17 @@ Math.easeInOutQuad = function (t, b, c, d) {
 // "markers": [{"name": "crown-vic", "anchor": 0.75}];
 
 var scene = [
-
-    // { "name": "marseille",
-    //   "type": "title",
-    //   "title": "MARSEILLE",
-    //   "backgroundImage": "/erik3/marseille_1.jpg",
-    //   "fontSize": 250},
+    { "name": "marseille",
+      "type": "title",
+      "title": "MARSEILLE",
+      "backgroundImage": "/erik3/marseille_1.jpg",
+      "fontSize": 250},
     {"name": "progressmap",
      "type": "routemap"},
-    // {"name": "square",
-    // "type": "slide1"},
-    // {"name": "slide2",
-    // "type": "slide2"},
+    {"name": "square",
+    "type": "slide1"},
+    {"name": "slide2",
+    "type": "slide2"},
     // { "name": "intro",
     //   "copy": "We just moved to a new office, which is in a different part of the neighborhood than we are used to. In New York, even something as small as a few blocks can change everything. To show us around, we hooked up with VICE veteran, Ben Kammerle, to show us all the spots.",
     //   "type": "marker",
@@ -660,103 +659,6 @@ class Slide2 extends ScanComponent {
   }
 }
 
-// class RouteMap extends ScanComponent {
-
-//   adjust(last_state) {
-//     if(!this.routes[0].routePoints) { return last_state; }
-//     var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.context;
-//     // console.log(this.context);
-//     // return {};
-//     // var marker_elapsed = new_state.markers["intro"](0).pct_elapsed;
-//     var pointsIdx = Math.round((this.routes[0].routePoints.length - 1) * pctScroll);
-
-//     var that = this;
-//     var poly = new google.maps.Polyline({
-//       path: this.routes[0].routePoints.slice(0, pointsIdx).map(that.toLatLngObj),
-//       strokeColor: '#dd0',
-//       strokeOpacity: 1.0,
-//       strokeWeight: 3
-//     });
-
-//     poly.setMap(this.map);
-//     if(this.routes[0].poly) { this.routes[0].poly.setMap(null); }
-//     this.routes[0].poly = poly;
-
-//     this.map.setCenter(this.toGoogleLatLng(this.routes[0].routePoints[pointsIdx]));
-//     // this.map.setZoom(15);
-//     return _.extend(this.state, { routePoints: this.routes[0].routePoints.slice(0, pointsIdx) });
-//   }
-
-
-//   componentWillMount() {
-//     this.routes = [{ poly: null,
-//     markers: [{ marker: new google.maps.Marker({ position: { lat: 40.8025967, lng: -73.9502753},
-//         animation: google.maps.Animation.DROP,
-//         title: 'Amy Ruth\'s'}),
-//       trigger: null},
-//       {marker: new google.maps.Marker({ position: { lat: 40.797814, lng: -73.960124},
-//         animation: google.maps.Animation.DROP,
-//         title: 'Secret Smoke Spot'}),
-//       trigger: null }]}];
-
-//     return this.getDirectionsPolyline(this.routes[0].markers.map((m) => {
-//       return m.marker.position;
-//     })).then((routePoints) => {
-//       this.routes[0].routePoints = routePoints;
-//       this.state.routePoints = routePoints;
-//       var dimensions = {
-//       width: 300,
-//       height: this.context.viewportHeight,
-//       mapHeight: this.context.viewportHeight - 10
-//       };
-//       console.log(routePoints);
-//       this.setState(_.extend(this.state, dimensions));
-//     });
-//   }
-
-//   componentWillReceiveProps() {
-//    this.setState(this.adjust(this.state));
-//   }
-
-//   componentDidMount() {
-//     var styles = [{ featureType: "all", stylers: [{ visibility: "off" }]}];
-//     var mapNode = this.refs.map;
-//     // this.map = new google.maps.Map(ReactDOM.findDOMNode(this.refs.map), {
-//     //   center: {lat: 40.786858, lng: -73.962468},
-//     //   zoom: 14,
-//     //   backgroundColor: 'transparent',
-//     //   disableDefaultUI: true,
-//     //   disableDoubleClickZoom: true,
-//     //   // draggable: false,
-//     //   scrollWheel: false
-//     // });
-//     this.map = new google.maps.Map(this.refs.map, {
-//       center: {lat: 40.786858, lng: -73.962468},
-//       backgroundColor: 'transparent',
-//       zoom: 14
-//     });
-//     this.map.setOptions({styles: styles});
-
-//     _.forEach(this.routes,(rte) => {
-//       _.forEach(_.where(rte.markers, {trigger: null}), (m) => {
-//         // console.log(m);
-//         m.marker.setMap(this.map);
-//       });
-//     });
-
-//     this.map.setCenter(this.routes[0].markers[0].marker.position);
-
-//   }
-
-//   render() {
-//     return (
-//       <div className="map" style={{position: 'fixed', height: this.state.height, width: this.state.width, top: 0}}>
-//         <div ref="map" className="map" style={{height: this.state.height, width: "100%"}}></div>
-//       </div>
-//       );
-//   }
-// }
-
 class RouteMap extends ScanComponent {
   constructor(props) {
     super(props);
@@ -765,14 +667,16 @@ class RouteMap extends ScanComponent {
     };
   }
 
-  adjust(last_state, new_state) {
-    var marker_elapsed = new_state.markers["intro"](0).pct_elapsed;
-    var pointsIdx = Math.round((this.routes[0].routePoints.length - 1) * marker_elapsed);
+  adjust(last_state) {
+    if(!this.routes[0].routePoints) { return last_state; }
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.context;
+    // console.log(this.context);
+    var pointsIdx = Math.round((this.routes[0].routePoints.length - 1) * pctScroll);
 
     var that = this;
     var poly = new google.maps.Polyline({
       path: this.routes[0].routePoints.slice(0, pointsIdx).map(that.toLatLngObj),
-      strokeColor: '#000000',
+      strokeColor: '#dd0',
       strokeOpacity: 1.0,
       strokeWeight: 3
     });
@@ -782,8 +686,8 @@ class RouteMap extends ScanComponent {
     this.routes[0].poly = poly;
 
     // this.map.setCenter(this.toGoogleLatLng(this.routes[0].routePoints[pointsIdx]));
-    this.map.setZoom(15);
-    return { routePoints: this.routes[0].routePoints.slice(0, pointsIdx) };
+    // this.map.setZoom(15);
+    return _.extend(this.state, { routePoints: this.routes[0].routePoints.slice(0, pointsIdx) });
   }
 
   toLatLngObj(point) { return {lat: point[0], lng: point[1]}; };
@@ -844,45 +748,41 @@ class RouteMap extends ScanComponent {
       this.routes[0].routePoints = routePoints;
       this.state.routePoints = routePoints;
       var dimensions = {
-      width: 150,
-      height: this.context.viewportHeight,
-      mapHeight: this.context.viewportHeight - 10
+        width: 150,
+        height: this.context.viewportHeight,
+        mapHeight: this.context.viewportHeight - 10
       };
       // console.log(routePoints);
       this.setState(_.extend(this.state, dimensions));
     });
   }
 
+  componentWillReceiveProps() { this.setState(this.adjust(this.state)); }
+
   componentDidMount() {
     var styles = [{ featureType: "all", stylers: [{ visibility: "off" }]}];
     var mapNode = this.refs.map;
-    // this.map = new google.maps.Map(ReactDOM.findDOMNode(this.refs.map), {
-    //   center: {lat: 40.786858, lng: -73.962468},
-    //   zoom: 14,
-    //   backgroundColor: 'transparent',
-    //   disableDefaultUI: true,
-    //   disableDoubleClickZoom: true,
-    //   // draggable: false,
-    //   scrollWheel: false
-    // });
+
     this.map = new google.maps.Map(this.refs.map, {
-      center: {lat: 40.786858, lng: -73.962468},
       backgroundColor: 'transparent',
-      zoom: 14,
+      center: {lat: 40.786858, lng: -73.962468},
       disableDefaultUI: true,
-      disableDoubleClickZoom: true
+      disableDoubleClickZoom: true,
+      draggable: false,
+      keyboardShortcuts: false,
+      scrollwheel: false,
+      zoom: 13
     });
     this.map.setOptions({styles: styles});
 
-    _.forEach(this.routes,(rte) => {
-      _.forEach(_.where(rte.markers, {trigger: null}), (m) => {
-        console.log(m);
-        m.marker.setMap(this.map);
-      });
-    });
+    // _.forEach(this.routes,(rte) => {
+    //   _.forEach(_.where(rte.markers, {trigger: null}), (m) => {
+    //     console.log(m);
+    //     m.marker.setMap(this.map);
+    //   });
+    // });
 
     this.map.setCenter(this.routes[0].markers[0].marker.position);
-
   }
 
   render() {
