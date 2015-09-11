@@ -19,10 +19,12 @@
     "immutable": "3.7.4",
     "jquery": "2.1.4",
     "json-loader": "0.5.2",
-    "polyline": "^0.2.0",
+    "polyline": "0.2.0",
+    "pym.js": "0.4.5",
     "raf": "3.1.0",
     "react": "0.14.0-beta3",
     "react-dom": "0.14.0-beta3",
+    "react-frame-component": "0.3.4",
     "three": "0.71.0",
     "underscore": "1.8.3"
   }
