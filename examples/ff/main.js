@@ -87,7 +87,7 @@ function createViewport(Component, container) {
       this.setState({
         viewportWidth, viewportHeight,
         viewportLeft: 0, viewportTop: 0,
-        contentHeight: (viewportHeight*30), adjustedViewportTop: 0,
+        contentHeight: (viewportHeight * 8), adjustedViewportTop: 0,
         pctScroll: 0
       });
     }
@@ -450,20 +450,20 @@ class Slide1 extends ScanComponent {
     }
 
     if(pctScroll < 0.1){
-        $("#shopping-mp3")[0].play();
+        // $("#shopping-mp3")[0].play();
         var new_pitch = 64.9837616957764;
         var new_volume = 0;
     } else if (pctScroll >= 0.1 && pctScroll < 0.2) {
-        $("#shopping-mp3")[0].play();
+        // $("#shopping-mp3")[0].play();
         var clamped_pct = (pctScroll - 0.1) / 0.1;
         var new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1);
         var new_volume = Math.linearTween(clamped_pct,0,0.6,1);
     } else if (pctScroll >= 0.2 && pctScroll < 0.35) {
-        $("#shopping-mp3")[0].play();
+        // $("#shopping-mp3")[0].play();
         var new_pitch = 0;
         var new_volume = 0.6
     } else if (pctScroll >= 0.35 && pctScroll < 0.45) {
-        $("#shopping-mp3")[0].play();
+        // $("#shopping-mp3")[0].play();
         var new_pitch = 0;
         var clamped_pct = (pctScroll - 0.35) / 0.1;
         var new_volume = Math.linearTween(clamped_pct,0.6,-0.6,1);
@@ -482,23 +482,23 @@ class Slide1 extends ScanComponent {
     } else if ((pctScroll >= 0.15 && pctScroll < 0.2)){
         caption = "I woke up in the middle of the promenade.";
         if(caption !== this.state.caption){
-          $("#shopping-mp3-1")[0].play();
+          // $("#shopping-mp3-1")[0].play();
         }
     } else if ((pctScroll >= 0.2 && pctScroll < 0.25)){
         caption = "Traffic had stopped, my head spinning.";
         if(caption !== this.state.caption){
-          $("#shopping-mp3-2")[0].play();
+          // $("#shopping-mp3-2")[0].play();
         }
     } else if ((pctScroll >= 0.25 && pctScroll < 0.3)) {
         caption = "Yung TourGuide was laughing.<br/>'First time, eh?'";
         if(caption !== this.state.caption){
           console.log(caption,this.state.caption)
-          $("#shopping-mp3-4")[0].play();
+          // $("#shopping-mp3-4")[0].play();
         }
     } else {
         caption = "My hand was clutching a bottle of magic juice. My night had just started."
         if(caption !== this.state.caption){
-          $("#shopping-mp3-3")[0].play();
+          // $("#shopping-mp3-3")[0].play();
         }
     }
 
@@ -670,24 +670,57 @@ class RouteMap extends ScanComponent {
   adjust(last_state) {
     if(!this.routes[0].routePoints) { return last_state; }
     var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.context;
-    // console.log(this.context);
     var pointsIdx = Math.round((this.routes[0].routePoints.length - 1) * pctScroll);
-
+    var currentPath = this.routes[0].routePoints.slice(0, pointsIdx);
     var that = this;
     var poly = new google.maps.Polyline({
-      path: this.routes[0].routePoints.slice(0, pointsIdx).map(that.toLatLngObj),
-      strokeColor: '#dd0',
+      path: currentPath.map(that.toLatLngObj),
+      strokeColor: '#000',
       strokeOpacity: 1.0,
-      strokeWeight: 3
+      strokeWeight: 4
     });
 
+    var point = this.routes[0].routePoints[pointsIdx];
+    if(point) {
+      var markers = this.getMarkerAt(point);
+      // console.log(this.routes[0].routePoints);
+      if(markers.length > 0) {
+        // console.log(markers);
+        if(markers[0].marker.added) {
+          markers[0].marker.setMap(null);
+          markers[0].marker.added = false;
+        } else {
+          markers[0].marker.setMap(this.map);
+          markers[0].marker.added = true;
+        }
+      }
+    }
     poly.setMap(this.map);
     if(this.routes[0].poly) { this.routes[0].poly.setMap(null); }
     this.routes[0].poly = poly;
 
     // this.map.setCenter(this.toGoogleLatLng(this.routes[0].routePoints[pointsIdx]));
     // this.map.setZoom(15);
-    return _.extend(this.state, { routePoints: this.routes[0].routePoints.slice(0, pointsIdx) });
+
+    // var bounds = new google.maps.LatLngBounds(this.routes[0].markers[this.routes[0].markers.length-1].marker.position ,this.routes[0].markers[0].marker.position);
+    return _.extend(this.state, { routePoints: currentPath });
+  }
+
+  getMarkerAt(point) {
+    // return [];
+    // console.log("================================");
+    return this.routes[0].markers.filter(function(m) {
+      var isMarker = ((m.marker.position.G.toFixed(3) === point[0].toFixed(3)) && (m.marker.position.K.toFixed(3) === point[1].toFixed(3)));
+      // console.log('marker:', m.marker.position.G, m.marker.position.K);
+      // console.log('line point:', point[0], point[1]);
+      // console.log(isMarker);
+      // console.log("-----------------------------");
+      return isMarker;
+    });
+  }
+
+  getMarkersIn(path) {
+    return false;
   }
 
   toLatLngObj(point) { return {lat: point[0], lng: point[1]}; };
@@ -709,10 +742,18 @@ class RouteMap extends ScanComponent {
     return points;
   }
 
+  makeWaypoint(point) {
+    return {
+      location: point,
+      stopover: true
+    };
+  }
+
   getDirectionsPolyline(points) {
+    // console.log(points);
     return new Promise((resolve, reject) => {
       var trip = { origin: points[0],
-        waypoints: (points.length > 2) ? points.slice(1, destination.length) : [],
+        waypoints: (points.length > 2) ? points.slice(1, points.length).map(this.makeWaypoint) : [],
         destination: points[points.length-1],
         travelMode: google.maps.TravelMode.WALKING
       };
@@ -720,9 +761,8 @@ class RouteMap extends ScanComponent {
       var directions = new google.maps.DirectionsService();
       directions.route(trip, (result, status) => {
         if(status === "OK") {
+          console.log(result);
           var routePoints = polyline.decode(result.routes[0].overview_polyline);
-          // console.log(routePoints);
-          // console.table(routePoints);
           resolve(this.addMidPoints(routePoints, 50, 0.5));
           return;
         }
@@ -733,13 +773,25 @@ class RouteMap extends ScanComponent {
 
   componentWillMount() {
     this.routes = [{ poly: null,
-    markers: [{ marker: new google.maps.Marker({ position: { lat: 40.8025967, lng: -73.9502753},
+      markers: [{ marker: new google.maps.Marker({ position: { lat: 40.8025967, lng: -73.9502753},
         animation: google.maps.Animation.DROP,
         title: 'Amy Ruth\'s'}),
       trigger: null},
       {marker: new google.maps.Marker({ position: { lat: 40.797814, lng: -73.960124},
         animation: google.maps.Animation.DROP,
         title: 'Secret Smoke Spot'}),
+      trigger: null },
+      {marker: new google.maps.Marker({ position: { lat: 40.780916, lng: -73.972981},
+        animation: google.maps.Animation.DROP,
+        title: 'AMNH'}),
+      trigger: null },
+      {marker: new google.maps.Marker({ position: { lat: 40.783778, lng: -73.986376},
+        animation: google.maps.Animation.DROP,
+        title: 'Hudson River Hot Dog Vendor'}),
+      trigger: null },
+      {marker: new google.maps.Marker({ position: { lat: 40.704021, lng: -74.017073},
+        animation: google.maps.Animation.DROP,
+        title: 'Battery Park Underpass'}),
       trigger: null }]}];
 
     return this.getDirectionsPolyline(this.routes[0].markers.map((m) => {
@@ -775,6 +827,7 @@ class RouteMap extends ScanComponent {
     });
     this.map.setOptions({styles: styles});
 
+    //Add all markers to map initially
     // _.forEach(this.routes,(rte) => {
     //   _.forEach(_.where(rte.markers, {trigger: null}), (m) => {
     //     console.log(m);
@@ -782,7 +835,11 @@ class RouteMap extends ScanComponent {
     //   });
     // });
 
-    this.map.setCenter(this.routes[0].markers[0].marker.position);
+    this.routes[0].markers[0].marker.setMap(this.map);
+    // this.map.setCenter(this.routes[0].markers[0].marker.position);
+    var bounds = new google.maps.LatLngBounds(this.routes[0].markers[this.routes[0].markers.length-1].marker.position ,this.routes[0].markers[0].marker.position);
+    // this.map.setCenter(bounds.getCenter());
+    this.map.fitBounds(bounds);
   }
 
   render() {
