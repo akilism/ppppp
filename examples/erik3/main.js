@@ -578,7 +578,10 @@ class Slide3 extends ScanComponent {
       width: $(window).width(),
       height: $(window).height(),
       redh: 0,
-      current_slide: 0
+      current_slide: 0,
+      map_opacity: 0,
+      map_progress: 0,
+      black: 0
     };
   }
 
@@ -624,9 +627,6 @@ class Slide3 extends ScanComponent {
         var new_volume = 0.6
     }
     
-    if(new_volume || new_volume === 0){
-        $("#diner-mp3")[0].volume = new_volume;
-    }
 
     var caption = false;
     if (d.pct_scroll < 0.5) {
@@ -648,6 +648,71 @@ class Slide3 extends ScanComponent {
         }
     }
 
+    var c = this;
+
+    var map_conti = new Conti(0,0.65,"pct_scroll", function(pct, t){
+        t.black = 0;
+        t.map_progress = 0;
+        t.map_opacity = 0;
+        t.volume = new_volume || 0;
+        t.bells_volume = 0;
+        clearInterval(TRV.bells_interval)
+        clearInterval(TRV.bells_interval_2)
+        TRV.bells_interval = false
+        TRV.bells_interval_2 = false
+        return t;
+    }).abut(0.7, function(pct, t){
+        t.black = Math.linearTween(pct,0,0.7,1);
+        t.volume = Math.linearTween(pct,0.6,-0.6,1);
+        t.map_progress = 0;
+        t.map_opacity = pct;
+        t.bells_volume = pct;
+        if(!TRV.bells_interval){
+            TRV.bells_interval = setInterval(function(){
+                $("#map-cap").addClass("blur");
+                setTimeout(function(){jQ("#map-cap").removeClass("blur")},150);
+            },860)
+        }
+        return t;
+    }).abut(0.8, function(pct, t){
+        t.black = 0.7;
+        t.volume = 0;
+        t.map_progress = pct;
+        t.map_opacity = 1;
+        t.bells_volume = 1;
+        if(!TRV.bells_interval){
+            TRV.bells_interval = setInterval(function(){
+                $("#map-cap").addClass("blur");
+                setTimeout(function(){jQ("#map-cap").removeClass("blur")},150);
+            },860)
+        }
+        return t;
+    }).abut(1, function(pct, t){
+        t.black = 0.7;
+        t.volume = 0;
+        t.map_progress = 1;
+        t.map_opacity = 1;
+        t.bells_volume = 1;
+        if(!TRV.bells_interval){
+            TRV.bells_interval = setInterval(function(){
+                $("#map-cap").addClass("blur");
+                setTimeout(function(){jQ("#map-cap").removeClass("blur")},150);
+            },860)
+        }
+        return t;
+    })
+
+    
+    var map_data = map_conti.run(d,{})
+    $("#diner-mp3")[0].volume = map_data.volume;
+
+    if(map_data.bells_volume > 0){
+        $("#jakes")[0].play();
+        $("#jakes")[0].volume = map_data.bells_volume;
+    } else {
+        $("#jakes")[0].pause();
+    }
+
     var card_pct;
     if(d.pct_scroll < 0.5){
        card_pct = 0;
@@ -660,7 +725,9 @@ class Slide3 extends ScanComponent {
 
     var redh = Math.linearTween(card_pct,0,79,1)
 
-    return {bg_top: new_top, redh: redh, caption: caption};
+    console.log(map_data)
+
+    return {bg_top: new_top, redh: redh, caption: caption, black: map_data.black, map_progress: map_data.map_progress, map_opacity: map_data.map_opacity, map_offset_x: map_data.map_offset_x, map_offset_y: map_data.map_offset_y};
   }
   
   shuffleSlides(){
@@ -695,7 +762,8 @@ class Slide3 extends ScanComponent {
   render() {
     var cs = this.state.current_slide,
         pic_2_left = (cs === 1 ||  cs === 2 ? 0 : -1 * $(window).width()),
-        pic_3_left = (cs === 2 ? 0 : -1 * $(window).width())
+        pic_3_left = (cs === 2 ? 0 : -1 * $(window).width()),
+        map_width = $(window).height() * 1.686;
     return(
       <div className='bg-slide' style={{
         position: "fixed",
@@ -721,6 +789,10 @@ class Slide3 extends ScanComponent {
             <div className="v-red" style={{height: this.state.redh}}/>
         </div>
 
+        <audio id="jakes" loop>
+          <source src="bells.wav" type="audio/wav"/>
+        </audio>
+
         <audio id="diner-mp3" loop>
           <source src="diner.mp3" type="audio/mp3"/>
         </audio>
@@ -734,6 +806,14 @@ class Slide3 extends ScanComponent {
         <audio id="diner-mp3-3">
           <source src="diner-clip3.wav" type="audio/wav"/>
         </audio>
+        <div className="full-black" style={{opacity: this.state.black}}/>
+        <h5 className="slide-caption" id="map-cap" style={{opacity: this.state.map_opacity}}>
+            We paid the bill. <br/>
+            That's when he said it. <br/>
+            "Viceboy, are you ready to dance?"
+        </h5>
+        <div id="trip-overlay" style={{width: map_width, opacity: this.state.map_opacity, backgroundPositionX: -610 + this.state.map_offset_x, backgroundPositionY: 0 + this.state.map_offset_y}}>
+        </div>
       </div>
     )
   }

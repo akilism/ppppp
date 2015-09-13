@@ -229,6 +229,30 @@ p {
     position:fixed;
     background-size:cover;
 }
+#trip-overlay{
+    background-image:url('map-overlay.png');
+    position:absolute;
+    height:120%;
+    background-size:cover;
+    background-position-x:-610px;
+    
+}
+#map-cap{
+    width:860px;
+    text-align:right;
+    left:auto;
+    right:0;
+    font-size:60px;
+    padding:0 80px;
+    transition: text-shadow 0.15s ease;
+    -webkit-transition: text-shadow 0.15s ease;
+    -moz-transition: text-shadow 0.15s ease;
+    color:transparent;
+    text-shadow: 0 0 0px rgba(255,255,255,1);
+}
+#map-cap.blur{
+    text-shadow: 0 0 7px rgba(255,255,255,1);
+}
     </style>
   </head>
   <body>
