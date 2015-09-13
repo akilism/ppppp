@@ -83,8 +83,7 @@ function createViewport(Component, container) {
     getChildContext() {
       return {
         getPercentage: this.getPct.bind(this),
-        getPercentageInverse: this.getInv.bind(this),
-        ...this.measurements
+        getPercentageInverse: this.getInv.bind(this)
       };
     }
 
@@ -99,31 +98,25 @@ function createViewport(Component, container) {
         throw new Error("Viewport must have a non-zero width and height");
       }
 
-      this.measurements = { viewportWidth, viewportHeight,
-        viewportLeft: 0, viewportTop: 0,
+      this.setState({measurements: {
+        viewportWidth, viewportHeight, viewportLeft: 0, viewportTop: 0,
         contentHeight: (viewportHeight * 8), adjustedViewportTop: 0,
-        pctScroll: 0};
-
-      this.setState({
-        viewportWidth, viewportHeight,
-        viewportLeft: 0, viewportTop: 0,
-        contentHeight: (viewportHeight * 8), adjustedViewportTop: 0,
-        pctScroll: 0
-      });
+        pctScroll: 0 }});
     }
 
     componentDidMount() {
-      $(window).on('scroll', _.throttle(this.handleScroll.bind(this), 5));
+      $(window).on('scroll', _.throttle(this.handleScroll.bind(this), 10));
     }
 
     render() {
       var style = {
-        width: this.state.viewportWidth,
-        height: this.state.contentHeight,
+        width: this.state.measurements.viewportWidth,
+        height: this.state.measurements.contentHeight,
       };
+
       return (
         <div style={style}>
-          <Component ref="viewportRoot" />
+          <Component ref="viewportRoot" measurements={this.state.measurements} />
         </div>
       );
     }
@@ -141,12 +134,10 @@ function createViewport(Component, container) {
     handleScroll(ev) {
       var viewportLeft = $(ev.target).scrollLeft(),
           viewportTop = $(ev.target).scrollTop(),
-          contentHeight = this.state.contentHeight,
-          adjustedViewportTop = (viewportTop / this.state.viewportHeight) * (contentHeight * 0.1),
-          pctScroll = viewportTop / (contentHeight - this.state.viewportHeight);
-      this.measurements = _.extend(this.measurements, {viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll});
-      this.setState({viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll});
-      console.log("handleScroll: ", viewportTop, ':', pctScroll);
+          contentHeight = this.state.measurements.contentHeight,
+          adjustedViewportTop = (viewportTop / this.state.measurements.viewportHeight) * (contentHeight * 0.1),
+          pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
+      this.setState({measurements: _.extend(this.state.measurements, {viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll})});
     }
 
     bfs(ref) {
@@ -167,13 +158,6 @@ function createViewport(Component, container) {
   }
 
   Viewport.childContextTypes = {
-    viewportWidth: React.PropTypes.number.isRequired,
-    viewportHeight: React.PropTypes.number.isRequired,
-    viewportLeft: React.PropTypes.number.isRequired,
-    viewportTop: React.PropTypes.number.isRequired,
-    contentHeight: React.PropTypes.number.isRequired,
-    adjustedViewportTop: React.PropTypes.number.isRequired,
-    pctScroll: React.PropTypes.number.isRequired,
     getPercentage: React.PropTypes.func.isRequired,
     getPercentageInverse: React.PropTypes.func.isRequired,
   };
@@ -203,19 +187,19 @@ class Root extends React.Component {
     return content.map((el, i) => {
       switch (el.type) {
         case "marker":
-          return <MarkerComponent ref={el.name} copy={el.copy} key={el.name} idx={i}  />;
+          return <MarkerComponent ref={el.name} copy={el.copy} key={el.name} idx={i} measurements={this.props.measurements} />;
         case "transition":
-          return <TransitionComponent ref={el.name} marker={el.marker} anchor={el.anchor} key={el.name}  />
+          return <TransitionComponent ref={el.name} marker={el.marker} anchor={el.anchor} key={el.name} measurements={this.props.measurements} />
         case "timelapse":
-          return <Timelapse ref={el.name} marker={el.marker} anchor={el.anchor} key={el.name} />
+          return <Timelapse ref={el.name} marker={el.marker} anchor={el.anchor} key={el.name} measurements={this.props.measurements} />
         case "title":
-          return <Title ref={el.name} title={el.title} backgroundImage={el.backgroundImage} key={el.name} />
+          return <Title ref={el.name} title={el.title} backgroundImage={el.backgroundImage} key={el.name} measurements={this.props.measurements} />
         case "slide1":
-          return <Slide1 ref={el.name} key={el.name} />
+          return <Slide1 ref={el.name} key={el.name} measurements={this.props.measurements} />
         case "slide2":
-          return <Slide2 ref={el.name} key={el.name} />
+          return <Slide2 ref={el.name} key={el.name} measurements={this.props.measurements} />
         case "routemap":
-          return <RouteMap ref={el.name} key={el.name} />
+          return <RouteMap ref={el.name} key={el.name} measurements={this.props.measurements} />
         default:
           throw new Error("Unrecognized Component Type: " + el.type);
       }
@@ -224,24 +208,15 @@ class Root extends React.Component {
 
   render() {
     var content = this.buildComponents(scene);
-    // console.log(this.state.progressIndicators);
-    console.log("root.render:", this.context.viewportTop, ':', this.context.pctScroll);
+    <ProgressBar ref="progressBar" progressIndicators={this.state.progressIndicators}  measurements={this.props.measurements} />
     return (
       <div>
         {content}
-        <ProgressBar ref="progressBar" progressIndicators={this.state.progressIndicators} />
       </div>
     );
   }
 }
 
-Root.contextTypes = {
-  viewportHeight: React.PropTypes.number.isRequired,
-  viewportTop: React.PropTypes.number.isRequired,
-  pctScroll: React.PropTypes.number.isRequired,
-  viewportWidth: React.PropTypes.number.isRequired,
-  adjustedViewportTop: React.PropTypes.number.isRequired,
-};
 
 class Base extends React.Component {
   constructor(props) {
@@ -249,7 +224,7 @@ class Base extends React.Component {
   }
 
   getPct(anchor) {
-    var {viewportHeight, adjustedViewportTop} = this.context,
+    var {viewportHeight, adjustedViewportTop} = this.props.measurements,
       $p = $(ReactDOM.findDOMNode(this)),
       el_height = $p.outerHeight(),
       el_top = $p.position().top,
@@ -271,7 +246,7 @@ class Base extends React.Component {
   }
 
   getInv(anchor) {
-    var {viewportHeight, viewportTop} = this.context,
+    var {viewportHeight, viewportTop} = this.props.measurements,
       $p = $(ReactDOM.findDOMNode(this)),
       el_height = $p.outerHeight(),
       el_top = $p.position().top,
@@ -291,14 +266,6 @@ class Base extends React.Component {
       return {pct_elapsed: pct_elapsed, pct_elapsed_raw: pct_elapsed_raw};
   }
 }
-
-Base.contextTypes = {
-  viewportHeight: React.PropTypes.number.isRequired,
-  viewportTop: React.PropTypes.number.isRequired,
-  adjustedViewportTop: React.PropTypes.number.isRequired,
-  pctScroll: React.PropTypes.number.isRequired,
-  viewportWidth: React.PropTypes.number.isRequired
-};
 
 class MarkerComponent extends Base {
   constructor(props) {
@@ -326,12 +293,6 @@ class ScanComponent extends Base {
 
 ScanComponent.contextTypes = {
   getPercentage: React.PropTypes.func.isRequired,
-  viewportHeight: React.PropTypes.number.isRequired,
-  viewportTop: React.PropTypes.number.isRequired,
-  contentHeight: React.PropTypes.number.isRequired,
-  viewportWidth: React.PropTypes.number.isRequired,
-  pctScroll: React.PropTypes.number.isRequired,
-  adjustedViewportTop: React.PropTypes.number.isRequired
 };
 
 class Timelapse extends ScanComponent {
@@ -381,18 +342,12 @@ class Title extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    console.log('title.componentWillReceiveProps:', this.context.viewportTop, ':', this.context.pctScroll);
+    // console.log('title.componentWillReceiveProps:', this.props.measurements.viewportTop, ':', this.props.measurements.pctScroll);
     this.setState(this.adjust(this.state));
   }
 
-  shouldComponentUpdate(nextProps, nextState, nextContext) {
-    console.log('title.shouldComponentUpdate curr:', this.context.viewportTop, ':', this.context.pctScroll);
-    console.log('title.shouldComponentUpdate next:', nextContext.viewportTop, ':', nextContext.pctScroll);
-    return true;
-  }
-
   adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.context;
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements;
 
     // console.log('title.adjust:', viewportTop, ':', pctScroll);
     var dest_top = viewportHeight * -1 ;
@@ -404,15 +359,11 @@ class Title extends ScanComponent {
         var new_top = dest_top;
     }
     return {bg_top: new_top, height: viewportHeight, width: "100%"};
-    // this.setState(_.extend(last_state, {bg_top: new_top}));
-    return true;
   }
 
   render() {
-    // console.log('title.render:', this.context.viewportTop, ':', this.context.pctScroll);
     return(
       <div className='bg-slide' style={{
-        // position: "absolute",
         top: this.state.bg_top,
         width: this.state.width,
         height: this.state.height,
@@ -429,44 +380,44 @@ class Title extends ScanComponent {
   }
 }
 
-class TransitionComponent extends ScanComponent {
-  constructor(props) {
-    super(props);
-    this.state = {
-      visible: false
+// class TransitionComponent extends ScanComponent {
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+//       visible: false
 
-    };
-  }
+//     };
+//   }
 
-  adjust(last_state, d) {
-    var marker = d.markers[this.props.marker](this.props.anchor);
-    var marker_elapsed = marker.pct_elapsed;
+//   adjust(last_state, d) {
+//     var marker = d.markers[this.props.marker](this.props.anchor);
+//     var marker_elapsed = marker.pct_elapsed;
 
-    if(marker_elapsed > 0) {
-      var opacity = Math.linearTween(marker_elapsed, 0, 1, 1.0);
-      return {visible: true, opacity: opacity};
-    }
+//     if(marker_elapsed > 0) {
+//       var opacity = Math.linearTween(marker_elapsed, 0, 1, 1.0);
+//       return {visible: true, opacity: opacity};
+//     }
 
-    return {visible: false};
-  }
+//     return {visible: false};
+//   }
 
-  getStyle() {
-    if(this.state.visible) {
-      return {visibility: "visible", opacity: this.state.opacity};
-    } else {
-      return {visibility: "visible", opacity: 0};
-    }
-  }
+//   getStyle() {
+//     if(this.state.visible) {
+//       return {visibility: "visible", opacity: this.state.opacity};
+//     } else {
+//       return {visibility: "visible", opacity: 0};
+//     }
+//   }
 
-  render() {
-    var content = <img src="/akil3/fireworks.jpg" style={{width: "100%"}} />;
-    return (
-      <div className="transition" style={this.getStyle()}>
-        {content}
-      </div>
-    );
-  }
-}
+//   render() {
+//     var content = <img src="/akil3/fireworks.jpg" style={{width: "100%"}} />;
+//     return (
+//       <div className="transition" style={this.getStyle()}>
+//         {content}
+//       </div>
+//     );
+//   }
+// }
 
 class Slide1 extends ScanComponent {
   constructor(props) {
@@ -481,8 +432,8 @@ class Slide1 extends ScanComponent {
 
   componentWillMount() {
     var dimensions = {
-      width: this.context.viewportWidth,
-      height: this.context.viewportHeight
+      width: this.props.measurements.viewportWidth,
+      height: this.props.measurements.viewportHeight
     };
     this.setState(_.extend(this.state, dimensions));
   }
@@ -496,8 +447,8 @@ class Slide1 extends ScanComponent {
   }
 
   adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.context;
-    if(this.isActive(this.context)){
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements;
+    if(this.isActive(this.props.measurements)){
         this.state.active = true;
     } else {
         this.state.active = false;
@@ -672,7 +623,7 @@ class Slide2 extends ScanComponent {
   }
 
   adjust(last_state, d) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.context;
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements;
     var otop = -1 * viewportHeight;
 
     if(pctScroll < 0.35){
@@ -688,9 +639,9 @@ class Slide2 extends ScanComponent {
 
   componentWillMount() {
     var dimensions = {
-      width: this.context.viewportWidth,
-      height: this.context.viewportHeight,
-      bg_top: -1 * this.context.viewportHeight
+      width: this.props.measurements.viewportWidth,
+      height: this.props.measurements.viewportHeight,
+      bg_top: -1 * this.props.measurements.viewportHeight
     };
     this.setState(_.extend(this.state, dimensions));
   }
@@ -741,7 +692,7 @@ class ProgressBar extends ScanComponent {
   componentWillMount() {
     directions.getXY(this.props.progressIndicators).then((res) => {
       console.log(res);
-      this.setState(_.extend(this.state, {barWidth: (this.context.viewportWidth - 80)}));
+      this.setState(_.extend(this.state, {barWidth: (this.props.measurements.viewportWidth - 80)}));
     });
   }
 
@@ -750,7 +701,7 @@ class ProgressBar extends ScanComponent {
   }
 
   adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, viewportWidth} = this.context;
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, viewportWidth} = this.props.measurements;
     return _.extend(last_state, {progressPx: Math.round(this.state.barWidth * pctScroll), progressPct: (pctScroll * 100)});
   }
 
