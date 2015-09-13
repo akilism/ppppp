@@ -158,13 +158,56 @@ p {
   z-index: 1000;
 }
 
-#app {
-  height: 800px;
-  width: 100%;
+/*.progress-outer {
+  height: 5px;
+  border: none;
+  border-radius: 10px;
+  background-color: rgba(255,255,255,1);
+  width: 95%;
+  position: fixed;
+  bottom: 15px;
+  left: 20px;
+  z-index: 1000;
 }
-    </style>
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 10px;
+  background-color: rgba(0,0,255,1);
+}
+
+.progress-indicator {
+  border-radius: 50%;
+  height: 11px;
+  width: 11px;
+  top: -3px;
+  position: absolute;
+  background-color: rgba(255,255,255,1);
+}*/
+
+.progress-svg {
+  position: fixed;
+  bottom: 15px;
+  left: 10px;
+  z-index: 1000;
+}
+
+.progress-back {
+  /*stroke-linecap: round;*/
+  stroke: black;
+  stroke-width: 10;
+}
+
+.progress-fill {
+  /*stroke-linecap: round;*/
+  stroke: gold;
+  stroke-width: 10;
+}
+
+</style>
   </head>
   <body>
-    <div id="app"></div>
+
   </body>
 </html>
