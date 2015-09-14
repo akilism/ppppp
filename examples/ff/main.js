@@ -30,7 +30,9 @@ var scene = [
       "coords": { "lat": 40.8025967, "lng": -73.9502753},
       "progressIndicator": {
         "name": "Marseille",
-        "position": 0
+        "location": "France",
+        "startPosition": 0,
+        "endPosition": 0.15,
       }},
     // {"name": "progressmap",
     //  "type": "routemap"},
@@ -39,14 +41,18 @@ var scene = [
       "coords": { "lat": 40.780916, "lng": -73.972981 },
       "progressIndicator": {
         "name": "Marseille Square",
-        "position": 0.25
+        "location": "Marseille, France",
+        "startPosition": 0.15,
+        "endPosition": 0.35
       }},
     {"name": "slide2",
       "type": "slide2",
       "coords": { "lat": 40.704021, "lng": -74.017073},
       "progressIndicator": {
-        "name": "The Run Down",
-        "position": 0.45
+        "name": "Life is Hard",
+        "location": "Marseille, France",
+        "startPosition": 0.35,
+        "endPosition": 1
       }},
     // { "name": "intro",
     //   "copy": "We just moved to a new office, which is in a different part of the neighborhood than we are used to. In New York, even something as small as a few blocks can change everything. To show us around, we hooked up with VICE veteran, Ben Kammerle, to show us all the spots.",
@@ -208,10 +214,10 @@ class Root extends React.Component {
 
   render() {
     var content = this.buildComponents(scene);
-    <ProgressBar ref="progressBar" progressIndicators={this.state.progressIndicators}  measurements={this.props.measurements} />
     return (
       <div>
         {content}
+        <ProgressBar ref="progressBar" progressIndicators={this.state.progressIndicators}  measurements={this.props.measurements} />
       </div>
     );
   }
@@ -665,14 +671,12 @@ class Slide2 extends ScanComponent {
 }
 
 class ProgressIndicator extends React.Component {
-  handleClick(ev) {
-    console.log(ev);
-    console.log(this.props);
-  }
-
   render() {
     return (
-      <circle cx={this.props.x} cy={this.props.y} r={this.props.r} onClick={this.handleClick.bind(this)} />
+      <g>
+        <circle cx={this.props.x} cy={this.props.y} r={this.props.r} />
+        <circle cx={this.props.x} cy={this.props.y} r={this.props.r*1.75} onClick={this.props.clickHandler} className="indicator-click" />
+      </g>
     );
   }
 }
@@ -685,15 +689,69 @@ class ProgressBar extends ScanComponent {
       progressPx: 0,
       progressPct: 0,
       barWidth: 0,
-      barY: 125
+      barY: 125,
+      activeIndicator: {coords:  {lat: 40.786858, lng: -73.962468}, show: false}
     };
   }
 
+  setCard(x, y) {
+    var $card = $(ReactDOM.findDOMNode(this.refs.progressCard));
+    var top = 10;
+    var left = x - $card.width() - 50;
+    var right = 60;
+      $card.css({
+        top: top,
+        // left: (left < 10) ? 10 : left
+        right: right
+      });
+  }
+
+  handleClick(i, evt) {
+    var indicator = this.props.progressIndicators[i];
+    indicator.show = true;
+    if(this.state.activeIndicator.name === indicator.name) {
+      this.setState(_.extend(this.state, {activeIndicator: {show: false}}));
+    } else {
+      this.setState(_.extend(this.state, {activeIndicator: indicator}));
+      this.setCard(evt.clientX, evt.clientY);
+    }
+  }
+
+  getCurrentIndicator() {
+    var pctScroll = this.props.measurements.pctScroll;
+    return this.props.progressIndicators.filter((i) => {
+      return pctScroll >= i.startPosition && pctScroll < i.endPosition;
+    })[0];
+  }
+
+  handleGClick(evt) {
+    var indicator = this.getCurrentIndicator();
+    indicator.show = true;
+    if(this.state.activeIndicator.name === indicator.name) {
+      this.setState(_.extend(this.state, {activeIndicator: {show: false}}));
+    } else {
+      this.setState(_.extend(this.state, {activeIndicator: indicator}));
+      this.setCard(evt.clientX, evt.clientY);
+    }
+  }
+
+  showGBar(evt) {
+    var indicator = this.getCurrentIndicator();
+    indicator.show = true;
+    this.setState(_.extend(this.state, {activeIndicator: indicator}));
+    this.setCard(evt.clientX, evt.clientY);
+  }
+
+  hideGBar(evt) {
+    this.setState(_.extend(this.state, {activeIndicator: {show: false}}));
+  }
+
   componentWillMount() {
-    directions.getXY(this.props.progressIndicators).then((res) => {
-      console.log(res);
-      this.setState(_.extend(this.state, {barWidth: (this.props.measurements.viewportWidth - 80)}));
-    });
+    // directions.getXY(this.props.progressIndicators).then((res) => {
+    //   console.log(res);
+    //   this.setState(_.extend(this.state, {barWidth: (this.props.measurements.viewportWidth - 80)}));
+    // });
+    this.setState(_.extend(this.state, {barWidth: (this.props.measurements.viewportWidth - 80)}));
   }
 
   componentWillReceiveProps() {
@@ -705,22 +763,65 @@ class ProgressBar extends ScanComponent {
     return _.extend(last_state, {progressPx: Math.round(this.state.barWidth * pctScroll), progressPct: (pctScroll * 100)});
   }
 
-  buildIndicator(i) {
-    var r = 4;
-    return <ProgressIndicator y={this.state.barY} x={(i.position * this.state.barWidth)+(r * 2)} r={r} name={i.name} key={i.name} />;
+  buildIndicator(i, idx) {
+    var r = 5;
+    return <ProgressIndicator clickHandler={this.handleClick.bind(this, idx)} y={this.state.barY} x={(i.position * this.state.barWidth)+(r * 2)} r={r} name={i.name} key={i.name} />;
   }
+
+  highlight(point) { return [point[0], point[1] - 3]; }
+  lowlight(point) { return [point[0], point[1] + 3]; }
 
   render() {
     var indicators = _.map(this.props.progressIndicators, this.buildIndicator, this);
     var pointsBar = [[0, this.state.barY], [this.state.barWidth, this.state.barY]];
+    //this.state.progressPx-20
     var pointsFill = [[0, this.state.barY], [this.state.progressPx, this.state.barY]];
+    var showCard = (this.state.activeIndicator.show) ? 'visible' : 'hidden';
+    // {indicators}
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" className="progress-svg" style={{width: (this.state.barWidth)}}>
-        <polyline className="progress-back" points={pointsBar} />
-        <polyline className="progress-fill" points={pointsFill} />
-        {indicators}
-      </svg>
+      <div className="progress-bar">
+        <img className="g-icon" src="/ff/g.png" onMouseEnter={this.showGBar.bind(this)} onMouseLeave={this.hideGBar.bind(this)} />
+        <svg xmlns="http://www.w3.org/2000/svg" className="progress-svg" style={{width: (this.state.barWidth)}}>
+          <g>
+            <polyline className="progress-highlight" points={pointsBar.map(this.highlight)} />
+            <polyline className="progress-back" points={pointsBar} />
+            <polyline className="progress-lowlight" points={pointsBar.map(this.lowlight)} />
+          </g>
+          <g>
+            <polyline className="progress-fill" points={pointsFill} />
+          </g>
+        </svg>
+        <div ref="progressCard" className="progress-card" style={{visibility: showCard}}>
+          <div ref="cardMap" className="progress-card-map">
+            <Map center={this.state.activeIndicator.coords} zoom={17} position={this.state.activeIndicator.position} />
+          </div>
+          <div className="progress-card-name">{this.state.activeIndicator.name}</div>
+          <div className="progress-card-subtitle">{this.state.activeIndicator.location}</div>
+        </div>
+      </div>
     );
+  }
+}
+
+class Map extends React.Component {
+  componentDidMount() {
+    console.log(this.props.center);
+     this.map = new google.maps.Map(ReactDOM.findDOMNode(this.refs.map), {
+      center: this.props.center,
+      zoom: this.props.zoom,
+      disableDefaultUI: true,
+      // disableDoubleClickZoom: true,
+      // draggable: false,
+      scrollwheel: false
+    });
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.map.setCenter(nextProps.center);
+  }
+
+  render() {
+    return (<div ref="map" className="map-container"></div>);
   }
 }
 

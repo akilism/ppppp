@@ -4,6 +4,7 @@
     <meta charset=utf-8>
     <title>Scroll Experiments</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,700' rel='stylesheet' type='text/css'>
     <script async src="./build/main.js"></script>
     <style>
 @font-face {
@@ -186,24 +187,96 @@ p {
   background-color: rgba(255,255,255,1);
 }*/
 
-.progress-svg {
+.progress-bar {
   position: fixed;
   bottom: 15px;
-  left: 10px;
+  /*left: 10px;*/
   z-index: 1000;
+  width: 100%;
+  text-align: center;
+}
+
+.progress-svg {
+
 }
 
 .progress-back {
   /*stroke-linecap: round;*/
-  stroke: black;
-  stroke-width: 10;
+  stroke: rgba(0,0,255,0.25);
+  stroke-width: 8;
+}
+
+.progress-highlight {
+  stroke-width: 1px;
+  stroke: rgba(255,255,255,0.65);
+}
+
+.progress-lowlight {
+  stroke-width: 2px;
+  stroke: rgba(0,0,0,0.45);
 }
 
 .progress-fill {
   /*stroke-linecap: round;*/
-  stroke: gold;
-  stroke-width: 10;
+  stroke: rgba(255,255,0,0.45);
+  stroke-width: 8;
 }
+
+.progress-card {
+  border-radius: 2px;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+  position: fixed;
+  height: 220px;
+  width: 325px;
+  background-color: #fff;
+  font-family: 'Roboto', sans-serif;
+  text-align: left;
+}
+
+.indicator-click {
+  stroke: none;
+  fill: transparent;
+  cursor: pointer;
+}
+
+.progress-card-map {
+  height: 150px;
+  width: 100%;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+}
+
+.progress-card-name {
+  font-size: 18px;
+  padding: 16px 12px 4px 12px;
+}
+
+.progress-card-subtitle {
+  font-size: 12px;
+  padding-left: 12px;
+  color: #BDB9B9;
+  font-weight: 200;
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
+}
+
+.g-icon {
+  position: fixed;
+  right: -20px;
+  top: 10px;
+  height: 35px;
+  box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 4px -3px;
+  cursor: pointer;
+  transition: right 250ms ease-in-out;
+}
+
+.g-icon:hover {
+  box-shadow: rgba(255, 255, 255, 0.5) 0px 1px 4px -3px;
+  right: 10px;
+}
+
 
 </style>
   </head>
