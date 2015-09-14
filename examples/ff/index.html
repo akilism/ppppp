@@ -4,6 +4,7 @@
     <meta charset=utf-8>
     <title>Scroll Experiments</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700' rel='stylesheet' type='text/css'>
     <script async src="./build/main.js"></script>
     <style>
 @font-face {
@@ -196,13 +197,51 @@ p {
 .progress-back {
   /*stroke-linecap: round;*/
   stroke: black;
-  stroke-width: 10;
+  stroke-width: 12;
 }
 
 .progress-fill {
   /*stroke-linecap: round;*/
   stroke: gold;
-  stroke-width: 10;
+  stroke-width: 12;
+}
+
+.progress-card {
+  border-radius: 2px;
+  box-shadow: 0 0 2px #000;
+  position: fixed;
+  height: 220px;
+  width: 325px;
+  background-color: #fff;
+  font-family: 'Roboto', sans-serif;
+}
+
+.indicator-click {
+  stroke: none;
+  fill: transparent;
+  cursor: pointer;
+}
+
+.progress-card-map {
+  height: 150px;
+  width: 100%;
+  box-shadow: 0 0 1px #000;
+}
+
+.progress-card-name {
+  font-size: 18px;
+  padding: 16px 12px 4px 12px;
+}
+
+.progress-card-subtitle {
+  font-size: 12px;
+  padding-left: 12px;
+  color: #BDB9B9;
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
 }
 
 </style>
