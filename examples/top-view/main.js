@@ -7,6 +7,7 @@ window.$ = $
 window.TRV = {}
 
 function initialize() {
+
   var layer = "toner";
   var mapOptions = {
     center: { lat: 40.71988, lng: -73.95726},
@@ -176,6 +177,8 @@ TRV.putAwayMap = function(p){
 
     TRV.hideArrive();
     setTimeout(function(){
+
+        $("#rocky-mp3")[0].pause();
         $("#map-wrapper").addClass("flipped");
     },500)
 }
@@ -192,6 +195,7 @@ TRV.getMapOn = function(){
             }
             TRV.current_place = false;
         }
+        $("#rocky-mp3")[0].play();
     },500)
 }
 
@@ -218,10 +222,13 @@ TRV.drop_unlock = function(u){
 $(function(){
     initialize();
 
+  $("#rocky-mp3")[0].volume = 0;
   setTimeout(function(){
     $(window).scrollTop(0)
+    $("#rocky-mp3")[0].pause();
+    $("#rocky-mp3")[0].volume = 1;
     $("body").css({overflow: "visible"})
-  },100)
+  },50)
 
   $("#title").height($(window).height())
   $("#page").height($(window).height() * 3);
@@ -245,6 +252,7 @@ $(function(){
 
     $(window).on("scroll",_.throttle(function(){
         if ($(window).scrollTop() > $(window).height()){
+            $("#rocky-mp3")[0].play();
             $("body").css({overflow:"hidden"})
         }
     },25))
