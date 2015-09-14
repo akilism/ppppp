@@ -262,19 +262,42 @@ p {
   width: 100%;
 }
 
+.google-bar {
+  position: fixed;
+  right: 0;
+  width: 35px;
+  height: 35px;
+  top: 0;
+}
+
 .g-icon {
   position: fixed;
   right: -20px;
   top: 10px;
+  width: 35px;
   height: 35px;
   box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 4px -3px;
   cursor: pointer;
   transition: right 250ms ease-in-out;
 }
 
-.g-icon:hover {
+.google-bar:hover > .g-icon {
   box-shadow: rgba(255, 255, 255, 0.5) 0px 1px 4px -3px;
   right: 10px;
+}
+
+.arrow-svg {
+  width: 163px;
+  height: 72px;
+}
+
+.arrows {
+  transform: scaleX(1);
+  transition: transform 50ms;
+}
+
+.arrows.flip {
+  transform: scaleX(-1);
 }
 
 

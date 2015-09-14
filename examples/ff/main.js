@@ -218,6 +218,7 @@ class Root extends React.Component {
       <div>
         {content}
         <ProgressBar ref="progressBar" progressIndicators={this.state.progressIndicators}  measurements={this.props.measurements} />
+        <ArrowTransition measurements={this.props.measurements} />
       </div>
     );
   }
@@ -385,45 +386,6 @@ class Title extends ScanComponent {
     )
   }
 }
-
-// class TransitionComponent extends ScanComponent {
-//   constructor(props) {
-//     super(props);
-//     this.state = {
-//       visible: false
-
-//     };
-//   }
-
-//   adjust(last_state, d) {
-//     var marker = d.markers[this.props.marker](this.props.anchor);
-//     var marker_elapsed = marker.pct_elapsed;
-
-//     if(marker_elapsed > 0) {
-//       var opacity = Math.linearTween(marker_elapsed, 0, 1, 1.0);
-//       return {visible: true, opacity: opacity};
-//     }
-
-//     return {visible: false};
-//   }
-
-//   getStyle() {
-//     if(this.state.visible) {
-//       return {visibility: "visible", opacity: this.state.opacity};
-//     } else {
-//       return {visibility: "visible", opacity: 0};
-//     }
-//   }
-
-//   render() {
-//     var content = <img src="/akil3/fireworks.jpg" style={{width: "100%"}} />;
-//     return (
-//       <div className="transition" style={this.getStyle()}>
-//         {content}
-//       </div>
-//     );
-//   }
-// }
 
 class Slide1 extends ScanComponent {
   constructor(props) {
@@ -780,7 +742,16 @@ class ProgressBar extends ScanComponent {
     // {indicators}
     return (
       <div className="progress-bar">
-        <img className="g-icon" src="/ff/g.png" onMouseEnter={this.showGBar.bind(this)} onMouseLeave={this.hideGBar.bind(this)} />
+        <div className="google-bar" onMouseEnter={this.showGBar.bind(this)} onMouseLeave={this.hideGBar.bind(this)}>
+          <img className="g-icon" src="/ff/g.png" />
+          <div ref="progressCard" className="progress-card" style={{visibility: showCard}}>
+            <div ref="cardMap" className="progress-card-map">
+              <Map center={this.state.activeIndicator.coords} zoom={17} position={this.state.activeIndicator.position} />
+            </div>
+            <div className="progress-card-name">{this.state.activeIndicator.name}</div>
+            <div className="progress-card-subtitle">{this.state.activeIndicator.location}</div>
+          </div>
+        </div>
         <svg xmlns="http://www.w3.org/2000/svg" className="progress-svg" style={{width: (this.state.barWidth)}}>
           <g>
             <polyline className="progress-highlight" points={pointsBar.map(this.highlight)} />
@@ -791,13 +762,6 @@ class ProgressBar extends ScanComponent {
             <polyline className="progress-fill" points={pointsFill} />
           </g>
         </svg>
-        <div ref="progressCard" className="progress-card" style={{visibility: showCard}}>
-          <div ref="cardMap" className="progress-card-map">
-            <Map center={this.state.activeIndicator.coords} zoom={17} position={this.state.activeIndicator.position} />
-          </div>
-          <div className="progress-card-name">{this.state.activeIndicator.name}</div>
-          <div className="progress-card-subtitle">{this.state.activeIndicator.location}</div>
-        </div>
       </div>
     );
   }
@@ -825,6 +789,130 @@ class Map extends React.Component {
   }
 }
 
+class ArrowTransition extends ScanComponent {
+  constructor(props) {
+    super(props)
+    this.state = {
+      left: 0,
+      flip: false,
+      colors: []
+    }
+  }
+
+  adjust(last_state, d) {
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, viewportWidth} = this.props.measurements;
+    viewportWidth = viewportWidth*2;
+    var left = last_state.left;
+    var flip = last_state.flip;
+    if(pctScroll < 0.45){
+        left = -viewportWidth;
+    } else if (pctScroll > 0.75){
+        left = viewportWidth;
+    } else {
+        var clamped_scroll = (pctScroll - 0.45) / 0.1;
+        left = Math.linearTween(clamped_scroll, viewportWidth * -1, viewportWidth, 1)
+    }
+    if(left < last_state.left) {
+      flip = true;
+    } else {
+      flip = false;
+    }
+    return _.extend(last_state, {left: left, flip: flip});
+  }
+
+  componentWillMount() {
+    var dimensions = {
+      width: this.props.measurements.viewportWidth,
+      height: this.props.measurements.viewportHeight,
+      left: -1 * (this.props.measurements.viewportWidth*2)
+    };
+    this.setState(_.extend(this.state, dimensions));
+  }
+
+  componentWillReceiveProps() {
+    this.setState(this.adjust(this.state));
+  }
+
+  getColor(i) {
+    if(!this.state.colors[i]) {
+      let r = Math.floor(Math.random() * 100 + i);
+      let g = Math.floor(Math.random() * 150 + i);
+      let b = Math.floor(Math.random() * 50 + i);
+      this.state.colors[i] = "rgb(" + r + "," + g + "," + b + ")";
+    }
+    return this.state.colors[i];
+  }
+
+  arrow(i) {
+    var fill = this.getColor(i);
+    return(<svg className="arrow-svg" key={i}><path fill={fill} d="M93,20 L0,20 L0,52 L93,52 L93,72 L163,36 L93,0 L93,20 Z"></path></svg>);
+  }
+
+  buildArrows() {
+    var arrowHeight = 72;
+    var arrowWidth = 163;
+    var countCols = Math.floor((this.props.measurements.viewportWidth*2) / arrowWidth);
+    var countRows = Math.floor(this.props.measurements.viewportHeight / arrowHeight);
+    return Array.from({length: (countCols * countRows)}, (v, k) => this.arrow(k));
+  }
+
+  render() {
+    var arrows = this.buildArrows();
+    var classes = (this.state.flip) ? 'arrows flip' : 'arrow';
+    return(
+      <div className={classes} style={{
+        position: "fixed",
+        left: this.state.left,
+        width: this.state.width*2,
+        height: this.state.height,
+        backgroundColor: "transparent",
+        zIndex: 10000
+      }}>
+      {arrows}
+      </div>
+    )
+  }
+}
+
+
+// class TransitionComponent extends ScanComponent {
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+//       visible: false
+
+//     };
+//   }
+
+//   adjust(last_state, d) {
+//     var marker = d.markers[this.props.marker](this.props.anchor);
+//     var marker_elapsed = marker.pct_elapsed;
+
+//     if(marker_elapsed > 0) {
+//       var opacity = Math.linearTween(marker_elapsed, 0, 1, 1.0);
+//       return {visible: true, opacity: opacity};
+//     }
+
+//     return {visible: false};
+//   }
+
+//   getStyle() {
+//     if(this.state.visible) {
+//       return {visibility: "visible", opacity: this.state.opacity};
+//     } else {
+//       return {visibility: "visible", opacity: 0};
+//     }
+//   }
+
+//   render() {
+//     var content = <img src="/akil3/fireworks.jpg" style={{width: "100%"}} />;
+//     return (
+//       <div className="transition" style={this.getStyle()}>
+//         {content}
+//       </div>
+//     );
+//   }
+// }
 function embedComponent(Component, container, callback) {
   $(container).empty();
   var Viewport = createViewport(Component, container);
