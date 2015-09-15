@@ -780,7 +780,7 @@ class ProgressBar extends ScanComponent {
     // {indicators}
     return (
       <div className="progress-bar">
-        <img className="g-icon" src="/ff/g.png" onMouseEnter={this.showGBar.bind(this)} onMouseLeave={this.hideGBar.bind(this)} />
+        <img className="g-icon" src="g.png" onMouseEnter={this.showGBar.bind(this)} onMouseLeave={this.hideGBar.bind(this)} />
         <svg xmlns="http://www.w3.org/2000/svg" className="progress-svg" style={{width: (this.state.barWidth)}}>
           <g>
             <polyline className="progress-highlight" points={pointsBar.map(this.highlight)} />
