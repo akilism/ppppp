@@ -368,8 +368,13 @@ class Timebar extends ScanComponent {
             t.caption = false;
         }
 
+        if(asap_on){
+          t.playhead_left = Math.linearTween(asap_on[0]/100, -20, track_width, 1);
+        } else {
+          t.playhead_left = Math.linearTween(pct, -20, track_width, 1);
+        }
+        console.log("p",t.playhead_left)
 
-        t.playhead_left = Math.linearTween(pct, -20, track_width, 1);
         t.asap_on = asap_on && asap_on[0];
 
         return t;
