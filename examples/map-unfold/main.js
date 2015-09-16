@@ -181,6 +181,7 @@ class TestComponent extends React.Component {
         <Title/>
         <HomeMap/>
         <Timebar/>
+        <Slide2/>
         <Slide1/>
       </div>
     );
@@ -361,7 +362,6 @@ class Timebar extends ScanComponent {
         var near_dots = _(this.dots).map(function(title,dot){return [dot,Math.abs(dot - (pct * 100))]}),
         asap_on = _(near_dots).find(function(dot){return dot[1] < 1});
         
-        console.log(this.dots,asap_on)
         if(asap_on && this.dots[asap_on[0]].length > 0){
           t.caption = this.dots[asap_on[0]];
         } else {
@@ -420,13 +420,29 @@ class Slide1 extends ScanComponent {
       this.state = {
         frame: 0,
         frames: 22,
-        base_bg: "round-gif"
+        base_bg: "round-gif",
+        bg_top: 0
       };
     }
 
     adjust(last,d){
-        var new_frame = Math.round(d.pct_scroll/0.002) % this.state.frames;
-        return {frame: new_frame} 
+      var new_frame = Math.round(d.pct_scroll/0.002) % this.state.frames,
+          target_height = -1300;
+      var conti = new Conti(0,0.4,"pct_scroll",function(pct,t){
+        t.bg_top = 0;
+        return t;
+      }).abut(0.45,function(pct,t){
+        t.bg_top = Math.linearTween(pct,0,target_height,1)
+        return t;
+      }).abut(1,function(pct,t){
+        t.bg_top = target_height;
+        return t;
+      })
+ 
+      var trans_data = conti.run(d,{})
+      trans_data.frame = new_frame;
+
+      return trans_data;
     }
     componentDidMount(){
         $(window).on("keydown",_.bind(function(e){
@@ -439,6 +455,43 @@ class Slide1 extends ScanComponent {
         $(window).on("keyup",_.bind(function(e){
             if(e.keyCode === 16){
               this.setState({frames: 22, base_bg: "round-gif"})
+            }
+        },this))    
+    }
+    render(){
+        return (
+          <img className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"} style={{
+            top: this.state.bg_top
+          }}/>
+        )
+    }
+}
+
+class Slide2 extends ScanComponent {
+    constructor(props) {
+      super(props);
+      this.state = {
+        frame: 0,
+        frames: 20,
+        base_bg: "barbie-gif"
+      };
+    }
+
+    adjust(last,d){
+        var new_frame = Math.round(d.pct_scroll/0.002) % this.state.frames;
+        return {frame: new_frame} 
+    }
+    componentDidMount(){
+        $(window).on("keydown",_.bind(function(e){
+            if(e.keyCode === 16){
+              var pct_scroll = $(window).scrollTop() / ($("body").height() - $(window).height());
+              var new_frame = Math.round(pct_scroll/0.002) % 14; 
+              this.setState({frames: 14, base_bg: "barbie-gif-2", frame: new_frame})
+            }
+        },this))    
+        $(window).on("keyup",_.bind(function(e){
+            if(e.keyCode === 16){
+              this.setState({frames: 20, base_bg: "barbie-gif"})
             }
         },this))    
     }
