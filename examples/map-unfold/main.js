@@ -373,7 +373,6 @@ class Timebar extends ScanComponent {
         } else {
           t.playhead_left = Math.linearTween(pct, -20, track_width, 1);
         }
-        console.log("p",t.playhead_left)
 
         t.asap_on = asap_on && asap_on[0];
 
@@ -426,7 +425,10 @@ class Slide1 extends ScanComponent {
         frame: 0,
         frames: 22,
         base_bg: "round-gif",
-        bg_top: 0
+        bg_top: 0,
+        caption: "",
+        caption_2: "",
+        toggle: false
       };
     }
 
@@ -447,6 +449,26 @@ class Slide1 extends ScanComponent {
       var trans_data = conti.run(d,{})
       trans_data.frame = new_frame;
 
+      var caption_conti = new Conti(0,0.25,"pct_scroll",function(pct,t){
+        t.caption = ""
+        t.caption_2 = ""
+        return t;
+      }).abut(0.3,function(pct,t){
+        t.caption = "Between the bar and the club, in the magic hour, we broke down in the mountains."
+        t.caption_2 = "Between the bar and the club, in the magic hour, we stopped our car for narrative impact."
+        return t;
+      }).abut(0.35,function(pct,t){
+        t.caption = "The hills were the kind of gold you find in lion manes."
+        t.caption_2 = "The hills were just hills, ya know?."
+        return t;
+      }).abut(1,function(pct,t){
+        t.caption = "We felt like we were in some sort of lyrical interactive media."
+        t.caption_2 = "We felt like we were in some sort of bullshit interactive media."
+        return t;
+      })
+      trans_data = caption_conti.run(d,trans_data)
+
+
       return trans_data;
     }
     componentDidMount(){
@@ -454,20 +476,29 @@ class Slide1 extends ScanComponent {
             if(e.keyCode === 16){
               var pct_scroll = $(window).scrollTop() / ($("body").height() - $(window).height());
               var new_frame = Math.round(pct_scroll/0.002) % 14; 
-              this.setState({frames: 14, base_bg: "round-gif-2", frame: new_frame})
+              this.setState({frames: 14, base_bg: "round-gif-2", frame: new_frame, toggle: true})
             }
         },this))    
         $(window).on("keyup",_.bind(function(e){
             if(e.keyCode === 16){
-              this.setState({frames: 22, base_bg: "round-gif"})
+              this.setState({frames: 22, base_bg: "round-gif", toggle: false})
             }
         },this))    
     }
     render(){
         return (
-          <img className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"} style={{
-            top: this.state.bg_top
-          }}/>
+          <div className="full-card" style={{
+              top: this.state.bg_top
+          }}>
+            <img className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"} style={{
+            }}/>
+            <div className="vid-title" style={{
+                display: (this.state.toggle ? "none" : "block")
+            }}>{this.state.caption}</div>
+            <div className="vid-title" style={{
+                display: (this.state.toggle ? "block" : "none")
+            }}>{this.state.caption_2}</div>
+          </div>
         )
     }
 }
