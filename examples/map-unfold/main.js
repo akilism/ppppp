@@ -341,7 +341,13 @@ class Timebar extends ScanComponent {
         asap_on: false,
         playhead_left: -29
       };
-      this.dots = [0,25,60,70,99];
+      this.dots = {
+        0: "",
+        25: "I wanna get closer. Press 'SHIFT' and scroll.",
+        60: "",
+        70: "",
+        99: ""
+      }
     }
 
     adjust(last,d){
@@ -349,14 +355,22 @@ class Timebar extends ScanComponent {
       var conti = new Conti(0,0.2,"pct_scroll",function(pct,t){
         t.playhead_left = -29;
         t.asap_on = true;
+        t.caption = false;
         return t;
       }).abut(1,_.bind(function(pct,t){
-        var near_dots = _(this.dots).map(function(dot){return Math.abs(dot - (pct * 100))}),
-        asap_on = _(near_dots).any(function(dot){return dot < 1});
+        var near_dots = _(this.dots).map(function(title,dot){return [dot,Math.abs(dot - (pct * 100))]}),
+        asap_on = _(near_dots).find(function(dot){return dot[1] < 1});
+        
+        console.log(this.dots,asap_on)
+        if(asap_on && this.dots[asap_on[0]].length > 0){
+          t.caption = this.dots[asap_on[0]];
+        } else {
+            t.caption = false;
+        }
+
 
         t.playhead_left = Math.linearTween(pct, -20, track_width, 1);
-        t.asap_on = asap_on;
-        console.log(asap_on, near_dots)
+        t.asap_on = asap_on && asap_on[0];
 
         return t;
       },this))
@@ -368,10 +382,16 @@ class Timebar extends ScanComponent {
     }
 
     render(){
+      var track_passed = $("#timebar-track-inner").width() - this.state.playhead_left - 10;
+
       return(
         <div id="timebar">
           <div id="timebar-track">
             <div id="timebar-track-inner">
+
+              <div id="timebar-track-passed" style={{
+                  right: track_passed
+              }}/>
               <div className="track-dot" style={{left:0}}/>
               <div className="track-dot" style={{left: "25%"}}/>
               <div className="track-dot" style={{left: "60%"}}/>
@@ -380,6 +400,12 @@ class Timebar extends ScanComponent {
               <img src={this.state.asap_on ? "asap-head-yellow.png" : "asap-head.png"} id="playhead" style={{
                   left: this.state.playhead_left
               }}/>
+              <div id="head-caption" style={{
+                display: (this.state.caption ? "block" : "none"),
+                left: this.state.playhead_left + 40
+              }}>
+                {this.state.caption}
+              </div>
             </div>
           </div>
         </div>
@@ -393,16 +419,32 @@ class Slide1 extends ScanComponent {
       super(props);
       this.state = {
         frame: 0,
+        frames: 22,
+        base_bg: "round-gif"
       };
     }
 
     adjust(last,d){
-        var new_frame = Math.round(d.pct_scroll/0.002) % 22
+        var new_frame = Math.round(d.pct_scroll/0.002) % this.state.frames;
         return {frame: new_frame} 
+    }
+    componentDidMount(){
+        $(window).on("keydown",_.bind(function(e){
+            if(e.keyCode === 16){
+              var pct_scroll = $(window).scrollTop() / ($("body").height() - $(window).height());
+              var new_frame = Math.round(pct_scroll/0.002) % 14; 
+              this.setState({frames: 14, base_bg: "round-gif-2", frame: new_frame})
+            }
+        },this))    
+        $(window).on("keyup",_.bind(function(e){
+            if(e.keyCode === 16){
+              this.setState({frames: 22, base_bg: "round-gif"})
+            }
+        },this))    
     }
     render(){
         return (
-          <img className="full-gif" src={"round-gif/frame_" + this.state.frame + ".gif"}/>
+          <img className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"}/>
         )
     }
 }
