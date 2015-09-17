@@ -373,7 +373,7 @@ class Timebar extends ScanComponent {
       this.dots = {
         0: "",
         25: "I wanna get closer. Press 'SHIFT' and scroll.",
-        30: "",
+        45: "What's over there? Press 'SHIFT' to look around.",
         70: "",
         99: ""
       }
@@ -426,7 +426,7 @@ class Timebar extends ScanComponent {
               }}/>
               <div className="track-dot" style={{left:0}}/>
               <div className="track-dot" style={{left: "25%"}}/>
-              <div className="track-dot" style={{left: "30%"}}/>
+              <div className="track-dot" style={{left: "45%"}}/>
               <div className="track-dot" style={{left: "70%"}}/>
               <div className="track-dot" style={{left: "99%"}}/>
               <img src={this.state.asap_on ? "asap-head-yellow.png" : "asap-head.png"} id="playhead" style={{
@@ -550,13 +550,77 @@ class Pano1 extends ScanComponent {
       };
     }
 
+
+    togglePov(t){
+      var current_pov = _.clone(TRV.streetView.getPov());
+      if(t){
+          current_pov.heading += 180;
+          this.pov_toggle = true;
+      } else {
+          current_pov.heading -= 180;
+          this.pov_toggle = false;
+      }
+      TRV.animatePov(TRV.streetView,current_pov);
+    }
+
+    componentDidMount(){
+      var map = new google.maps.Map(document.getElementById('pano1'));
+      TRV.map_2 = map;
+      TRV.streetView = TRV.map_2.getStreetView();
+      TRV.streetView.setVisible(true);
+      TRV.streetView.setOptions( {linksControl: false,panControl: false, zoomControl: false, mapTypeControl: false, streetViewControl: false, overviewMapControl: false, addressControl: false, enableCloseButton: false})
+
+      var startPoint = new google.maps.LatLng(43.29638, 5.377674); 
+      TRV.streetView.setPosition(startPoint)
+      TRV.streetView.setPov({heading: 77.68007576992042, pitch: 64.9837616957764, zoom: 1})
+      $('#pano1').css({"pointer-events": "none"})
+
+      $(window).on("keydown",_.bind(function(e){
+          if(e.keyCode == 16){
+            this.togglePov(true);
+          }
+      },this))
+      $(window).on("keyup",_.bind(function(e){
+          if(e.keyCode == 16){
+            this.togglePov(false);
+          }
+      },this))
+    }
+
     adjust(last,d){
-        return {}
+      var conti = new Conti(0,0.47,"pct_scroll",function(clamped_pct, t){
+          t.new_pitch = 64.9837616957764;
+          t.new_slide = 10;
+          return t;
+      }).abut(0.57, function(clamped_pct, t){
+          t.new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1)
+          t.new_slide = Math.linearTween(clamped_pct,10,-100,1);
+          return t;
+      }).abut(1, function(clamped_pct, t){
+          t.new_pitch = 0;
+          t.new_slide = -100;
+          return t;
+      })
+
+        var trans_data = conti.run(d,{})
+
+        var current_pov = TRV.streetView.getPov();
+        current_pov.pitch = trans_data.new_pitch;
+        TRV.streetView.setPov(current_pov)
+
+        return trans_data
     }
 
     render(){
         return (
-            <div id="pano1" className="full-card"></div>
+            <div id="pano-wrapper" className="full-card">
+                <div id="pano1"/>
+                <h6 className="slide-words" style={{
+                    top: this.state.new_slide + "%"
+                }}>
+                    At 6:00 PM, I got the text. "Meet Yung Tourguide in the middle of Marseille and take this pill". A pill popped out of my phone, because it was the future. I was gonna have a crazy night in the service of journalism.
+                </h6>
+            </div>
         )
     }
 }
@@ -573,12 +637,12 @@ class Slide2 extends ScanComponent {
 
     adjust(last,d){
         var new_frame = Math.round(d.pct_scroll/0.002) % this.state.frames;
-        var target_height = $("#barbie-gif").height() * -1;
+        var target_height = ($("#barbie-gif").height() + 300) * -1;
 
-        var conti = new Conti(0,0.46,"pct_scroll",function(pct,t){
+        var conti = new Conti(0,0.45,"pct_scroll",function(pct,t){
           t.bg_top = 0;
           return t;
-        }).abut(0.5,function(pct,t){
+        }).abut(0.47,function(pct,t){
           t.bg_top = Math.linearTween(pct,0,target_height,1)
           return t;
         }).abut(1,function(pct,t){
@@ -674,12 +738,7 @@ TRV.city = {
   }
 }
 
-$(function() {
-
-  $("#page").height($(window).height() * 30);
-  TRV.last_scroll = $(window).scrollTop();
-  TRV.root = ReactDOM.render(<TestComponent/>, document.getElementById('track'));
-  $(window).on("scroll",_.throttle(function(){
+TRV.adjustAll = function(){
     var new_scroll = $(window).scrollTop(),
         window_height = $(window).height(),
         $copy = $('#copy'),
@@ -700,5 +759,16 @@ $(function() {
       });
       c.setState(new_state);
     });
-  },5));
+}
+
+$(function() {
+
+  $("#page").height($(window).height() * 30);
+  TRV.last_scroll = $(window).scrollTop();
+  TRV.root = ReactDOM.render(<TestComponent/>, document.getElementById('track'));
+  $(window).on("scroll",_.throttle(TRV.adjustAll,5));
+  setTimeout(function(){
+    $("#page").css({visibility: "visible"});
+    TRV.adjustAll();
+  },100)
 });
