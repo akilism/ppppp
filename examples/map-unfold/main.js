@@ -181,7 +181,6 @@ class TestComponent extends React.Component {
         <Title/>
         <HomeMap/>
         <Timebar/>
-        <Pano1/>
         <Slide2/>
         <Slide1/>
       </div>
@@ -223,7 +222,32 @@ class HomeMap extends ScanComponent {
       super(props);
       this.state = {
         bg_top: 0,
+        caption: false,
+        zindex:100
       };
+    }
+
+    togglePov(t){
+      var current_pov = _.clone(TRV.streetView.getPov());
+      if(t){
+          current_pov.heading = 257.68007576992042;
+          this.pov_toggle = true;
+      } else {
+          current_pov.heading = 77.68007576992042;
+          this.pov_toggle = false;
+      }
+      TRV.animatePov(TRV.streetView,current_pov);
+    }
+
+    setUpPano(){
+      TRV.streetView = TRV.map.getStreetView();
+      TRV.streetView.setVisible(true);
+      TRV.streetView.setOptions( {linksControl: false,panControl: false, zoomControl: false, mapTypeControl: false, streetViewControl: false, overviewMapControl: false, addressControl: false, enableCloseButton: false})
+
+      var startPoint = new google.maps.LatLng(43.29638, 5.377674); 
+      TRV.streetView.setPosition(startPoint)
+      TRV.streetView.setPov({heading: 77.68007576992042, pitch: 64.9837616957764, zoom: 1})
+      $('#pano1').css({"pointer-events": "none"})
     }
 
     componentDidMount(){
@@ -257,26 +281,6 @@ class HomeMap extends ScanComponent {
            var worldPoint =  projection.fromLatLngToPoint(latlng)
            return [(worldPoint.x - bottomLeft.x) * scale, (worldPoint.y - topRight.y) * scale]
         })
-        //var draw = SVG('drawing')
-        
-        //var polyline = draw.polyline(xy_path).fill('none').stroke({color: "#ff0000", width: 8 })
-        //TRV.path = _(xy_path).map(function(p){return [p[0] + 10,p[1] + 10]})
-        //TRV.polyline = polyline
-        //var s = Snap("#drawing");
-        //var line = s.polyline(_.flatten(xy_path))
-        //line.attr({
-            //stroke: "#ff0000",
-            //strokeWidth: 8,
-            //fill: "none"
-        //})
-        //TRV.path = _.flatten(xy_path)
-        //TRV.line = line
-        //TRV.a = s.polyline([0,0,100,100])
-        //TRV.a.attr({
-            //stroke: "#ff0000",
-            //strokeWidth: 8,
-            //fill: "none"
-        //})
 
       });
       TRV.map.addListener('click', function(e) {
@@ -335,6 +339,17 @@ class HomeMap extends ScanComponent {
               });
       })
       
+      this.setUpPano();
+      $(window).on("keydown",_.bind(function(e){
+          if(e.keyCode == 16){
+            this.togglePov(true);
+          }
+      },this))
+      $(window).on("keyup",_.bind(function(e){
+          if(e.keyCode == 16){
+            this.togglePov(false);
+          }
+      },this))
 
     }
 
@@ -342,24 +357,67 @@ class HomeMap extends ScanComponent {
       var dest_top = -1 * $(window).height();
       var conti = new Conti(0,0.15,"pct_scroll",function(pct,t){
         t.bg_top = 0;
+        t.zindex = 100;
         return t;
       }).abut(0.2,function(pct,t){
         t.bg_top = Math.linearTween(pct, 0, dest_top, 1);
+        t.zindex = 100;
         return t;
       }).abut(1, function(pct,t){
-        t.bg_top = dest_top;
+        t.bg_top = 0;
+        t.zindex = 20;
         return t;
       })
  
       var trans_data = conti.run(d,{})
 
-      return trans_data
+      var pano_conti = new Conti(0,0.45,"pct_scroll",function(clamped_pct, t){
+          TRV.streetView.setVisible(false);
+          t.caption = false;
+          t.new_pitch = 64.9837616957764;
+          t.new_slide = 10;
+          return t;
+      }).abut(0.47, function(clamped_pct, t){
+          TRV.streetView.setVisible(true);
+          t.caption = true;
+          t.new_pitch = 64.9837616957764;
+          t.new_slide = 10;
+          return t;
+      }).abut(0.57, _.bind(function(clamped_pct, t){
+          TRV.streetView.setVisible(true);
+          t.caption = true;
+          t.new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1)
+          t.new_slide = Math.linearTween(clamped_pct,10,-100,1);
+          return t;
+      },this)).abut(1, _.bind(function(clamped_pct, t){
+          TRV.streetView.setVisible(true);
+          t.caption = true;
+          t.new_pitch = 0;
+          t.new_slide = -100;
+          return t;
+      },this))
+
+      trans_data = pano_conti.run(d,trans_data)
+
+      if(TRV.streetView){
+        var current_pov = TRV.streetView.getPov();
+        current_pov.pitch = trans_data.new_pitch;
+        TRV.streetView.setPov(current_pov)
+      }
+
+        return trans_data
     }
 
     render(){
         return (
-          <div id="map-wrapper" style={{top: this.state.bg_top}}>
+          <div id="map-wrapper" style={{top: this.state.bg_top, zIndex: this.state.zindex}}>
                 <div id="map"/>
+                <h6 className="slide-words" style={{
+                  top: this.state.new_slide + "%",
+                  display: this.state.caption ? "block" : "none"
+                }}>
+                    At 6:00 PM, I got the text. "Meet Yung Tourguide in the middle of Marseille and take this pill". A pill popped out of my phone, because it was the future. I was gonna have a crazy night in the service of journalism.
+                </h6>
             </div>
         )   
     }
@@ -375,8 +433,8 @@ class Timebar extends ScanComponent {
       };
       this.dots = {
         0: "",
-        25: "I wanna get closer. Press 'SHIFT' and scroll.",
-        45: "What's over there? Press 'SHIFT' to look around.",
+        25: "I wanna get closer. Hold 'SHIFT' and scroll.",
+        45: "What's over there? Hold 'SHIFT' to look around.",
         70: "",
         99: ""
       }
@@ -558,7 +616,8 @@ class Slide1 extends ScanComponent {
     render(){
         return (
           <div className="full-card" style={{
-              top: this.state.bg_top
+            top: this.state.bg_top,
+            zIndex:98
           }}>
             <img className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"} style={{
             }}/>
@@ -574,96 +633,6 @@ class Slide1 extends ScanComponent {
                 display: (this.state.toggle ? "block" : "none")
             }}>{this.state.caption_2}</div>
           </div>
-        )
-    }
-}
-
-class Pano1 extends ScanComponent {
-    constructor(props) {
-      super(props);
-      this.state = {
-      };
-      this.setup = _.once(this.setUpPano)
-    }
-
-
-    togglePov(t){
-      var current_pov = _.clone(TRV.streetView.getPov());
-      if(t){
-          current_pov.heading += 180;
-          this.pov_toggle = true;
-      } else {
-          current_pov.heading -= 180;
-          this.pov_toggle = false;
-      }
-      TRV.animatePov(TRV.streetView,current_pov);
-    }
-
-    setUpPano(){
-      var map = new google.maps.Map(document.getElementById('pano1'));
-      TRV.map_2 = map;
-      TRV.streetView = TRV.map_2.getStreetView();
-      TRV.streetView.setVisible(true);
-      TRV.streetView.setOptions( {linksControl: false,panControl: false, zoomControl: false, mapTypeControl: false, streetViewControl: false, overviewMapControl: false, addressControl: false, enableCloseButton: false})
-
-      var startPoint = new google.maps.LatLng(43.29638, 5.377674); 
-      TRV.streetView.setPosition(startPoint)
-      TRV.streetView.setPov({heading: 77.68007576992042, pitch: 64.9837616957764, zoom: 1})
-      $('#pano1').css({"pointer-events": "none"})
-    }
-
-    componentDidMount(){
-
-      $(window).on("keydown",_.bind(function(e){
-          if(e.keyCode == 16){
-            this.togglePov(true);
-          }
-      },this))
-      $(window).on("keyup",_.bind(function(e){
-          if(e.keyCode == 16){
-            this.togglePov(false);
-          }
-      },this))
-    }
-
-    adjust(last,d){
-      var conti = new Conti(0,0.47,"pct_scroll",function(clamped_pct, t){
-          t.new_pitch = 64.9837616957764;
-          t.new_slide = 10;
-          return t;
-      }).abut(0.57, _.bind(function(clamped_pct, t){
-          this.setup();
-          t.new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1)
-          t.new_slide = Math.linearTween(clamped_pct,10,-100,1);
-          return t;
-      },this)).abut(1, _.bind(function(clamped_pct, t){
-          this.setup();
-          t.new_pitch = 0;
-          t.new_slide = -100;
-          return t;
-      },this))
-
-        var trans_data = conti.run(d,{})
-
-        if(TRV.streetView){
-          var current_pov = TRV.streetView.getPov();
-          current_pov.pitch = trans_data.new_pitch;
-          TRV.streetView.setPov(current_pov)
-        }
-
-        return trans_data
-    }
-
-    render(){
-        return (
-            <div id="pano-wrapper" className="full-card">
-                <div id="pano1"/>
-                <h6 className="slide-words" style={{
-                    top: this.state.new_slide + "%"
-                }}>
-                    At 6:00 PM, I got the text. "Meet Yung Tourguide in the middle of Marseille and take this pill". A pill popped out of my phone, because it was the future. I was gonna have a crazy night in the service of journalism.
-                </h6>
-            </div>
         )
     }
 }
@@ -714,7 +683,8 @@ class Slide2 extends ScanComponent {
     render(){
         return (
           <img style={{
-            top: this.state.bg_top
+            top: this.state.bg_top,
+            zIndex: 97
           }} id="barbie-gif" className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"}/>
         )
     }
