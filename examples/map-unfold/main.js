@@ -283,27 +283,54 @@ class HomeMap extends ScanComponent {
       })
 
 
-      //var path = _.map(TRV.city, function(v,k){
-        //return {name: k, coords: new google.maps.LatLng(v.lat, v.lng)}
-      //})
+      var path = _.map(TRV.city, function(v,k){
+        return {name: k, coords: new google.maps.LatLng(v.lat, v.lng)}
+      })
 
       //console.log("getting path")
       //dir.getXY(path).then(function(d){
         //console.log("xy",d)
       //})
 
-      //var transit_path = dir.getLatLng(path)
-      //transit_path.then(function(d){
-        //var path = _(d).map(function(p){return {lat: p[0], lng: p[1]}})
-        //var tripPath = new google.maps.Polyline({
-            //path: path,
-            //geodesic: true,
-            //strokeColor: '#FF0000',
-            //strokeOpacity: 0.9,
-            //strokeWeight: 8
-          //});
-         //tripPath.setMap(TRV.map)
-      //})
+      var transit_path = dir.getLatLng(path)
+      transit_path.then(function(d){
+        var d = _(d).select(function(p){return p[0] && p[1]})
+        var path = _(d).map(function(p){return {lat: p[0], lng: p[1]}})
+        var tripPath = new google.maps.Polyline({
+            path: path,
+            geodesic: true,
+            strokeColor: '#FFFF00',
+            strokeWeight: 12
+          });
+         tripPath.setMap(TRV.map)
+          var image = {
+              url: 'yellow-dot.png',
+              size: new google.maps.Size(26,26),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(13,13),
+              zIndex: 1
+            };
+         _(TRV.city).each(function(v,k){
+          var marker = new google.maps.Marker({
+                position: {lat: v.lat, lng: v.lng},
+                map: TRV.map,
+                icon: image
+              });
+         })
+
+         var asap = {
+              url: 'asap-head-yellow.png',
+              size: new google.maps.Size(80,110),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(40,55),
+              zIndex: 2
+         }
+          var marker = new google.maps.Marker({
+                position: {lat: TRV.city["bar"].lat, lng: TRV.city["bar"].lng},
+                map: TRV.map,
+                icon: asap
+              });
+      })
       
 
     }
@@ -435,10 +462,10 @@ class Slide1 extends ScanComponent {
     adjust(last,d){
       var new_frame = Math.round(d.pct_scroll/0.002) % this.state.frames,
           target_height = -1300;
-      var conti = new Conti(0,0.4,"pct_scroll",function(pct,t){
+      var conti = new Conti(0,0.41,"pct_scroll",function(pct,t){
         t.bg_top = 0;
         return t;
-      }).abut(0.45,function(pct,t){
+      }).abut(0.46,function(pct,t){
         t.bg_top = Math.linearTween(pct,0,target_height,1)
         return t;
       }).abut(1,function(pct,t){
