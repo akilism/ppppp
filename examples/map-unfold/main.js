@@ -315,20 +315,22 @@ class HomeMap extends ScanComponent {
           var marker = new google.maps.Marker({
                 position: {lat: v.lat, lng: v.lng},
                 map: TRV.map,
+                zIndex: 1,
                 icon: image
               });
          })
 
          var asap = {
               url: 'asap-head-yellow.png',
-              size: new google.maps.Size(80,110),
+              size: new google.maps.Size(90,110),
               origin: new google.maps.Point(0, 0),
               anchor: new google.maps.Point(40,55),
-              zIndex: 2
+              zIndex: 10
          }
           var marker = new google.maps.Marker({
                 position: {lat: TRV.city["bar"].lat, lng: TRV.city["bar"].lng},
                 map: TRV.map,
+                zIndex: 10,
                 icon: asap
               });
       })
@@ -368,6 +370,7 @@ class Timebar extends ScanComponent {
       super(props);
       this.state = {
         asap_on: false,
+        zoom: false,
         playhead_left: -29
       };
       this.dots = {
@@ -377,6 +380,21 @@ class Timebar extends ScanComponent {
         70: "",
         99: ""
       }
+    }
+
+    componentDidMount(){
+        $(window).on("keydown",_.bind(function(e){
+            if(e.keyCode === 16){
+              $("#bass-hit")[0].play();
+              this.setState({zoom: true})
+            }
+        },this))    
+        $(window).on("keyup",_.bind(function(e){
+            if(e.keyCode === 16){
+              $("#bass-hit-2")[0].play();
+              this.setState({zoom: false})
+            }
+        },this))    
     }
 
     adjust(last,d){
@@ -409,6 +427,9 @@ class Timebar extends ScanComponent {
  
       var trans_data = conti.run(d,{})
 
+      if(trans_data.asap_on && ! this.state.asap_on){
+        $("#click-hit")[0].play();
+      }
 
       return trans_data
     }
@@ -418,6 +439,15 @@ class Timebar extends ScanComponent {
 
       return(
         <div id="timebar">
+          <audio id="bass-hit">
+            <source src="bass-hit.mp3" type="audio/mpeg"/>
+          </audio>
+          <audio id="bass-hit-2">
+            <source src="bass-hit-2.mp3" type="audio/mpeg"/>
+          </audio>
+          <audio id="click-hit">
+            <source src="click.mp3" type="audio/mpeg"/>
+          </audio>
           <div id="timebar-track">
             <div id="timebar-track-inner">
 
@@ -430,9 +460,14 @@ class Timebar extends ScanComponent {
               <div className="track-dot" style={{left: "70%"}}/>
               <div className="track-dot" style={{left: "99%"}}/>
               <img src={this.state.asap_on ? "asap-head-yellow.png" : "asap-head.png"} id="playhead" style={{
+                  display: this.state.zoom ? "none" : "block",
                   left: this.state.playhead_left
               }}/>
-              <div id="head-caption" style={{
+              <img src={this.state.asap_on ? "asap-head-yellow.png" : "asap-head.png"} id="playhead-z" style={{
+                  display: this.state.zoom ? "block" : "none",
+                  left: this.state.playhead_left
+              }}/>
+              <div id="head-caption" className={ this.state.zoom ? "z" : ""} style={{
                 display: (this.state.caption ? "block" : "none"),
                 left: this.state.playhead_left + 40
               }}>
@@ -548,6 +583,7 @@ class Pano1 extends ScanComponent {
       super(props);
       this.state = {
       };
+      this.setup = _.once(this.setUpPano)
     }
 
 
@@ -563,7 +599,7 @@ class Pano1 extends ScanComponent {
       TRV.animatePov(TRV.streetView,current_pov);
     }
 
-    componentDidMount(){
+    setUpPano(){
       var map = new google.maps.Map(document.getElementById('pano1'));
       TRV.map_2 = map;
       TRV.streetView = TRV.map_2.getStreetView();
@@ -574,6 +610,9 @@ class Pano1 extends ScanComponent {
       TRV.streetView.setPosition(startPoint)
       TRV.streetView.setPov({heading: 77.68007576992042, pitch: 64.9837616957764, zoom: 1})
       $('#pano1').css({"pointer-events": "none"})
+    }
+
+    componentDidMount(){
 
       $(window).on("keydown",_.bind(function(e){
           if(e.keyCode == 16){
@@ -592,21 +631,25 @@ class Pano1 extends ScanComponent {
           t.new_pitch = 64.9837616957764;
           t.new_slide = 10;
           return t;
-      }).abut(0.57, function(clamped_pct, t){
+      }).abut(0.57, _.bind(function(clamped_pct, t){
+          this.setup();
           t.new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1)
           t.new_slide = Math.linearTween(clamped_pct,10,-100,1);
           return t;
-      }).abut(1, function(clamped_pct, t){
+      },this)).abut(1, _.bind(function(clamped_pct, t){
+          this.setup();
           t.new_pitch = 0;
           t.new_slide = -100;
           return t;
-      })
+      },this))
 
         var trans_data = conti.run(d,{})
 
-        var current_pov = TRV.streetView.getPov();
-        current_pov.pitch = trans_data.new_pitch;
-        TRV.streetView.setPov(current_pov)
+        if(TRV.streetView){
+          var current_pov = TRV.streetView.getPov();
+          current_pov.pitch = trans_data.new_pitch;
+          TRV.streetView.setPov(current_pov)
+        }
 
         return trans_data
     }

@@ -346,9 +346,16 @@ p {
 
 #playhead{
     position:absolute;
-    left:0;
+    margin-left:-10px;
     height:80px;
     top:-36px;
+    z-index:11;
+}
+#playhead-z{
+    position:absolute;
+    margin-left:-10px;
+    height:100px;
+    top:-50px;
     z-index:11;
 }
 .track-dot{
@@ -370,6 +377,18 @@ p {
     bottom: 20px;
     z-index:10;
     font-family:"TradeGothic";
+}
+#head-caption.z{
+    padding:6px 14px 4px 14px;
+    width: 260px;
+    border:4px solid yellow;
+    border-radius:14px;
+    position:absolute;
+    background-color:white;
+    bottom: 20px;
+    z-index:10;
+    font-family:"TradeGothic";
+    font-size:20px;
 }
 .full-card{
     position:fixed;
