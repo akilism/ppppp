@@ -181,6 +181,7 @@ class TestComponent extends React.Component {
         <Title/>
         <HomeMap/>
         <Timebar/>
+        <Pano1/>
         <Slide2/>
         <Slide1/>
       </div>
@@ -372,7 +373,7 @@ class Timebar extends ScanComponent {
       this.dots = {
         0: "",
         25: "I wanna get closer. Press 'SHIFT' and scroll.",
-        60: "",
+        30: "",
         70: "",
         99: ""
       }
@@ -425,7 +426,7 @@ class Timebar extends ScanComponent {
               }}/>
               <div className="track-dot" style={{left:0}}/>
               <div className="track-dot" style={{left: "25%"}}/>
-              <div className="track-dot" style={{left: "60%"}}/>
+              <div className="track-dot" style={{left: "30%"}}/>
               <div className="track-dot" style={{left: "70%"}}/>
               <div className="track-dot" style={{left: "99%"}}/>
               <img src={this.state.asap_on ? "asap-head-yellow.png" : "asap-head.png"} id="playhead" style={{
@@ -455,7 +456,10 @@ class Slide1 extends ScanComponent {
         bg_top: 0,
         caption: "",
         caption_2: "",
-        toggle: false
+        toggle: false,
+        intro: true,
+        intro_text: "A$AP Rocky is sitting across from me at a table inside Brooklyn’s Sound Factory Studios. He looks away from the table, away from a sparse dinner he occasionally picks at, away from me, and repeats, under his breath, the two words I’ve never heard him say, and didn’t think I ever would: “No comment.”",
+        intro_text_2: "No comment"
       };
     }
 
@@ -479,16 +483,20 @@ class Slide1 extends ScanComponent {
       var caption_conti = new Conti(0,0.25,"pct_scroll",function(pct,t){
         t.caption = ""
         t.caption_2 = ""
+        t.intro = true
         return t;
       }).abut(0.3,function(pct,t){
+        t.intro = false
         t.caption = "Between the bar and the club, in the magic hour, we broke down in the mountains."
         t.caption_2 = "Between the bar and the club, in the magic hour, we stopped our car for narrative impact."
         return t;
       }).abut(0.35,function(pct,t){
+        t.intro = false
         t.caption = "The hills were the kind of gold you find in lion manes."
         t.caption_2 = "The hills were just hills, ya know?."
         return t;
       }).abut(1,function(pct,t){
+        t.intro = false
         t.caption = "We felt like we were in some sort of lyrical interactive media."
         t.caption_2 = "We felt like we were in some sort of bullshit interactive media."
         return t;
@@ -519,6 +527,11 @@ class Slide1 extends ScanComponent {
           }}>
             <img className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"} style={{
             }}/>
+            <div className="vid-intro" style={{
+                display: (this.state.intro ? "block" : "none") 
+            }}> 
+                {this.state.toggle ? this.state.intro_text_2 : this.state.intro_text}
+            </div>
             <div className="vid-title" style={{
                 display: (this.state.toggle ? "none" : "block")
             }}>{this.state.caption}</div>
@@ -530,19 +543,52 @@ class Slide1 extends ScanComponent {
     }
 }
 
+class Pano1 extends ScanComponent {
+    constructor(props) {
+      super(props);
+      this.state = {
+      };
+    }
+
+    adjust(last,d){
+        return {}
+    }
+
+    render(){
+        return (
+            <div id="pano1" className="full-card"></div>
+        )
+    }
+}
 class Slide2 extends ScanComponent {
     constructor(props) {
       super(props);
       this.state = {
         frame: 0,
         frames: 20,
-        base_bg: "barbie-gif"
+        base_bg: "barbie-gif",
+        bg_top: 0
       };
     }
 
     adjust(last,d){
         var new_frame = Math.round(d.pct_scroll/0.002) % this.state.frames;
-        return {frame: new_frame} 
+        var target_height = $("#barbie-gif").height() * -1;
+
+        var conti = new Conti(0,0.46,"pct_scroll",function(pct,t){
+          t.bg_top = 0;
+          return t;
+        }).abut(0.5,function(pct,t){
+          t.bg_top = Math.linearTween(pct,0,target_height,1)
+          return t;
+        }).abut(1,function(pct,t){
+          t.bg_top = target_height;
+          return t;
+        })
+   
+        var trans_data = conti.run(d,{frame: new_frame})
+
+        return trans_data;
     }
     componentDidMount(){
         $(window).on("keydown",_.bind(function(e){
@@ -560,7 +606,9 @@ class Slide2 extends ScanComponent {
     }
     render(){
         return (
-          <img className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"}/>
+          <img style={{
+            top: this.state.bg_top
+          }} id="barbie-gif" className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"}/>
         )
     }
 }
@@ -589,11 +637,10 @@ class Title extends ScanComponent {
         top: this.state.bg_top,
         width: this.state.width,
         height: this.state.height,
-        backgroundImage: "url('marseille_1.jpg')",
+        backgroundImage: "url('asap-title.png')",
         backgroundSize: "cover",
         zIndex: 2000000
       }}>
-        <h3 className="vid-title" style={{fontSize: 300}}>MARSEILLE</h3>
       </div>
     )
   }
