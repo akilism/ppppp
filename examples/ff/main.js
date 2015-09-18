@@ -96,7 +96,8 @@ function createViewport(Component, container) {
     componentWillMount() {
       var viewportWidth, viewportHeight;
       if (container === document.body) {
-        [viewportWidth, viewportHeight] = [$(window).width(), $(window).height()];
+        //if mobile use screen height and width
+        [viewportWidth, viewportHeight] = [$(window).width(), ($(window).height()+60)];
       } else {
         [viewportWidth, viewportHeight] = [$(container).width(), $(container).height()];
       }
@@ -368,11 +369,11 @@ class Title extends ScanComponent {
   }
 
   render() {
+        //     width: this.state.width,
+        // height: this.state.height,
     return(
       <div className='bg-slide' style={{
         top: this.state.bg_top,
-        width: this.state.width,
-        height: this.state.height,
         backgroundImage: "url('" + this.props.backgroundImage + "')",
         backgroundSize: "cover",
         display: "flex",
@@ -582,11 +583,11 @@ class Slide1 extends ScanComponent {
   }
 
   render() {
+        //     width: this.state.width,
+        // height: this.state.height,
     return(
       <div className='bg-slide' style={{
         top: this.state.bg_top,
-        width: this.state.width,
-        height: this.state.height,
       }}>
         <div ref="map" id="slide1" style= {{
           width: this.state.width,
@@ -657,12 +658,13 @@ class Slide2 extends ScanComponent {
   }
 
   render() {
+        //     width: this.state.width,
+        // height: this.state.height,
     return(
       <div className='bg-slide' style={{
         position: "fixed",
         top: this.state.bg_top,
-        width: this.state.width,
-        height: this.state.height,
+
         backgroundColor: "white"
       }}>
       </div>
