@@ -181,7 +181,7 @@ class Root extends React.Component {
         <Slide3 measurements={this.props.measurements} start={0.75} end={1} />
         <Slide2 measurements={this.props.measurements} start={0.65} end={0.75} />
         <Slide1 measurements={this.props.measurements} start={0.10} end={0.65} />
-        <Title measurements={this.props.measurements} start={0} end={0.10} title="marseille" backgroundImage="/erik3/marseille_1.jpg" />
+        <Title measurements={this.props.measurements} start={0} end={0.10} title="mobile" backgroundImage="/erik3/marseille_1.jpg" />
       </div>
     );
   }
@@ -385,19 +385,31 @@ class Slide1 extends ScanComponent {
     this.state.streetView.setPov({heading: 77.68007576992042, pitch: 30.9837616957764, zoom: 1}); //64.9837616957764
     $(domNode).css({"pointer-events": "none"});
 
-    $(window).on("keydown",_.bind(function(e){
-        if(e.keyCode == 32){
-            if(this.state.active){
-                e.preventDefault();
-                this.togglePov();
-                $(".v-white-glow").css({opacity:1});
-                setTimeout(function(){
-                    $(".v-white-glow").css({opacity:0});
-                },500)
-                return false;
-            }
+    $(window).on("keydown", (e) => {
+      if(e.keyCode === 32 && this.state.active){
+        e.preventDefault();
+        this.togglePov();
+        return false;
+      }
+    });
+
+    var hammerSwipe = new Hammer(document.body);
+
+    hammerSwipe.on('swipeleft', (ev) => {
+        if(this.state.active) {
+          ev.preventDefault();
+          this.swipePov('left');
+          return false;
         }
-    },this));
+    });
+
+    hammerSwipe.on('swiperight', (ev) => {
+        if(this.state.active) {
+          ev.preventDefault();
+          this.swipePov('right');
+          return false;
+        }
+    });
   }
 
   isActive(d){
@@ -469,6 +481,16 @@ class Slide1 extends ScanComponent {
     return {active: active, top: 0, caption: caption, slideWords: trans_data.new_slide + "%"};
   }
 
+  swipePov(direction){
+    var current_pov = _.clone(this.state.streetView.getPov());
+    if(direction === 'left') {
+      current_pov.heading += 180;
+    } else {
+      current_pov.heading -= 180;
+    }
+    animatePov(this.state.streetView,current_pov);
+  }
+
   togglePov(){
     var current_pov = _.clone(this.state.streetView.getPov());
     if(!this.pov_toggle){
@@ -483,7 +505,7 @@ class Slide1 extends ScanComponent {
 
   render() {
     return(
-      <div className='bg-slide' style={{
+      <div ref="slideRoot" className='bg-slide' style={{
         top: this.state.top,
         height: this.props.measurements.viewportHeight
       }}>
@@ -586,25 +608,25 @@ class Slide2 extends ScanComponent {
   }
 
   componentDidMount() {
-    $(window).on("keydown",_.bind(function(e){
+    $(window).on("keydown",(e) => {
         if(e.keyCode == 32){
             if(this.state.active){
                 e.preventDefault();
-                this.toggleBars();
-                $(".v-white-glow").css({opacity:1});
-                setTimeout(_.bind(function(){
-                    $(".v-white-glow").css({opacity:0});
-                    if(! this.played){
-                        $("#city")[0].play();
-                        $("#city-v")[0].play();
-                        $("#city")[0].volume = 0.4;
-                        this.played = true;
-                    }
-                },this),500)
+                this.toggleBars().bind(this);
                 return false;
             }
         }
-    },this))
+    });
+
+    var hammerSwipe = new Hammer(document.body);
+
+    hammerSwipe.on('swipe', (ev) => {
+        if(this.state.active) {
+          ev.preventDefault();
+          this.toggleBars().bind(this);
+          return false;
+        }
+    });
   }
 
   render() {

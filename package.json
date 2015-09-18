@@ -22,9 +22,9 @@
     "polyline": "0.2.0",
     "pym.js": "0.4.5",
     "raf": "3.1.0",
-    "react-frame-component": "0.3.4",
     "react": "0.14.0-rc1",
     "react-dom": "0.14.0-rc1",
+    "react-frame-component": "0.3.4",
     "three": "0.71.0",
     "underscore": "1.8.3"
   }
