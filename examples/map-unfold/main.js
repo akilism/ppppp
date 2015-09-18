@@ -349,7 +349,7 @@ class HomeMap extends ScanComponent {
       
       this.setUpPano();
       $(window).on("keydown",_.bind(function(e){
-          if(e.keyCode == 16){
+          if(e.keyCode == 16 && this.state.zindex < 100){
             this.togglePov(true,_.bind(function(){
                 this.last_title = this.state.title;
                 this.setState({face:true, title: false});
@@ -590,8 +590,9 @@ class Slide1 extends ScanComponent {
         caption_2: "",
         toggle: false,
         intro: true,
-        intro_text: "A$AP Rocky is sitting across from me at a table inside Brooklyn’s Sound Factory Studios. He looks away from the table, away from a sparse dinner he occasionally picks at, away from me, and repeats, under his breath, the two words I’ve never heard him say, and didn’t think I ever would: “No comment.”",
-        intro_text_2: "No comment"
+        intro_text: "A$AP Rocky is sitting across from me at a table inside Brooklyn’s Sound Factory Studios. He looks away from the table, away from a sparse dinner he occasionally picks at, away from me, and repeats, under his breath, the two words I’ve never heard him say, and didn’t think I ever would: “No comment.”<br/><br/>To be fair, it’s been a long day, and he’s barely on the other end of it. A studio all-nighter that ended at 8 a.m. A photo shoot. This interview. A corporate fashion meeting. But despite his schedule, the “no comment” is still a surprise, even though it’s in response to a question about his love life.",
+        intro_text_2: "No comment",
+        intro_top: 0
       };
     }
 
@@ -611,11 +612,25 @@ class Slide1 extends ScanComponent {
  
       var trans_data = conti.run(d,{})
       trans_data.frame = new_frame;
+      var delta = $(".intro-cropper-inner").innerHeight() - $(".intro-cropper").innerHeight();
 
-      var caption_conti = new Conti(0,0.25,"pct_scroll",function(pct,t){
+      var caption_conti = new Conti(0,0.2,"pct_scroll",function(pct,t){
         t.caption = ""
         t.caption_2 = ""
         t.intro = true
+        t.intro_top = 0
+        return t;
+      }).abut(0.23,function(pct,t){
+        t.caption = ""
+        t.caption_2 = ""
+        t.intro = true
+        t.intro_top = Math.linearTween(pct,0,-delta,1)
+        return t;
+      }).abut(0.25,function(pct,t){
+        t.caption = ""
+        t.caption_2 = ""
+        t.intro = true
+        t.intro_top = -delta
         return t;
       }).abut(0.3,function(pct,t){
         t.intro = false
@@ -663,7 +678,12 @@ class Slide1 extends ScanComponent {
             <div className="vid-intro" style={{
                 display: (this.state.intro ? "block" : "none") 
             }}> 
-                {this.state.toggle ? this.state.intro_text_2 : this.state.intro_text}
+                <div className="intro-cropper">
+                  <div className="intro-cropper-inner" dangerouslySetInnerHTML={{__html: this.state.toggle ? this.state.intro_text_2 : this.state.intro_text}} style={{
+                    top: this.state.intro_top 
+                  }}>
+                    </div>
+                </div>
             </div>
             <div className="vid-title" style={{
                 display: (this.state.toggle ? "none" : "block")
