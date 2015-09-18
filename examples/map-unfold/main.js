@@ -145,6 +145,7 @@ window.TRV = {
 };
 
 TRV.animatePov = function(sv,pov){
+    clearTimeout(TRV.anim)
     var start_pov = sv.getPov(),
         ticks = 24,
         heading_d = pov.heading - start_pov.heading,
@@ -162,7 +163,7 @@ TRV.animatePov = function(sv,pov){
         sv.setPov({heading: new_heading, pitch: new_pitch, zoom: new_zoom});
         i++;
         if(i < ticks){
-            setTimeout(function(){
+            TRV.anim = setTimeout(function(){
               next();
             },33)
         }
@@ -506,6 +507,9 @@ class Timebar extends ScanComponent {
           <audio id="click-hit">
             <source src="click.mp3" type="audio/mpeg"/>
           </audio>
+          <audio id="bass-casino" autoPlay>
+            <source src="bass-casino.mp3" type="audio/mpeg"/>
+          </audio>
           <div id="timebar-track">
             <div id="timebar-track-inner">
 
@@ -784,4 +788,5 @@ $(function() {
     $("#page").css({visibility: "visible"});
     TRV.adjustAll();
   },100)
+
 });
