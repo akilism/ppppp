@@ -104,7 +104,7 @@ function createViewport(Component, container) {
 
       this.setState({measurements: {
         viewportWidth, viewportHeight, viewportLeft: 0, viewportTop: 0,
-        contentHeight: (viewportHeight * 4), adjustedViewportTop: 0,
+        contentHeight: (viewportHeight * 12), adjustedViewportTop: 0,
         pctScroll: 0 }});
     }
 
@@ -176,13 +176,12 @@ class Root extends React.Component {
   }
 
   render() {
-
     return (
       <div>
         <Slide3 measurements={this.props.measurements} start={0.75} end={1} />
-        <Slide2 measurements={this.props.measurements} start={0.5} end={0.6} />
-        <Slide1 measurements={this.props.measurements} start={0.15} end={0.5} />
-        <Title measurements={this.props.measurements} start={0} end={0.15} title="marseille" backgroundImage="/erik3/marseille_1.jpg" />
+        <Slide2 measurements={this.props.measurements} start={0.65} end={0.75} />
+        <Slide1 measurements={this.props.measurements} start={0.10} end={0.65} />
+        <Title measurements={this.props.measurements} start={0} end={0.10} title="marseille" backgroundImage="/erik3/marseille_1.jpg" />
       </div>
     );
   }
@@ -321,13 +320,19 @@ class Title extends ScanComponent {
     this.setState(_.extend(this.state, this.adjust(this.state)));
   }
 
-  adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements;
+  isActive(d){
+    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
+  }
 
-    var dest_top = viewportHeight * -1,
-      newTop;
-    if(pctScroll < 0.1){
-        newTop = Math.linearTween((pctScroll-this.props.start), 0, dest_top, 0.1);
+  adjust(last_state) {
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
+        active = this.isActive(this.props.measurements),
+        dest_top = viewportHeight * -1,
+        newTop;
+
+    if(adjustedPctScroll < 1){
+        newTop = Math.linearTween(adjustedPctScroll, 0, dest_top, 1);
     } else if (pctScroll) {
         newTop = dest_top;
     }
@@ -352,10 +357,10 @@ class Slide1 extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-      top: 0,
+      top: 10,
       caption: false,
       active: false,
-      slideWords: "10%"
+      slideWords: "6.5%"
     };
   }
 
@@ -401,8 +406,8 @@ class Slide1 extends ScanComponent {
 
   adjust(last_state, d) {
     let {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
         active = this.isActive(this.props.measurements),
-        adjustedPctScroll = pctScroll - this.props.start,
         currentPov = this.state.streetView.getPov(),
         caption = false;
 
@@ -411,14 +416,14 @@ class Slide1 extends ScanComponent {
     var conti = new Conti(0,0.05,"adjustedPctScroll",function(clamped_pct, t){
         t.new_pitch = 64.9837616957764;
         t.new_volume = 0
-        t.new_slide = 10;
+        t.new_slide = 6.5;
         return t;
-      }).abut(0.3, function(clamped_pct, t){
+      }).abut(0.1, function(clamped_pct, t){
         t.new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1)
         t.new_volume = Math.linearTween(clamped_pct,0,0.6,1);
         t.new_slide = Math.linearTween(clamped_pct,10,-100,1);
         return t;
-      }).abut(0.65, function(clamped_pct, t){
+      }).abut(0.35, function(clamped_pct, t){
         t.new_pitch = 0;
         t.new_volume = 0.6;
         t.new_slide = -100;
@@ -444,16 +449,16 @@ class Slide1 extends ScanComponent {
 
     if (adjustedPctScroll < 0) {
         caption = false
-    } else if ((adjustedPctScroll >= 0.15 && adjustedPctScroll < 0.2)){
+    } else if ((adjustedPctScroll >= 0.25 && adjustedPctScroll < 0.45)){
         caption = "I woke up in the middle of the promenade.";
         if(caption !== this.state.caption){ $("#shopping-mp3-1")[0].play(); }
-    } else if ((adjustedPctScroll >= 0.2 && adjustedPctScroll < 0.25)){
+    } else if ((adjustedPctScroll >= 0.45 && adjustedPctScroll < 0.65)){
         caption = "Traffic had stopped, my head spinning.";
         if(caption !== this.state.caption){ $("#shopping-mp3-2")[0].play(); }
-    } else if ((adjustedPctScroll >= 0.25 && adjustedPctScroll < 0.3)) {
+    } else if ((adjustedPctScroll >= 0.65 && adjustedPctScroll < 0.85)) {
         caption = "Yung TourGuide was laughing.<br/>'First time, eh?'";
         if(caption !== this.state.caption){ $("#shopping-mp3-4")[0].play(); }
-    } else if (adjustedPctScroll > 0.3 && adjustedPctScroll < 0.45) {
+    } else if (adjustedPctScroll > 0.85 && adjustedPctScroll < 1) {
         caption = "My hand was clutching a bottle of magic juice. My night had just started."
         if(caption !== this.state.caption){ $("#shopping-mp3-3")[0].play(); }
     }
@@ -539,9 +544,9 @@ class Slide2 extends ScanComponent {
 
   adjust(last_state, d) {
     var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
-        adjustedPctScroll = pctScroll - this.props.start,
         offsetTop = -1 * viewportHeight,
         offsetBottom = viewportHeight,
+        adjustedPctScroll = this.scaler(pctScroll),
         active = this.isActive(this.props.measurements),
         bgBottom = 0,
         clampedScroll;
@@ -551,8 +556,8 @@ class Slide2 extends ScanComponent {
     } else if (pctScroll > this.props.end){
         bgBottom = 0;
     } else {
-        clampedScroll = adjustedPctScroll / 0.1
-        bgBottom = Math.linearTween(clampedScroll, offsetBottom,-1 * offsetBottom, 1)
+        // clampedScroll = adjustedPctScroll / 0.1
+        bgBottom = Math.linearTween(adjustedPctScroll, offsetBottom, -1 * offsetBottom, 1)
     }
 
     return {bottom: bgBottom, active: active};
@@ -674,52 +679,58 @@ class Slide3 extends ScanComponent {
   }
 
   adjust(last_state, d) {
-
     var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
         active = this.isActive(this.props.measurements),
         adjustedPctScroll = this.scaler(pctScroll),
         adjScroll,
         newTop;
 
-    // if(!this.isActive(this.props.measurements)) { return last_state; }
+    if(adjustedPctScroll <= 0) {
+      return { map_opacity: 0,
+        map_progress: 0,
+        black: 0,
+        top: -1 * viewportHeight };
+    }
 
-    if(adjustedPctScroll > 0.25) {
+    // , ':', contentHeight, ':', viewportHeight, ':', viewportTop
+    // console.log(active, ':', adjustedPctScroll, ':', pctScroll);
+
+    if(adjustedPctScroll > 0.20) {
       newTop = 0;
     } else {
-      newTop = Math.linearTween(adjustedPctScroll, -viewportHeight, viewportHeight, 0.25);
+      newTop = Math.linearTween(adjustedPctScroll, -viewportHeight, viewportHeight, 0.20);
     }
 
 
     if(adjustedPctScroll < 0.35){
-        // $("#diner-mp3")[0].play();
+        $("#diner-mp3")[0].play();
         var new_volume = 0;
-    } else if (adjustedPctScroll >= 0.35 && adjustedPctScroll < 0.45) {
-        // $("#diner-mp3")[0].play();
-        // var clamped_pct = (adjustedPctScroll - 0.45) / 0.05;
+    } else if (adjustedPctScroll >= 0.30 && adjustedPctScroll < 0.55) {
+        $("#diner-mp3")[0].play();
         var new_volume = Math.linearTween(adjustedPctScroll, 0, 0.6, 1);
-    } else if (adjustedPctScroll >= 0.45 && adjustedPctScroll < 0.55) {
-        // $("#diner-mp3")[0].play();
+    } else if (adjustedPctScroll >= 0.55 && adjustedPctScroll < 0.70) {
+        $("#diner-mp3")[0].play();
         var new_volume = 0.6
     }
 
 
     var caption = false;
-    if (adjustedPctScroll < 0.25) {
+    if (adjustedPctScroll < 0.20) {
         caption = false
-    } else if (adjustedPctScroll >= 0.25 && adjustedPctScroll < 0.35){
+    } else if (adjustedPctScroll >= 0.20 && adjustedPctScroll < 0.30){
         caption = "Yung Tourguide took me to his favorite diner, Schmetty's.";
         if(caption !== this.state.caption){
-          // $("#diner-mp3-1")[0].play();
+          $("#diner-mp3-1")[0].play();
         }
-    } else if (adjustedPctScroll >= 0.35 && adjustedPctScroll < 0.55){
+    } else if (adjustedPctScroll >= 0.30 && adjustedPctScroll < 0.55){
         caption = "The deli meats were chopped. I was chopped. I needed extra ketchup but they weren't serving Heinz.";
         if(caption !== this.state.caption){
-          // $("#diner-mp3-2")[0].play();
+          $("#diner-mp3-2")[0].play();
         }
     } else if (adjustedPctScroll >= 0.55 && adjustedPctScroll < 0.70) {
         caption = "Yung Tourguide said that he ate here 8 times a week, 50 weeks a year.";
         if(caption !== this.state.caption){
-          // $("#diner-mp3-3")[0].play();
+          $("#diner-mp3-3")[0].play();
         }
     }
 
@@ -731,10 +742,10 @@ class Slide3 extends ScanComponent {
         t.map_opacity = 0;
         t.volume = new_volume || 0;
         t.bells_volume = 0;
-        clearInterval(this.bells_interval)
-        clearInterval(this.bells_interval_2)
-        this.bells_interval = false
-        this.bells_interval_2 = false
+        clearInterval(this.bells_interval);
+        clearInterval(this.bells_interval_2);
+        this.bells_interval = false;
+        this.bells_interval_2 = false;
         return t;
     }).abut(0.70, function(pct, t){
         t.black = Math.linearTween(pct,0,0.7,1);
@@ -762,7 +773,7 @@ class Slide3 extends ScanComponent {
             },860)
         }
         return t;
-    }).abut(0.80, function(pct, t){
+    }).abut(2, function(pct, t){
         t.black = 0.7;
         t.volume = 0;
         t.map_progress = 1;
@@ -779,11 +790,10 @@ class Slide3 extends ScanComponent {
 
 
     var map_data = map_conti.run(_.extend(this.props.measurements, {adjustedPctScroll}),{})
-    map_data.volume = 0;
-    $("#diner-mp3")[0].volume = map_data.volume;
+    $("#diner-mp3")[0].volume = 0; //map_data.volume;
 
     if(map_data.bells_volume > 0){
-        // $("#jakes")[0].play();
+        $("#jakes")[0].play();
         $("#jakes")[0].volume = map_data.bells_volume;
     } else {
         $("#jakes")[0].pause();
@@ -810,10 +820,6 @@ class Slide3 extends ScanComponent {
             if(this.state.active){
                 e.preventDefault();
                 this.shuffleSlides();
-                $(".v-white-glow").css({opacity:1});
-                setTimeout(function(){
-                    $(".v-white-glow").css({opacity:0});
-                },500)
                 return false;
             }
         }
@@ -825,6 +831,7 @@ class Slide3 extends ScanComponent {
         pic_2_left = (cs === 1 ||  cs === 2 ? 0 : -1 * this.props.measurements.viewportWidth),
         pic_3_left = (cs === 2 ? 0 : -1 * this.props.measurements.viewportWidth),
         map_width = this.props.measurements.viewportHeight * 1.686;
+        var overlayStyle = {width: map_width, opacity: this.state.map_opacity, backgroundPositionX: -610 + this.state.map_offset_x, backgroundPositionY: 0 + this.state.map_offset_y};
     return(
       <div className='bg-slide' style={{
         height: this.props.measurements.viewportHeight,
@@ -865,10 +872,10 @@ class Slide3 extends ScanComponent {
         <div className="full-black" style={{opacity: this.state.black}}/>
         <h5 className="slide-caption" id="map-cap" style={{opacity: this.state.map_opacity}}>
             We paid the bill. <br/>
-            That's when he said it. <br/>
+            That''s when he said it. <br/>
             "Viceboy, are you ready to dance?"
         </h5>
-        <div id="trip-overlay" style={{width: map_width, opacity: this.state.map_opacity, backgroundPositionX: -610 + this.state.map_offset_x, backgroundPositionY: 0 + this.state.map_offset_y}}>
+        <div id="trip-overlay" style={overlayStyle}>
         </div>
       </div>
     )
