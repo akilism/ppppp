@@ -144,7 +144,7 @@ window.TRV = {
   }
 };
 
-TRV.animatePov = function(sv,pov){
+TRV.animatePov = function(sv,pov,fn){
     clearTimeout(TRV.anim)
     var start_pov = sv.getPov(),
         ticks = 24,
@@ -166,6 +166,10 @@ TRV.animatePov = function(sv,pov){
             TRV.anim = setTimeout(function(){
               next();
             },33)
+        } else {
+            if(typeof(fn) !== "undefined"){
+                fn()
+            }
         }
     }
     next();
@@ -224,11 +228,14 @@ class HomeMap extends ScanComponent {
       this.state = {
         bg_top: 0,
         caption: false,
+        title: false,
+        face: false,
+        face_frame: 0,
         zindex:100
       };
     }
 
-    togglePov(t){
+    togglePov(t,fn){
       var current_pov = _.clone(TRV.streetView.getPov());
       if(t){
           current_pov.heading = 257.68007576992042;
@@ -237,7 +244,7 @@ class HomeMap extends ScanComponent {
           current_pov.heading = 77.68007576992042;
           this.pov_toggle = false;
       }
-      TRV.animatePov(TRV.streetView,current_pov);
+      TRV.animatePov(TRV.streetView,current_pov,fn);
     }
 
     setUpPano(){
@@ -343,14 +350,26 @@ class HomeMap extends ScanComponent {
       this.setUpPano();
       $(window).on("keydown",_.bind(function(e){
           if(e.keyCode == 16){
-            this.togglePov(true);
+            this.togglePov(true,_.bind(function(){
+                this.last_title = this.state.title;
+                this.setState({face:true, title: false});
+            },this));
           }
       },this))
       $(window).on("keyup",_.bind(function(e){
           if(e.keyCode == 16){
+            this.setState({face:false, title: this.last_title});
             this.togglePov(false);
           }
       },this))
+
+      setInterval(_.bind(function(){
+        if(this.state.face){
+            var f = this.state.face_frame,
+                new_f = (f + 1) % 8
+            this.setState({face_frame: new_f});
+        }
+      },this),100)
 
     }
 
@@ -377,22 +396,26 @@ class HomeMap extends ScanComponent {
           t.caption = false;
           t.new_pitch = 64.9837616957764;
           t.new_slide = 10;
+          t.title = false;
           return t;
       }).abut(0.47, function(clamped_pct, t){
           TRV.streetView.setVisible(true);
           t.caption = true;
           t.new_pitch = 64.9837616957764;
           t.new_slide = 10;
+          t.title = false;
           return t;
-      }).abut(0.57, _.bind(function(clamped_pct, t){
+      }).abut(0.55, _.bind(function(clamped_pct, t){
           TRV.streetView.setVisible(true);
           t.caption = true;
           t.new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1)
           t.new_slide = Math.linearTween(clamped_pct,10,-100,1);
+          t.title = false;
           return t;
       },this)).abut(1, _.bind(function(clamped_pct, t){
           TRV.streetView.setVisible(true);
           t.caption = true;
+          t.title = "In the middle of the street, A$AP Rocky pointed to a manhole and told me to climb in."
           t.new_pitch = 0;
           t.new_slide = -100;
           return t;
@@ -419,6 +442,18 @@ class HomeMap extends ScanComponent {
                 }}>
                     At 6:00 PM, I got the text. "Meet Yung Tourguide in the middle of Marseille and take this pill". A pill popped out of my phone, because it was the future. I was gonna have a crazy night in the service of journalism.
                 </h6>
+                <div className="vid-title" style={{
+                  display: (this.state.title ? "block" : "none"),
+                  zIndex:21
+                }}>{this.state.title}</div>
+                <img className="full-gif" style={{
+                  display: this.state.face ? "block" : "none",
+                  bottom: 0,
+                  width:1400,
+                  left: "50%",
+                  marginLeft: "-700px",
+                  zIndex:20
+                }} src={"spin/head_" + this.state.face_frame + ".png"}/>
             </div>
         )   
     }
@@ -788,5 +823,12 @@ $(function() {
     $("#page").css({visibility: "visible"});
     TRV.adjustAll();
   },100)
+  $(window).on("keydown",function(e){
+    if(e.keyCode === 65){
+        _($("audio")).each(function(a){
+            a.volume = 0;
+        })
+    }
+  })
 
 });
