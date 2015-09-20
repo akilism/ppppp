@@ -586,14 +586,16 @@ class Slide2 extends ScanComponent {
   }
 
   toggleBars(){
+    var vw = this.props.measurements.viewportWidth;
+    console.log(vw);
     if(this.bars_on){
         this.bars_on = false;
-        $("#bar1").css({right: this.props.measurements.viewportWidth});
+        $("#bar1").css({right: vw});
         setTimeout(function(){
-            $("#bar2").css({left: this.props.measurements.viewportWidth});
+            $("#bar2").css({left: vw});
         },500)
         setTimeout(function(){
-            $("#bar3").css({right: this.props.measurements.viewportWidth});
+            $("#bar3").css({right: vw});
         },750)
     } else {
         this.bars_on = true;
@@ -612,7 +614,7 @@ class Slide2 extends ScanComponent {
         if(e.keyCode == 32){
             if(this.state.active){
                 e.preventDefault();
-                this.toggleBars().bind(this);
+                this.toggleBars();
                 return false;
             }
         }
@@ -623,7 +625,7 @@ class Slide2 extends ScanComponent {
     hammerSwipe.on('swipe', (ev) => {
         if(this.state.active) {
           ev.preventDefault();
-          this.toggleBars().bind(this);
+          this.toggleBars();
           return false;
         }
     });
@@ -708,7 +710,8 @@ class Slide3 extends ScanComponent {
         newTop;
 
     if(adjustedPctScroll <= 0) {
-      return { map_opacity: 0,
+      return { active: active,
+        map_opacity: 0,
         map_progress: 0,
         black: 0,
         top: -1 * viewportHeight };
@@ -775,12 +778,12 @@ class Slide3 extends ScanComponent {
         t.map_progress = 0;
         t.map_opacity = pct;
         t.bells_volume = pct;
-        if(!this.bells_interval){
-            this.bells_interval = setInterval(function(){
-                $("#map-cap").addClass("blur");
-                setTimeout(function(){jQ("#map-cap").removeClass("blur")},150);
-            },860)
-        }
+        // if(!this.bells_interval){
+        //     this.bells_interval = setInterval(function(){
+        //         $("#map-cap").addClass("blur");
+        //         setTimeout(function(){jQ("#map-cap").removeClass("blur")},150);
+        //     },860)
+        // }
         return t;
     }).abut(0.75, function(pct, t){
         t.black = 0.7;
@@ -788,12 +791,12 @@ class Slide3 extends ScanComponent {
         t.map_progress = pct;
         t.map_opacity = 1;
         t.bells_volume = 1;
-        if(!this.bells_interval){
-            this.bells_interval = setInterval(function(){
-                $("#map-cap").addClass("blur");
-                setTimeout(function(){jQ("#map-cap").removeClass("blur")},150);
-            },860)
-        }
+        // if(!this.bells_interval){
+        //     this.bells_interval = setInterval(function(){
+        //         $("#map-cap").addClass("blur");
+        //         setTimeout(function(){jQ("#map-cap").removeClass("blur")},150);
+        //     },860)
+        // }
         return t;
     }).abut(2, function(pct, t){
         t.black = 0.7;
@@ -801,12 +804,12 @@ class Slide3 extends ScanComponent {
         t.map_progress = 1;
         t.map_opacity = 1;
         t.bells_volume = 1;
-        if(!this.bells_interval){
-            this.bells_interval = setInterval(function(){
-                $("#map-cap").addClass("blur");
-                setTimeout(function(){jQ("#map-cap").removeClass("blur")},150);
-            },860)
-        }
+        // if(!this.bells_interval){
+        //     this.bells_interval = setInterval(function(){
+        //         $("#map-cap").addClass("blur");
+        //         setTimeout(function(){jQ("#map-cap").removeClass("blur")},150);
+        //     },860)
+        // }
         return t;
     })
 
@@ -821,7 +824,7 @@ class Slide3 extends ScanComponent {
         $("#jakes")[0].pause();
     }
 
-    return {top: newTop, caption: caption, black: map_data.black,
+    return {active: active, top: newTop, caption: caption, black: map_data.black,
      map_progress: map_data.map_progress, map_opacity: map_data.map_opacity,
      map_offset_x: map_data.map_offset_x, map_offset_y: map_data.map_offset_y};
   }
@@ -837,15 +840,23 @@ class Slide3 extends ScanComponent {
   }
 
   componentDidMount() {
-    $(window).on("keydown",_.bind(function(e){
-        if(e.keyCode == 32){
-            if(this.state.active){
-                e.preventDefault();
-                this.shuffleSlides();
-                return false;
-            }
+    $(window).on("keydown",(e) => {
+        if(e.keyCode === 32 && this.state.active) {
+          e.preventDefault();
+          this.shuffleSlides();
+          return false;
         }
-    },this))
+    });
+
+    var hammerSwipe = new Hammer(document.body);
+
+    hammerSwipe.on('swipe', (ev) => {
+        if(this.state.active) {
+          ev.preventDefault();
+          this.shuffleSlides();
+          return false;
+        }
+    });
   }
 
   render() {
