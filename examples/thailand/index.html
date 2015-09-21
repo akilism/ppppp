@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang=en>
+  <head>
+    <meta charset=utf-8>
+    <meta name="viewport" content="width=device-width,height=device-height initial-scale=1">
+    <title>Scroll Experiments</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,700' rel='stylesheet' type='text/css'>
+    <script async src="./build/main.js"></script>
+    <style>
+
+/*
+  rainbow gradient
+  background: linear-gradient(135deg, #ff0000 0%,#ff6600 14%,#ffee00 28%,#00ff00 42%,#00ff00 56%,#0099ff 70%,#4400ff 84%,#9900ff 100%);
+*/
+
+@font-face {
+  font-family: 'ViceGothic';
+  src: url("ViceGothic_071514.otf");
+}
+
+@font-face {
+  font-family: 'TradeGothic-Bold';
+  src: url("TradeGothic-Bold.otf");
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.bg-slide {
+  position: fixed;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-transform: uppercase;
+  font-family: 'ViceGothic';
+  font-size: 15vw;
+}
+
+.timelapse {
+  height: 100vh;
+  width: 100vw;
+  left: 0;
+  top: 0;
+  position: fixed;
+}
+
+.vid-title {
+  text-align: center;
+  font-size: 15vw;
+  color: white;
+  text-transform: uppercase;
+  font-family: 'ViceGothic';
+  margin: 0;
+  padding: 0;
+}
+
+.slide-words{
+    top:10%;
+    position:absolute;
+    width: 73vw;
+    /*height:100vh;*/
+    left:50%;
+    margin-left: -37%;
+    /*margin-left:-250px;*/
+    /*font-size:38px;
+    line-height:54px;*/
+    /*font-size: 1.5rem;*/
+    font-size: 4vw;
+    color:white;
+    font-family:'TradeGothic';
+    text-align:justify;
+    hyphens: auto;
+}
+
+.slide-caption{
+    position:fixed;
+    bottom: 2vh;
+    /*bottom: 10px;*/
+    left: 0;
+    width:100%;
+    text-align:center;
+    color:white;
+    font-family: 'TradeGothic-Bold';
+    text-transform: uppercase;
+    font-weight:bold;
+    font-size: 7.5vw;
+    padding: 0 10%;
+    box-sizing:border-box;
+}
+
+@media only screen and (min-width : 992px) {
+  .slide-caption {
+    font-size: 5.5vw;
+  }
+}
+
+.slide-caption.black {
+    color:black;
+}
+
+
+.text-crop {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+}
+
+.blackbar {
+    position:absolute;
+    -webkit-transition: left 0.5s ease-in-out, right 0.5s ease-in-out;
+    -moz-transition: left 0.5s ease-in-out, right 0.5s ease-in-out;
+    transition: left 0.5s ease-in-out, right 0.5s ease-in-out;
+    background-color:black;
+    left:0;
+    right:0;
+    overflow:hidden;
+}
+
+.btext {
+    overflow:hidden;
+    position:absolute;
+    left:0;
+    top:0;
+    right:0;
+    bottom:0;
+}
+
+.btext-inner {
+    width:60%;
+    margin-left:auto;
+    margin-right:auto;
+    hyphens:auto;
+    text-align: justify;
+    padding-top:20px;
+    font-family: 'TradeGothic';
+    color:white;
+    font-size:32px;
+    line-height:42px;
+}
+
+.full-black {
+    position:absolute;
+    left:0;
+    top:0;
+    right:0;
+    bottom:0;
+    background-color:black;
+    opacity:0;
+}
+
+#trip-overlay {
+  background-image: url('/erik3/map-overlay.png');
+  position: absolute;
+  height: 120vh;
+  background-size: cover;
+  left: 0;
+  background-repeat: no-repeat;
+  background-position-x: -46vw;
+}
+
+#map-cap {
+    width:860px;
+    text-align:right;
+    left:auto;
+    right:0;
+    font-size:60px;
+    padding:0 80px;
+    transition: text-shadow 0.15s ease;
+    -webkit-transition: text-shadow 0.15s ease;
+    -moz-transition: text-shadow 0.15s ease;
+    color:transparent;
+    text-shadow: 0 0 0px rgba(255,255,255,1);
+}
+
+#map-cap.blur {
+    text-shadow: 0 0 7px rgba(255,255,255,1);
+}
+
+/* WordMask Component */
+.bg-mask {
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left:0;
+    background-color: rgba(205, 230, 104, 0.51);
+    background-size: cover;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 60px 0 0 10px;
+    opacity: 1;
+    background-blend-mode: color-burn;
+}
+
+.mask-text {
+    font-size: 14vw;
+    font-family: ViceGothic, sans-serif;
+    line-height: .55;
+    letter-spacing: -5px;
+    text-transform: uppercase;
+}
+
+.text {
+    position: fixed;
+    top: 60px;
+    left: 10px;
+    -webkit-text-fill-color: #fff;
+    transition: opacity 2s ease-out;
+}
+
+  .hide {
+    opacity: 0;
+  }
+
+  .show {
+    opacity: 1;
+    text-shadow: 3px 3px 11px rgba(78, 78, 103, 0.56);
+  }
+
+  /* SlideVideo */
+
+  .bg-video {
+    align-items: flex-start;
+    background-color: rgb(149, 236, 236);
+    z-index: 101;
+  }
+
+  .slide-video {
+    height: 480px;
+    box-shadow: 0 0 10px #000;
+    margin-top: 4vh;
+  }
+
+  .video-caption {
+    padding: 0 5%;
+    position: absolute;
+    bottom: 70px;
+    line-height: 0.6;
+  }
+
+  .video-link {
+    border-bottom: 1px dashed red;
+    cursor: pointer;
+    display: inline-block;
+  }
+
+  /* Google Card */
+
+.google-card {
+  border-radius: 2px;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+  position: fixed;
+  height: 210px;
+  width: 75vw;
+  /*width: 325px;*/
+  background-color: #fff;
+  font-family: 'Roboto', sans-serif;
+  text-align: left;
+  line-height: 1;
+}
+
+@media only screen and (min-width : 992px) {
+  .google-card {
+    height: 26vh;
+    width: 25vw;
+  }
+}
+
+.google-card-map {
+  height: 150px;
+  width: 100%;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+}
+
+.google-card-name {
+  font-size: 1.4rem;
+  color: #000;
+  padding: 12px 12px 4px 12px;
+}
+
+.google-card-subtitle {
+  font-size: 12px;
+  padding-left: 12px;
+  color: #BDB9B9;
+  font-weight: 300;
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 2px;
+}
+
+/*block slide*/
+.block-caption {
+  font-size: 2.5rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 1em 2em;
+  text-transform: none;
+}
+
+.slippy-block {
+  background-color: #fff;
+  position: fixed;
+  width: 100vw;
+/*  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;*/
+  background-image: url('/thailand/thailand3.png');
+  background-size: 100vw 100vh;
+}
+
+.slippy-block > div {
+  text-align: center;
+}
+
+.slippy-text {
+  margin: 1vw 0 0 -300%;
+  transition: margin 750ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-size: 5rem;
+  font-family: ViceGothic, sans-serif;
+  line-height: 1;
+  display: inline-block;
+  padding: 20px 35px;
+  text-transform: uppercase;
+  background-color: #000;
+  color: #fff;
+}
+
+.from-left {
+  margin: 1vw 0 0 0;
+}
+
+</style>
+  </head>
+  <body>
+
+  </body>
+</html>
