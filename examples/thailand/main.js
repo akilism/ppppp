@@ -184,14 +184,15 @@ class Root extends React.Component {
     // <SlideStreet startPos={{lat:13.782658, lng: 100.516636}} endPos={{lat: 13.782994, lng: 100.515541}} />
     // ["Bangkok! ", " Oh ", " my ", " god. ", " I ", " have ", " just ", " landed ", " but ", " already ", " it's ", " kind ", " of ", " everything ", " I ", " wanted."]
 
-    // <SlideBlock measurements={this.props.measurements} start={0.13} end={0.20} />
-    //     <Timelapse measurements={this.props.measurements} start={0.10} end={0.20} imagePath="/thailand/table" frameCount={17} />
-    //     <WordMask measurements={this.props.measurements} start={0.20} end={0.48} bgUrl="/thailand/biketomarket.gif" quote={["The ", " thing ", " is ", " I've ", " never ", " actually ", " been ", " there. ", " That ", " shit's ", " going ", " to ", " change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
-    //     <Title measurements={this.props.measurements} start={0} end={0.10} title="bangkok" backgroundImage="/thailand/bangkok.jpg" />
-    //     <SlideMovie measurements={this.props.measurements} start={0.48} end={0.70} videoSrc="/thailand/market2.mp4" />
+
     return (
       <div>
-        <SlippyBlock measurements={this.props.measurements} start={0} end={0.5} />
+        <SlideBlock measurements={this.props.measurements} start={0.13} end={0.20} />
+        <Timelapse measurements={this.props.measurements} start={0.10} end={0.20} imagePath="/thailand/table" frameCount={17} />
+        <WordMask measurements={this.props.measurements} start={0.20} end={0.48} bgUrl="/thailand/biketomarket.gif" quote={["The ", " thing ", " is ", " I've ", " never ", " actually ", " been ", " there. ", " That ", " shit's ", " going ", " to ", " change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
+        <Title measurements={this.props.measurements} start={0} end={0.10} title="bangkok" backgroundImage="/thailand/bangkok.jpg" />
+        <SlideMovie measurements={this.props.measurements} start={0.48} end={0.65} videoSrc="/thailand/market2.mp4" />
+        <SlippyBlock measurements={this.props.measurements} start={0.65} end={0.8} />
       </div>
     );
   }
@@ -530,6 +531,7 @@ class SlideMovie extends ScanComponent {
       caption: ".",
       active: false,
       videoSrc: "",
+      played: false,
       slideWords: "6.5%",
       cardData: {
         name: "Tewate Market",
@@ -558,9 +560,10 @@ class SlideMovie extends ScanComponent {
         active = this.isActive(this.props.measurements),
         caption = "It's amazing this market.",
         videoSrc = last_state.videoSrc,
+        played = last_state.played,
         top;
 
-    var conti = new Conti(0,0.5,"adjustedPctScroll", (pct, t) => {
+    var conti = new Conti(0,0.75,"adjustedPctScroll", (pct, t) => {
       t.top = Math.linearTween(pct,viewportHeight,-viewportHeight,1);
       t.play = false;
       t.videoSrc = this.props.videoSrc;
@@ -586,8 +589,9 @@ class SlideMovie extends ScanComponent {
     if (trans_data.play) {
       // console.log(this.refs.video.loop, this.refs.video.paused);
 
-      if(this.refs.video.paused) {
+      if(this.refs.video.paused && !this.state.played) {
         this.refs.video.play();
+        played = true;
       }
     };
 
@@ -602,7 +606,7 @@ class SlideMovie extends ScanComponent {
       top = trans_data.top;
     }
 
-    return {active, caption, top, videoSrc};
+    return {active, caption, played, top, videoSrc};
   }
 
   render() {
@@ -766,15 +770,16 @@ class SlippyBlock extends ScanComponent {
         count = last_state.count,
         top;
 
-    top = Math.linearTween(adjustedPctScroll, 0, viewportHeight, 0.85);
-
     if(adjustedPctScroll <= 0) {
+      top = 0;
       count = 0;
     } else if (adjustedPctScroll >= 1) {
-      count = this.state.maxCount;
+      top = viewportHeight;
     } else {
-      count = Math.min(this.state.maxCount, Math.round(this.state.maxCount * adjustedPctScroll));
+      count = Math.round(this.state.maxCount * adjustedPctScroll);
+      top = Math.linearTween(adjustedPctScroll, 0, viewportHeight, 0.85);
     }
+    console.log(count);
     return {active, count, top, adjustedPctScroll};
   }
 
@@ -799,7 +804,6 @@ class SlippyBlock extends ScanComponent {
       </div>
     )
   }
-
 }
 
 
