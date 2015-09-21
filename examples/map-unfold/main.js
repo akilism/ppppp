@@ -186,6 +186,7 @@ class TestComponent extends React.Component {
         <Title/>
         <HomeMap/>
         <Timebar/>
+        <Slide3/>
         <Slide2/>
         <Slide1/>
       </div>
@@ -383,9 +384,17 @@ class HomeMap extends ScanComponent {
         t.bg_top = Math.linearTween(pct, 0, dest_top, 1);
         t.zindex = 100;
         return t;
-      }).abut(1, function(pct,t){
+      }).abut(0.7, function(pct,t){
         t.bg_top = 0;
-        t.zindex = 20;
+        t.zindex = 96;
+        return t;
+      }).abut(0.75, function(pct,t){
+        t.bg_top = Math.linearTween(pct, 0, dest_top, 1);
+        t.zindex = 96;
+        return t;
+      }).abut(1, function(pct,t){
+        t.bg_top = dest_top;
+        t.zindex = 96;
         return t;
       })
  
@@ -471,22 +480,31 @@ class Timebar extends ScanComponent {
         0: "",
         25: "I wanna get closer. Hold 'SHIFT' and scroll.",
         45: "What's over there? Hold 'SHIFT' to look around.",
-        70: "",
+        70: "Help that dude high-five me. Tap 'SHIFT' rapidly until we smack.",
         99: ""
       }
     }
 
     componentDidMount(){
         $(window).on("keydown",_.bind(function(e){
-            if(e.keyCode === 16){
+            if(e.keyCode === 16 && ! TRV.stop){
               $("#bass-hit")[0].play();
               this.setState({zoom: true})
             }
+            if(e.keyCode === 16){
+            }
         },this))    
         $(window).on("keyup",_.bind(function(e){
-            if(e.keyCode === 16){
+            if(e.keyCode === 16 && ! TRV.stop){
               $("#bass-hit-2")[0].play();
               this.setState({zoom: false})
+            }
+            if(e.keyCode === 16){
+              clearTimeout(TRV.stop_to)
+              TRV.stop = true;
+              TRV.stop_to = setTimeout(function(){
+                TRV.stop = false;
+              },300)
             }
         },this))    
     }
@@ -745,6 +763,97 @@ class Slide2 extends ScanComponent {
             top: this.state.bg_top,
             zIndex: 97
           }} id="barbie-gif" className="full-gif" src={this.state.base_bg + "/frame_" + this.state.frame + ".gif"}/>
+        )
+    }
+}
+
+class Slide3 extends ScanComponent {
+    constructor(props) {
+      super(props);
+      this.state = {
+        current_step: 0,
+        burst: 0
+      };
+    }
+
+    adjust(last,d){
+      return {}
+    }
+    componentDidMount(){
+        $(window).on("keydown",_.bind(function(e){
+            if(e.keyCode === 16){
+              clearInterval(TRV.shrink);
+              var current_step = this.state.current_step;
+              if(current_step < 12){
+                this.setState({current_step: current_step + 1});
+              } else {
+                TRV.burst_i = 0
+                clearInterval(TRV.burst)
+                      clearInterval(TRV.unburst)
+                TRV.burst = setInterval(_.bind(function(){
+                    TRV.burst_i = TRV.burst_i + 1;
+                    if(TRV.burst_i > 7){
+                      clearInterval(TRV.burst)
+                      clearInterval(TRV.unburst)
+                      TRV.unburst = setInterval(_.bind(function(){
+                        TRV.burst_i = TRV.burst_i - 1;
+                        if(TRV.burst_i >= 0){
+                            this.setState({burst: TRV.burst_i, up: false})
+                        } else {
+                            clearInterval(TRV.unburst)
+                        }
+                      },this),66)
+                    } else {
+                        this.setState({burst: TRV.burst_i, up: true, hit: true})
+                    }
+                },this),66) 
+              }
+            }
+        },this))    
+        $(window).on("keyup",_.bind(function(e){
+            if(e.keyCode === 16){
+                clearInterval(TRV.shrink);
+                TRV.shrink = setInterval(_.bind(function(){
+                    var current_step = this.state.current_step - 1;
+                    this.setState({current_step: current_step});
+                    if(current_step === 0){
+                        clearInterval(TRV.shrink);
+                    } 
+                },this),66)
+            }
+        },this))    
+    }
+    render(){
+        var scale_x = Math.linearTween(this.state.current_step,1,1.7,30);
+        var scale_y = Math.linearTween(this.state.current_step,1,2.0,30);
+        var burst_scale = Math.linearTween(this.state.burst,0,2,12)
+        var burst_opacity = Math.linearTween(this.state.burst,0,1,12)
+        var flash = this.state.burst === 1 && this.state.up
+        if(flash){
+            $("#smash")[0].play()
+        }
+        console.log(this.state.hit)
+
+        return (
+          <div id="slide3">
+            <audio id="smash">
+              <source src="smash.mp3" type="audio/mpeg"/>
+            </audio>
+            <div id="black-back-text">
+                He slammed some dude's hand and the guy starts crying. "You're my hero, A$AP." Rocky smiles and disappears.
+            </div>
+            <img id="high-five-base" className="highfive" src="high-five-base.png" style={{
+                display: this.state.hit ? "none" : "block"
+            }}/>
+            <img id="high-five-guy" className="highfive" src="high-five-guy.png" style={{transform: "scale(" + scale_x+"," + scale_y + ")"}}/>
+            <img id="high-five-top" className="highfive" src="high-five-top.png" style={{
+                display: this.state.flash ? "none" : "block"
+            }}/>
+            <img id="starburst" src="starburst.png" style={{
+              transform: "scale(" + burst_scale + ")",
+              opacity: burst_opacity
+            }}/>
+          </div>
         )
     }
 }
