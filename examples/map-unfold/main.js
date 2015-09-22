@@ -186,6 +186,8 @@ class TestComponent extends React.Component {
         <Title/>
         <HomeMap/>
         <Timebar/>
+        <Slide5/>
+        <Slide4/>
         <Slide3/>
         <Slide2/>
         <Slide1/>
@@ -481,7 +483,7 @@ class Timebar extends ScanComponent {
         25: "I wanna get closer. Hold 'SHIFT' and scroll.",
         45: "What's over there? Hold 'SHIFT' to look around.",
         70: "Help that dude high-five me. Tap 'SHIFT' rapidly until we smack.",
-        99: ""
+        85: "What happened last night? Tap 'SHIFT' to fill in the blanks ..."
       }
     }
 
@@ -560,7 +562,7 @@ class Timebar extends ScanComponent {
           <audio id="click-hit">
             <source src="click.mp3" type="audio/mpeg"/>
           </audio>
-          <audio id="bass-casino" autoPlay>
+          <audio id="bass-casino">
             <source src="bass-casino.mp3" type="audio/mpeg"/>
           </audio>
           <div id="timebar-track">
@@ -573,7 +575,7 @@ class Timebar extends ScanComponent {
               <div className="track-dot" style={{left: "25%"}}/>
               <div className="track-dot" style={{left: "45%"}}/>
               <div className="track-dot" style={{left: "70%"}}/>
-              <div className="track-dot" style={{left: "99%"}}/>
+              <div className="track-dot" style={{left: "85%"}}/>
               <img src={this.state.asap_on ? "asap-head-yellow.png" : "asap-head.png"} id="playhead" style={{
                   display: this.state.zoom ? "none" : "block",
                   left: this.state.playhead_left
@@ -713,6 +715,56 @@ class Slide1 extends ScanComponent {
         )
     }
 }
+class Slide5 extends ScanComponent {
+    constructor(props) {
+      super(props);
+      this.state = {
+        perspective: 190,
+        hit: false
+      };
+    }
+
+    adjust(last,d){
+        var conti = new Conti(0,0.9,"pct_scroll",function(pct,t){
+          t.perspective = 190;
+          return t;
+        }).abut(1,function(pct,t){
+          t.perspective = Math.linearTween(pct,190,50,1)
+          return t;
+        })
+   
+        var trans_data = conti.run(d,{})
+
+        return trans_data;
+    }
+    componentDidMount(){
+        $(window).on("keydown",_.bind(function(e){
+            var pct_scroll = $(window).scrollTop() / ($("body").height() - $(window).height());
+            if(e.keyCode === 16 && pct_scroll > 0.9){
+                this.setState({hit:true})
+            }
+        },this))    
+    }
+    render(){
+        return (
+          <div id="last-slide" style={{
+            "-webkit-perspective": this.state.perspective
+          }}>
+                <img id="split-bot" className="full-img" src="rocky-split-bot.png"/>
+                <img id="split-mid" className="full-img" src="rocky-split-mid.png" style={{
+                }}/>
+                <img id="split-top" className="full-img" src="rocky-split-top.png" style={{
+                
+                    display: this.state.hit ? "none" : "block"
+                }}/>
+
+              <div className="vid-title" style={{
+                  display: (this.state.hit ? "block" : "none")
+              }}>A$AP disappeared into the sea whence he came</div>
+              </div>
+        )
+    }
+}
 class Slide2 extends ScanComponent {
     constructor(props) {
       super(props);
@@ -767,17 +819,148 @@ class Slide2 extends ScanComponent {
     }
 }
 
+class Slide4 extends ScanComponent {
+    constructor(props) {
+      super(props);
+      this.state = {
+        bg_top: 0
+      };
+    }
+
+    adjust(last,d){
+        var target_height = ($(window).height()) * -1;
+        var conti = new Conti(0,0.9,"pct_scroll",function(pct,t){
+          t.bg_top = 0;
+          return t;
+        }).abut(0.95,function(pct,t){
+          t.bg_top = Math.linearTween(pct,0,target_height,1)
+          return t;
+        }).abut(1,function(pct,t){
+          t.bg_top = target_height;
+          return t;
+        })
+   
+        var trans_data = conti.run(d,{})
+
+        return trans_data;
+    }
+    componentDidMount(){
+        var src ="bass-casino.mp3"
+        var audio = new Audio();
+        audio.src = src;
+        //audio.autoplay = true;
+        audio.id = "bass-casino";
+        document.getElementById("slide4").appendChild(audio)
+        // analyser stuff
+        var context = new webkitAudioContext();
+        var analyser = context.createAnalyser();
+        analyser.fftSize = 2048;
+         
+        // connect the stuff up to eachother
+        var source = context.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(context.destination);
+
+        var renderer = new PIXI.WebGLRenderer($(window).width(), $(window).height(), {transparent: true, antialias: true});
+        document.getElementById("slide4").appendChild(renderer.view);
+        var stage = new PIXI.Container();
+        var sprite = PIXI.Sprite.fromImage("party.jpg");
+        var ar = 1.5
+        var new_height = $(window).width() / ar;
+        sprite.width = $(window).width();
+        sprite.height = new_height;
+        stage.addChild(sprite);
+
+        var blur = new PIXI.filters.BlurXFilter()
+        blur.blur = 0
+        var invert = new PIXI.filters.InvertFilter()
+        invert.invert = 0
+        var noise = new PIXI.filters.NoiseFilter();
+        noise.noise = 0
+        var split = new PIXI.filters.RGBSplitFilter();
+        split.red = (new PIXI.Point(0, 0))
+        split.green = (new PIXI.Point(0, 0)) 
+        split.blue = (new PIXI.Point(0, 0))
+        sprite.filters = [blur]
+
+        animate();
+        var draw_new = false;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            var num_bars = 60;
+            var data = new Uint8Array(2048);
+            analyser.getByteFrequencyData(data);
+
+            var bass = _.take(_.drop(data,10),30)
+            var avg = _.reduce(bass,function(m,i){return m + i},0) / 30
+
+            var clipped_avg = avg - 155 > 0 ? avg - 155 : 0
+
+            blur.blur = (clipped_avg /100) * 20
+            if(draw_new){
+                var graphics = new PIXI.Graphics();
+                var start_x = Math.random() * $(window).width()
+                var start_y = Math.random() * $(window).height()
+                var end_x = Math.random() * $(window).width()
+                var end_y = Math.random() * $(window).height()
+                graphics.lineStyle(90, 0xffffff, 1);
+                graphics.moveTo(start_x,start_y);
+                graphics.lineTo(end_x,end_y);
+                graphics.endFill();
+                stage.addChild(graphics);
+
+                draw_new = false
+            }
+
+            
+            renderer.render(stage);
+        }
+
+        $(window).on("keydown",_.bind(function(e){
+            if(e.keyCode === 16 && $(window).scrollTop() > 20300){
+                draw_new = true; 
+            }
+        },this))    
+    }
+    render(){
+        return (
+          <div id="slide4" style={{
+            top: this.state.bg_top
+          }}>
+            <div className="vid-title" style={{
+            }}>The party continued like a real fun event</div>
+            <div id="slide4-text"/>
+          </div>
+        )
+    }
+}
 class Slide3 extends ScanComponent {
     constructor(props) {
       super(props);
       this.state = {
         current_step: 0,
-        burst: 0
+        burst: 0,
+        bg_top: 0
       };
     }
 
     adjust(last,d){
-      return {}
+        var target_height = ($(window).height()) * -1;
+        var conti = new Conti(0,0.80,"pct_scroll",function(pct,t){
+          t.bg_top = 0;
+          return t;
+        }).abut(0.85,function(pct,t){
+          t.bg_top = Math.linearTween(pct,0,target_height,1)
+          return t;
+        }).abut(1,function(pct,t){
+          t.bg_top = target_height;
+          return t;
+        })
+   
+        var trans_data = conti.run(d,{})
+
+        return trans_data;
     }
     componentDidMount(){
         $(window).on("keydown",_.bind(function(e){
@@ -832,10 +1015,12 @@ class Slide3 extends ScanComponent {
         if(flash){
             $("#smash")[0].play()
         }
-        console.log(this.state.hit)
 
         return (
-          <div id="slide3">
+          <div id="slide3" style={{
+            position: "fixed",
+            top: this.state.bg_top
+          }}>
             <audio id="smash">
               <source src="smash.mp3" type="audio/mpeg"/>
             </audio>

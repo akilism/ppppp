@@ -405,6 +405,11 @@ p {
     width:100%;
     height:100%;
 }
+.full-img{
+    position:absolute;
+    width:100%;
+    transform:translateZ(0);
+}
 #pano1{
     width:100%;
     height:100%;
@@ -442,16 +447,55 @@ p {
   position: absolute;
   right: 20px;
 }
+#slide3{
+    background-color:white;
+}
+#slide4{
+    background-color:red;
+    position:fixed;
+    width:100%;
+    height:100%;
+}
+#slide4-text{
+    background-image:url("party-text.png");
+    background-size:100% auto;
+    width:100%;
+    height:100%;
+    position:absolute;
+    top:3.5px;
+}
+#last-slide{
+    background-color:white;
+    position:fixed;
+    width:100%;
+    height:100%;
+    -webkit-perspective: 200;
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+    transform:rotate3d(0,0,0,2deg);
+}
+.full-img{
+    position:absolute;
+    width:100%;
+}
+#split-bot{
+}
+#split-mid{
+    transform: translateZ(50px) scale(0.8);
+}
+#split-top{
+    transform: translateZ(100px) scale(0.55);
+}
     </style>
   </head>
   <body>
-    <div id="drawing"></div>
     <div id="page">
       <div id="track"></div>
       <div id="copy">
       </div>
     </div>
     <script src="/lib/libgif.js"></script>
+    <script src="pixi.min.js"></script>
     <script src="./build/main.js"></script>
   </body>
 </html>
