@@ -6,6 +6,7 @@
     <title>Scroll Experiments</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
     <link href='https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,700' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Creepster' rel='stylesheet' type='text/css'>
     <script async src="./build/main.js"></script>
     <style>
 
@@ -54,6 +55,9 @@ body {
   position: fixed;
 }
 
+.title-slide {
+  flex-direction: column;
+}
 .vid-title {
   text-align: center;
   font-size: 15vw;
@@ -62,6 +66,13 @@ body {
   font-family: 'ViceGothic';
   margin: 0;
   padding: 0;
+  line-height: 0.65;
+}
+
+.vid-subtitle {
+    font-size: 3rem;
+    margin: 0;
+    padding: 0;
 }
 
 .slide-words{
@@ -192,7 +203,7 @@ body {
 .bg-mask {
     position: fixed;
     top: 0; right: 0; bottom: 0; left:0;
-    background-color: rgba(205, 230, 104, 0.51);
+    background-color: rgba(174, 185, 128, 0.51);
     background-size: cover;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -229,7 +240,8 @@ body {
   /* SlideVideo */
 
   .bg-video {
-    align-items: flex-start;
+    align-items: center;
+    flex-direction: column;
     background-color: rgb(149, 236, 236);
     z-index: 101;
   }
@@ -237,20 +249,21 @@ body {
   .slide-video {
     height: 480px;
     box-shadow: 0 0 10px #000;
-    margin-top: 4vh;
+    /*margin-top: 4vh;*/
+    margin-bottom: 50px;
   }
 
   .video-caption {
     padding: 0 5%;
-    position: absolute;
-    /*bottom: 70px;*/
-    line-height: 0.6;
+    position: initial;
+    margin: 0;
   }
 
   .video-link {
     border-bottom: 1px dashed red;
     cursor: pointer;
     display: inline-block;
+    line-height: 0.6;
   }
 
   /* Google Card */
@@ -270,7 +283,7 @@ body {
 
 @media only screen and (min-width : 992px) {
   .google-card {
-    height: 26vh;
+    height: 245px;
     width: 25vw;
   }
 }
@@ -279,6 +292,12 @@ body {
   height: 150px;
   width: 100%;
   box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+}
+
+@media only screen and (min-width : 992px) {
+  .google-card-map {
+    height: 185px;
+  }
 }
 
 .google-card-name {
@@ -318,6 +337,7 @@ body {
   align-items: center;*/
   background-image: url('/thailand/thailand3.png');
   background-size: 100vw 100vh;
+  transition: opacity 1500ms;
 }
 
 .slippy-block > div {
@@ -341,6 +361,192 @@ body {
   margin: 1vw 0 0 0;
 }
 
+/* zoom text */
+.bg-zoom {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left:0;
+  background-size: cover;
+  background-color: transparent;
+  /*-webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;*/
+  text-shadow: 0 0 19px rgba(182, 228, 173, 0.68);
+  padding-top: 35px;
+}
+
+.zoom-text {
+  font-size: 9vw;
+  font-family: ViceGothic, sans-serif;
+  line-height: .75;
+  letter-spacing: -5px;
+  text-transform: uppercase;
+}
+
+.zoomed-text {
+    position: absolute;
+    top: 0;
+    display: flex;
+    text-align: center;
+    width: 100vw;
+    /*color: #000;*/
+    -webkit-text-fill-color: #000;
+    line-height: 1;
+    /* animation-duration: 1s; */
+    /* animation-name: scale-fade; */
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    transition: margin 450ms ease-in;
+}
+
+.zoomed-text span {
+  background-color: #fff;
+  color: #000;
+  padding: 34px 10px 0 10px;
+  font-size: 10vw;
+}
+
+
+/* image switcher */
+  .image-switcher {
+    position: fixed;
+    top: 0; bottom: 0;
+    left: 0; right: 0;
+  }
+  .switcher-def {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .switcher-alt {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0 0 0 -300%;
+    transition: margin 750ms ease-out;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .switch-from-left {
+    margin: 0;
+  }
+
+/* scroll image gallery */
+
+.scroll-gallery-image {
+  width: 100vw;
+  height: 100%;
+  position: absolute;
+}
+
+.scroll-gallery-image-enter {
+  top: 100vh;
+}
+
+.scroll-gallery-image-enter-active {
+  top: 0;
+  transition: top 500ms ease-in-out;
+}
+
+.scroll-gallery-image-leave {
+  opacity: 1;
+}
+
+.scroll-gallery-image-leave-active {
+  opacity: 0;
+  transition: opacity 250ms;
+}
+
+.scroll-gallery {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left:0;
+}
+
+/* animation & transition specific classes */
+
+@keyframes black-to-white {
+  from {
+    background-color: #fff;
+    color: #000;
+    opacity: 1;
+  }
+
+  50% {
+    /*opacity: 0;*/
+  }
+
+  to {
+    background-color: #000;
+    color: #fff;
+    opacity: 1;
+  }
+}
+
+.flip-colors {
+ animation-name: black-to-white;
+ animation-duration: 2500ms;
+ animation-iteration-count: infinite;
+ animation-direction: reverse;
+}
+
+.exit-right {
+  right: 200vw;
+  transition: right 500ms ease-in;
+}
+
+.fadezzz {
+  opacity: 0;
+  transition: opacity 1500ms;
+}
+
+.materialize {
+  animation: fader-in 1500ms;
+}
+
+@keyframes fader-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fader-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.pull-right {
+  margin-left: 300vw;
+  transition: margin 450ms ease-in;
+}
+
+@keyframes scale-fade {
+  from {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+
+  75% {
+    transform: scale(3);
+    opacity: 0.5;
+  }
+
+  to {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
 </style>
   </head>
   <body>

@@ -1,9 +1,10 @@
 var $ = require('jquery');
-var React = require('react');
+var React = require('react/addons');
 var ReactDOM = require('react-dom');
 var _ = require('underscore');
 var directions = require('directions');
 var Conti = require('conti');
+var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
 var scaler = (function(currMin, currMax, otherMin, otherMax) {
   var left = currMax - currMin;
@@ -80,7 +81,6 @@ var scene = [
       }},
       ];
 
-
 function createViewport(Component, container) {
   class Viewport extends React.Component {
     getChildContext() {
@@ -104,7 +104,7 @@ function createViewport(Component, container) {
 
       this.setState({measurements: {
         viewportWidth, viewportHeight, viewportLeft: 0, viewportTop: 0,
-        contentHeight: (viewportHeight * 12), adjustedViewportTop: 0,
+        contentHeight: (viewportHeight * 17), adjustedViewportTop: 0,
         pctScroll: 0 }});
     }
 
@@ -176,23 +176,32 @@ class Root extends React.Component {
   }
 
   render() {
-    // <Slide3 measurements={this.props.measurements} start={0.75} end={1} />
-    // <Slide2 measurements={this.props.measurements} start={0.65} end={0.75} />
-    // <Slide1 measurements={this.props.measurements} start={0.10} end={0.65} />
     // down the street 13.782658, 100.516636
     // restaurant 13.782994, 100.515541
     // <SlideStreet startPos={{lat:13.782658, lng: 100.516636}} endPos={{lat: 13.782994, lng: 100.515541}} />
     // ["Bangkok! ", " Oh ", " my ", " god. ", " I ", " have ", " just ", " landed ", " but ", " already ", " it's ", " kind ", " of ", " everything ", " I ", " wanted."]
 
-
+    var images = ['khao_day.jpg', 'khao_famous_day.jpg', 'khao_cheap_eats_day.jpg', 'khao_hostel_day.jpg', 'khao_booze_day.jpg', 'khao_anything_day.jpg'];
+    var altImages = ['khao_night.jpg', 'khao_famous_night.jpg', 'khao_cheap_eats_night.jpg', 'khao_hostel_night.jpg', 'khao_booze_night.jpg', 'khao_anything_night.jpg'];
+    var galleryImages = [{file: 'cook0.png', caption: "&ldquo;But there are hidden gems in the quite side streets, locals secret spots and what not.&rdquo;"},
+    {file: 'cook1.png', caption: "&ldquo;I can smell the chillies down the block, clearly this is my kind of place.&rdquo;"},
+    {file: 'cook2.png', caption: "Pad Kra Pao Gai... Thai Basil Chicken. Oooh that heat, love that."},
+    {file: 'cook3.png', caption: "Chef Dunn in kitchen and shes got bellys to feed. Let's do this."},
+    {file: 'cook4.png', caption: "I wanna bring some heat so everyone's fucking coughing in this bitch."},
+    {file: 'cook5.png', caption: "Now we're going to find out if I'm the real deal or not.."},
+    {file: 'cook6.png', caption: "It's pretty good, it's real yummy."},
+    {file: 'cook7.png', caption: "Bo bo bo!"}];
     return (
       <div>
-        <SlideBlock measurements={this.props.measurements} start={0.13} end={0.20} />
-        <Timelapse measurements={this.props.measurements} start={0.10} end={0.20} imagePath="/thailand/table" frameCount={17} />
-        <WordMask measurements={this.props.measurements} start={0.20} end={0.48} bgUrl="/thailand/biketomarket.gif" quote={["The ", " thing ", " is ", " I've ", " never ", " actually ", " been ", " there. ", " That ", " shit's ", " going ", " to ", " change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
-        <Title measurements={this.props.measurements} start={0} end={0.10} title="bangkok" backgroundImage="/thailand/bangkok.jpg" />
-        <SlideMovie measurements={this.props.measurements} start={0.48} end={0.65} videoSrc="/thailand/market2.mp4" />
-        <SlippyBlock measurements={this.props.measurements} start={0.65} end={0.8} />
+        <SlideBlock measurements={this.props.measurements} start={0.075} end={0.12} caption="&ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like a match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;" />
+        <Timelapse measurements={this.props.measurements} start={0.05} end={0.12} imagePath="/thailand/table" frameCount={17} />
+        <WordMask measurements={this.props.measurements} start={0.12} end={0.24} bgUrl="/thailand/biketomarket.gif" quote={["The thing is ", " I've never actually ", " been there. ", " That shit's ", " going to change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
+        <Title measurements={this.props.measurements} start={0} end={0.05} title="bangkok" subtitle="with Jourdan Dunn" backgroundImage="/thailand/bangkok.jpg" />
+        <SlideMovie measurements={this.props.measurements} start={0.24} end={0.31} videoSrc="/thailand/market2.mp4" />
+        <ImageSwitcher measurements={this.props.measurements} start={0.40} end={0.55} images={images} altImages={altImages} />
+        <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap food. ", " Cheap hostels. ", " Cheap booze. ", " You can find absolutely anything there."]} />
+        <SlippyBlock measurements={this.props.measurements} start={0.31} end={0.41} />
+        <ScrollGallery measurements={this.props.measurements} start={0.55} end={0.85} images={galleryImages} />
       </div>
     );
   }
@@ -348,24 +357,25 @@ class Title extends ScanComponent {
         newTop = dest_top;
     }
 
-    if(adjustedPctScroll > 0.01 && adjustedPctScroll < 0.025 && this.refs.sound1.paused) {
-      this.refs.sound1.play();
-    } else if (adjustedPctScroll >= 1) {
-      this.refs.sound1.pause();
-    }
+    // if(adjustedPctScroll > 0.01 && adjustedPctScroll < 0.025 && this.refs.sound1.paused) {
+    //   this.refs.sound1.play();
+    // } else if (adjustedPctScroll >= 1) {
+    //   this.refs.sound1.pause();
+    // }
 
     return {top: newTop};
   }
 
   render() {
     return(
-      <div className='bg-slide' style={{
+      <div className='bg-slide title-slide' style={{
         height: this.props.measurements.viewportHeight,
         top: this.state.top,
         backgroundImage: "url('" + this.props.backgroundImage + "')",
         backgroundSize: "cover"
       }}>
         <h3 className="vid-title" style={{fontSize: this.props.fontSize}}>{this.props.title}</h3>
+        <h4 className="vid-subtitle">{this.props.subtitle}</h4>
         <audio ref="sound1">
           <source src="/thailand/chatter.mp3" type="audio/mp3"/>
         </audio>
@@ -425,10 +435,12 @@ class WordMask extends ScanComponent {
         maskText: [],
         wordCount: 0,
         wordIdx: -1,
+        played: false,
         clipMode: 'text',
         word: '',
         flickered: false
     };
+    this.wordScaler = scaler(this.props.start, this.props.end-0.05, 0, 1);
   }
 
   flicker(count) {
@@ -461,35 +473,46 @@ class WordMask extends ScanComponent {
   adjust(last_state) {
     var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
         adjustedPctScroll = this.scaler(pctScroll),
+        adjustWordScroll = this.wordScaler(pctScroll),
         active = this.isActive(this.props.measurements),
         dest_top = viewportHeight * -1,
         text = "",
         maskText = "",
         word = "",
         flickered,
-        wordIdx,
-        clipMode,
+        wordIdx = last_state.wordIdx,
+        clipMode = last_state.clipMode,
+        played = last_state.played,
         newTop;
 
-    if(pctScroll < this.props.start) {
+    if(adjustedPctScroll < 0) {
       wordIdx = -1;
       clipMode = 'text';
       flickered = false;
-    } else if (pctScroll > this.props.end) {
-      wordIdx = this.state.wordCount+1;
+    } else {
+      wordIdx = Math.round(this.state.wordCount * adjustWordScroll);
+      clipMode = 'text';
+    }
+
+    //flash in the background
+    if(wordIdx > this.state.wordCount) {
       clipMode = '';
+      wordIdx = this.state.wordCount+1;
+
       if(!this.state.flickered) {
         this.flicker(48);
       }
       flickered = true;
-    } else {
-      wordIdx = Math.min(this.state.wordCount, Math.round(this.state.wordCount * adjustedPctScroll));
-      clipMode = 'text';
-      flickered = false;
+      if (this.refs.welcome.paused && !this.state.played && this.state.active) {
+        this.refs.welcome.play();
+        played = true;
+      }
     }
 
-    // console.log(this.state.wordCount, wordIdx);
-
+    //update the displayed words.
+    //current word in white.
+    //hidden span of words to keep the spacing correct.
+    //masked out layer of words to show the background image.
     if(wordIdx === -1) {
       maskText = "";
       text = "";
@@ -507,8 +530,8 @@ class WordMask extends ScanComponent {
       text = this.props.quote.slice(0, wordIdx).join("");
       word = this.props.quote[wordIdx];
     }
-    // console.log('word:', word, 'wordidx:', wordIdx, flickered);
-    return {active, clipMode, flickered, maskText, text, word, wordIdx};
+
+    return {active, clipMode, flickered, maskText, text, word, wordIdx, played};
   }
 
   render() {
@@ -518,6 +541,9 @@ class WordMask extends ScanComponent {
           {this.state.maskText}
         </div>
         <span ref="text" className="mask-text text"><span ref="hide" className="hide">{this.state.text}</span><span ref="show" className="show">{this.state.word}</span></span>
+        <audio ref="welcome">
+          <source ref="welcomeSrc" type="audio/mp3" src="/thailand/bangkok.mp3" />
+        </audio>
       </div>
     )
   }
@@ -590,7 +616,7 @@ class SlideMovie extends ScanComponent {
       // console.log(this.refs.video.loop, this.refs.video.paused);
 
       if(this.refs.video.paused && !this.state.played) {
-        this.refs.video.play();
+        //this.refs.video.play();
         played = true;
       }
     };
@@ -622,10 +648,10 @@ class SlideMovie extends ScanComponent {
           <source ref="videoSrc" type="video/mp4" src={this.props.videoSrc} />
         </video>
         <h5 className="slide-caption video-caption" style={{display: this.state.caption ? 'block' : 'none'}}>
-          &ldquo;It''s amazing this <GoogleCardLink cssClass="video-link" cardData={this.state.cardData} text="market" />.&rdquo;
+          &ldquo;It's amazing this <GoogleCardLink cssClass="video-link" cardData={this.state.cardData} text="market" />.&rdquo;
         </h5>
       </div>
-    )
+    ); //'
   }
 }
 
@@ -636,7 +662,8 @@ class SlideBlock extends ScanComponent {
       top: 0,
       opacity: 0,
       active: false,
-      caption: true
+      caption: true,
+      display: 'none'
     };
   }
 
@@ -657,7 +684,8 @@ class SlideBlock extends ScanComponent {
         adjustedPctScroll = this.scaler(pctScroll),
         active = this.isActive(this.props.measurements),
         opacity,
-        top;
+        top,
+        display = last_state.display;
 
     var conti = new Conti(0,0.5,"adjustedPctScroll", (pct, t) => {
       t.top = Math.linearTween(pct,viewportHeight,-viewportHeight,1);
@@ -681,15 +709,18 @@ class SlideBlock extends ScanComponent {
     if(adjustedPctScroll < 0) {
       top = viewportHeight;
       opacity = 0;
+      display = 'none';
     } else if (adjustedPctScroll > 1) {
       top = 0;
       opacity = 0;
+      display = 'none';
     } else {
       top = trans_data.top;
       opacity = trans_data.opacity;
+      display = 'block';
     }
 
-    return {active, opacity, top};
+    return {active, opacity, top, display};
   }
 
   render() {
@@ -697,11 +728,12 @@ class SlideBlock extends ScanComponent {
       <div ref="slideRoot" className='bg-slide slide-block' style={{
         top: this.state.top,
         height: this.props.measurements.viewportHeight,
-        zIndex: 100,
-        opacity: this.state.opacity
+        zIndex: 200,
+        opacity: this.state.opacity,
+        display: this.state.display
       }}>
         <h5 className="slide-caption block-caption" style={{display: this.state.caption ? 'block' : 'none'}}>
-          &ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like the match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;
+          {this.props.caption}
         </h5>
       </div>
     )
@@ -729,7 +761,7 @@ class SlippyText extends ScanComponent {
         adjustedPctScroll = this.scaler(pctScroll),
         active = this.isActive(this.props.measurements);
 
-    return {active, className: (adjustedPctScroll > 0) ? "slippy-text from-left" : "slippy-text"};
+    return {active, className: (adjustedPctScroll > 0 && adjustedPctScroll < 0.95) ? "slippy-text from-left" : "slippy-text"};
   }
 
   render() {
@@ -768,25 +800,35 @@ class SlippyBlock extends ScanComponent {
         adjustedPctScroll = this.scaler(pctScroll),
         active = this.isActive(this.props.measurements),
         count = last_state.count,
-        top;
+        top,
+        $slipRoot = $(this.refs.slipRoot);
 
     if(adjustedPctScroll <= 0) {
       top = 0;
       count = 0;
-    } else if (adjustedPctScroll >= 1) {
+      if($slipRoot.hasClass('fadezzz')) {
+        $slipRoot.removeClass('fadezzz');
+      }
+    } else if (adjustedPctScroll > 1) {
       top = viewportHeight;
+      if(!$slipRoot.hasClass('fadezzz')) {
+        $slipRoot.addClass('fadezzz');
+      }
     } else {
+      if($slipRoot.hasClass('fadezzz')) {
+        $slipRoot.removeClass('fadezzz');
+      }
       count = Math.round(this.state.maxCount * adjustedPctScroll);
       top = Math.linearTween(adjustedPctScroll, 0, viewportHeight, 0.85);
     }
-    console.log(count);
+
     return {active, count, top, adjustedPctScroll};
   }
 
   getTextBlock(count) {
-    var measurements = _.extend(this.props.measurements, {pctScroll: this.state.adjustedPctScroll});
+    var measurements = _.extend(_.clone(this.props.measurements), {pctScroll: this.state.adjustedPctScroll});
     return Array(count).fill(0).map((v, i) => {
-      var start = i * 0.25,
+      var start = i * 0.15,
           // end = i * 0.25,
           end = 1;
       return <SlippyText caption={this.state.caption} key={i} start={start} end={end} measurements={measurements} />
@@ -794,7 +836,7 @@ class SlippyBlock extends ScanComponent {
   }
 
   render() {
-    var textBlocks = (this.props.measurements.pctScroll > 0) ? this.getTextBlock(this.state.count) : [];
+    var textBlocks = (this.state.adjustedPctScroll > 0) ? this.getTextBlock(this.state.count) : [];
     return(
       <div ref="slipRoot" className="slippy-block" style={{
         height: this.state.top,
@@ -806,189 +848,255 @@ class SlippyBlock extends ScanComponent {
   }
 }
 
-
-class SlideStreet extends ScanComponent {
+class ZoomWords extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-      top: 10,
-      caption: false,
-      active: false,
-      slideWords: "6.5%"
+        text: [],
+        maskText: [],
+        wordCount: 0,
+        wordIdx: -1,
+        clipMode: 'none',
+        display: 'none',
+        word: '',
+        flickered: false
     };
+  }
+
+  componentWillMount() {
+    this.setState(_.extend(this.state, {wordCount: this.props.quote.length-1, bgUrl: this.props.bgUrl}));
   }
 
   componentWillReceiveProps() {
     this.setState(_.extend(this.state, this.adjust(this.state)));
   }
 
-  componentDidMount(){
-    var domNode = this.refs.map; //ReactDOM.findDOMNode();
-    var map = new google.maps.Map(domNode);
-    // replace "toner" here with "terrain" or "watercolor"
-    this.state.map = map;
-    this.state.streetView = map.getStreetView();
-    this.state.streetView.setVisible(true);
-    this.state.streetView.setOptions({ linksControl: false, panControl: false,
-      zoomControl: false, mapTypeControl: false,
-      streetViewControl: false, overviewMapControl: false,
-      addressControl: false, enableCloseButton: false});
+  isActive(d){
+    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
+  }
 
-    var startPoint = new google.maps.LatLng(this.props.startPos.lat, this.props.startPos.lng);
-    this.state.streetView.setPosition(startPoint);
-    this.state.streetView.setPov({heading: 77.68007576992042, pitch: 0, zoom: 1}); //64.9837616957764
-    $(domNode).css({"pointer-events": "none"});
+  adjust(last_state) {
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
+        active = this.isActive(this.props.measurements),
+        dest_top = viewportHeight * -1,
+        text = "",
+        maskText = "",
+        word = "",
+        wordIdx,
+        display,
+        newTop;
 
-    $(window).on("keydown", (e) => {
-      if(e.keyCode === 32 && this.state.active){
-        e.preventDefault();
-        this.togglePov();
-        return false;
-      }
-    });
+    if(pctScroll < this.props.start) {
+      display = 'none';
+      wordIdx = -1;
+    } else if (pctScroll > this.props.end) {
+      wordIdx = this.state.wordCount+1;
+      display = 'block';
+    } else {
+      display = 'block';
+      wordIdx = Math.min(this.state.wordCount, Math.round(this.state.wordCount * adjustedPctScroll));
+    }
 
-    // var hammerSwipe = new Hammer(document.body);
+    // console.log(this.state.wordCount, wordIdx);
 
-    // hammerSwipe.on('swipeleft', (ev) => {
-    //     if(this.state.active) {
-    //       ev.preventDefault();
-    //       this.swipePov('left');
-    //       return false;
-    //     }
-    // });
+    if(wordIdx === -1) {
+      maskText = "";
+      text = "";
+      word = "";
+    } else if (wordIdx === 0) {
+      maskText = "";
+      text = this.props.quote.slice(0, wordIdx).join("");
+      word = this.props.quote[wordIdx];
+    } else if (wordIdx > this.state.wordCount) {
+      word = "";
+      maskText = this.props.quote.slice(0, wordIdx+1).join("");
+      text = this.props.quote.slice(0, wordIdx+1).join("");
+    } else {
+      maskText = this.props.quote.slice(0, wordIdx).join("");
+      text = this.props.quote.slice(0, wordIdx).join("");
+      word = this.props.quote[wordIdx];
+    }
 
-    // hammerSwipe.on('swiperight', (ev) => {
-    //     if(this.state.active) {
-    //       ev.preventDefault();
-    //       this.swipePov('right');
-    //       return false;
-    //     }
-    // });
+    // console.log('word:', word, 'wordidx:', wordIdx, flickered);
+    return {active, display, maskText, text, word, wordIdx};
+  }
+
+  getZoomText() {
+    return (
+      <div className="zoomed-text" style={{
+        display: (this.state.word) ? 'flex' : 'none'
+      }}>
+        <span ref="zoomText">{this.state.word}</span>
+      </div>);
+  }
+
+  render() {
+    var zoomText = this.getZoomText();
+    return(
+      <div style={{display: this.state.display}}>
+        <div className="bg-zoom zoom-text" style={{
+          backgroundImage: (this.state.bgUrl) ? 'url(' + this.state.bgUrl + ')' : '',
+          WebkitBackgroundClip: this.state.clipMode,
+          zIndex: 100 }}
+          ref="bg">
+          {this.state.maskText}
+          {zoomText}
+        </div>
+      </div>
+    )
+  }
+}
+
+class ImageSwitcher extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      altImage: "",
+      defImage: "",
+      imageCount: 0,
+      imageIdx: 0
+    }
+  }
+
+  componentWillMount() {
+    this.setState(_.extend(this.state, {imageCount: this.props.images.length-1}));
+  }
+
+  componentWillReceiveProps() {
+    this.setState(_.extend(this.state, this.adjust(this.state)));
   }
 
   isActive(d){
     return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
   }
 
-  adjust(last_state, d) {
-    let {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
+  adjust(last_state) {
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
         adjustedPctScroll = this.scaler(pctScroll),
         active = this.isActive(this.props.measurements),
-        currentPov = this.state.streetView.getPov(),
-        caption = false;
+        defImage,
+        altImage,
+        display,
+        imageIdx;
 
-    if(!active) { return {active}; }
-
-    var conti = new Conti(0,0.05,"adjustedPctScroll",function(clamped_pct, t){
-        t.new_pitch = 64.9837616957764;
-        t.new_volume = 0
-        t.new_slide = 6.5;
-        return t;
-      }).abut(0.1, function(clamped_pct, t){
-        t.new_pitch = Math.linearTween(clamped_pct, 64.9837616957764, -64.9837616957764, 1)
-        t.new_volume = Math.linearTween(clamped_pct,0,0.6,1);
-        t.new_slide = Math.linearTween(clamped_pct,10,-100,1);
-        return t;
-      }).abut(0.35, function(clamped_pct, t){
-        t.new_pitch = 0;
-        t.new_volume = 0.6;
-        t.new_slide = -100;
-        return t;
-      }).abut(0.85, function(clamped_pct, t){
-        t.new_pitch = 0;
-        t.new_volume = Math.linearTween(clamped_pct,0.6,-0.6,1);
-        t.new_slide = -100;
-        return t;
-      }).abut(1, function(clamped_pct,t){
-        t.new_pitch = 0;
-        t.new_volume = 0;
-        t.new_slide = -100;
-        return t;
-      });
-
-    var trans_data = conti.run(_.extend(this.props.measurements, {adjustedPctScroll}), {})
-
-    if (active) { $("#shopping-mp3")[0].play(); }
-    else { $("#shopping-mp3")[0].pause(); }
-
-    $("#shopping-mp3")[0].volume = trans_data.new_volume;
-
-    if (adjustedPctScroll < 0) {
-        caption = false
-    } else if ((adjustedPctScroll >= 0.25 && adjustedPctScroll < 0.45)){
-        caption = "I woke up in the middle of the promenade.";
-        if(caption !== this.state.caption){ $("#shopping-mp3-1")[0].play(); }
-    } else if ((adjustedPctScroll >= 0.45 && adjustedPctScroll < 0.65)){
-        caption = "Traffic had stopped, my head spinning.";
-        if(caption !== this.state.caption){ $("#shopping-mp3-2")[0].play(); }
-    } else if ((adjustedPctScroll >= 0.65 && adjustedPctScroll < 0.85)) {
-        caption = "Yung TourGuide was laughing.<br/>'First time, eh?'";
-        if(caption !== this.state.caption){ $("#shopping-mp3-4")[0].play(); }
-    } else if (adjustedPctScroll > 0.85 && adjustedPctScroll < 1) {
-        caption = "My hand was clutching a bottle of magic juice. My night had just started."
-        if(caption !== this.state.caption){ $("#shopping-mp3-3")[0].play(); }
+    // console.log(adjustedPctScroll);
+    if(pctScroll < this.props.start) {
+      imageIdx = -1;
+      display = 'none';
+    } else if (pctScroll > this.props.end) {
+      imageIdx = this.state.imageCount;
+      display = 'block';
+    } else {
+      display = 'block';
+      imageIdx = Math.min(this.state.imageCount, Math.round(this.state.imageCount * adjustedPctScroll));
     }
 
-    currentPov.pitch = trans_data.new_pitch;
-
-    this.state.streetView.setPov(currentPov);
-    return {active: active, top: 0, caption: caption, slideWords: trans_data.new_slide + "%"};
+    defImage = (imageIdx >= 0) ? "/thailand/" + this.props.images[imageIdx] : "";
+    altImage = (imageIdx >= 0) ? "/thailand/" + this.props.altImages[imageIdx] : "";
+    return {defImage, altImage, imageIdx, active, display};
   }
 
-  swipePov(direction){
-    var current_pov = _.clone(this.state.streetView.getPov());
-    if(direction === 'left') {
-      current_pov.heading += 180;
-    } else {
-      current_pov.heading -= 180;
-    }
-    animatePov(this.state.streetView,current_pov);
-  }
+  componentDidMount() {
+    $(window).on("keydown", (e) => {
+      if(e.keyCode == 16 && this.state.active) {
+        e.preventDefault();
+        let $alt = $(this.refs.altImage);
+        if(!$alt.hasClass("switch-from-left")) {
+          $(this.refs.altImage).addClass("switch-from-left");
+          $('.zoomed-text').addClass('pull-right');
+          // $('.zoomed-text span').addClass('flip-colors');
+        }
+      }
+    });
 
-  togglePov(){
-    var current_pov = _.clone(this.state.streetView.getPov());
-    if(!this.pov_toggle){
-        current_pov.heading += 180;
-        this.pov_toggle = true;
-    } else {
-        current_pov.heading -= 180;
-        this.pov_toggle = false;
-    }
-    animatePov(this.state.streetView,current_pov);
+    $(window).on("keyup", (e) => {
+      if(e.keyCode == 16 && this.state.active) {
+        e.preventDefault();
+        let $alt = $(this.refs.altImage);
+        if($alt.hasClass("switch-from-left")) {
+          $(this.refs.altImage).removeClass("switch-from-left");
+          $('.zoomed-text').removeClass('pull-right');
+          // $('.zoomed-text span').removeClass('flip-colors');
+        }
+      }
+    });
   }
 
   render() {
-    return(
-      <div ref="slideRoot" className='bg-slide' style={{
-        top: this.state.top,
-        height: this.props.measurements.viewportHeight
-      }}>
-        <div className="streetview-back" ref="map" id="slide1" style={{
-          width: this.props.measurements.viewportWidth,
-          height: this.props.measurements.viewportHeight
-        }}/>
-        <h6 className="slide-words" style={{top: this.state.slideWords}}>
-            At 6:00 PM, I got the text. "Meet Yung Tourguide in the middle of Marseille and take this pill". A pill popped out of my phone, because it was the future. I was gonna have a crazy night in the service of journalism.
-        </h6>
-        <h5 className="slide-caption" style={{display: this.state.caption ? 'block' : 'none'}} dangerouslySetInnerHTML={{ __html: this.state.caption}}>
-        </h5>
-        <audio id="shopping-mp3" loop>
-          <source src="/shopping-square-1.mp3" type="audio/mp3"/>
-        </audio>
-        <audio id="shopping-mp3-1">
-          <source src="/erik3/clip1.wav" type="audio/wav"/>
-        </audio>
-        <audio id="shopping-mp3-2">
-          <source src="/erik3/clip2.wav" type="audio/wav"/>
-        </audio>
-        <audio id="shopping-mp3-3">
-          <source src="/erik3/clip3.wav" type="audio/wav"/>
-        </audio>
-        <audio id="shopping-mp3-4">
-          <source src="/erik3/clip4.wav" type="audio/wav"/>
-        </audio>
+    return (
+      <div className="image-switcher" style={{zIndex: 100, display: this.state.display}}>
+        <img ref="defImage" src={this.state.defImage} className="switcher-def" />
+        <img ref="altImage" src={this.state.altImage} className="switcher-alt" />
       </div>
-    )
+    );
+  }
+}
+
+class ScrollGallery extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      imageIdx: -1,
+      active: false,
+      images: [],
+      zIndex: 0
+    };
+  }
+
+  componentWillMount() {
+    this.setState(_.extend(this.state, {imageCount: this.props.images.length-1}));
+  }
+
+  componentWillReceiveProps() {
+    this.setState(_.extend(this.state, this.adjust(this.state)));
+  }
+
+  isActive(d){
+    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
+  }
+
+  adjust(last_state) {
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
+        active = this.isActive(this.props.measurements),
+        images = [],
+        display,
+        imageIdx,
+        zIndex = last_state.zIndex;
+
+    if(adjustedPctScroll < 0) {
+      imageIdx = -1;
+      display = 'none';
+      zIndex = 0;
+    } else if (adjustedPctScroll > 1) {
+      imageIdx = this.state.imageCount;
+      display = 'block';
+    } else {
+      display = 'block';
+      imageIdx = Math.min(this.state.imageCount, Math.round(this.state.imageCount * adjustedPctScroll));
+      zIndex = 103;
+    }
+
+    if(imageIdx >= 0) {
+      images = this.props.images.slice(0, imageIdx+1);
+    }
+    return {active, display, imageIdx, images, zIndex};
+  }
+
+  render() {
+    var images = this.state.images.map((p, i) => {
+      return (
+        <img src={p} className="scroll-gallery-image" key={p} />
+      );
+    });
+    return (
+      <div className="scroll-gallery" style={{display: this.state.display, zIndex: this.state.zIndex}}>
+        <ReactCSSTransitionGroup transitionName="scroll-gallery-image">
+          {images}
+        </ReactCSSTransitionGroup>
+      </div>
+    );
   }
 }
 
