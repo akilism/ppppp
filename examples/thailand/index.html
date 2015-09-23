@@ -104,14 +104,14 @@ body {
     font-family: 'TradeGothic-Bold';
     text-transform: uppercase;
     font-weight:bold;
-    font-size: 7.5vw;
+    font-size: 5.5vw;
     padding: 0 10%;
     box-sizing:border-box;
 }
 
 @media only screen and (min-width : 992px) {
   .slide-caption {
-    font-size: 5.5vw;
+    font-size: 3.5vw;
   }
 }
 
@@ -204,20 +204,34 @@ body {
     position: fixed;
     top: 0; right: 0; bottom: 0; left:0;
     background-color: rgba(148, 183, 236, 0.51);
-    background-size: cover;
+    background-size: contain;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     padding: 60px 0 0 10px;
     opacity: 1;
     background-blend-mode: color-burn;
+    background-position: center center;
+}
+
+@media only screen and (min-width : 992px) {
+  .bg-mask {
+    background-size: cover;
+  }
 }
 
 .mask-text {
     font-size: 13vw;
     font-family: ViceGothic, sans-serif;
-    line-height: .55;
-    letter-spacing: -5px;
+    line-height: 0.7;
+    letter-spacing: -3px;
     text-transform: uppercase;
+}
+
+@media only screen and (min-width : 992px) {
+  .mask-text {
+    line-height: 0.55;
+    letter-spacing: -5px;
+  }
 }
 
 .text {
@@ -247,16 +261,28 @@ body {
   }
 
   .slide-video {
-    height: 480px;
+    height: 195px;
     box-shadow: 0 0 10px #000;
     /*margin-top: 4vh;*/
     margin-bottom: 50px;
+  }
+
+  @media only screen and (min-width : 992px) {
+    .slide-video {
+      height: 480px;
+    }
   }
 
   .video-caption {
     padding: 0 5%;
     position: initial;
     margin: 0;
+  }
+
+  @media only screen and (min-width : 992px) {
+    .video-caption {
+      font-size: 5.5vw;
+    }
   }
 
   .video-link {
@@ -321,7 +347,7 @@ body {
 
 /*block slide*/
 .block-caption {
-  font-size: 5vw;
+  /*font-size: 5vw;*/
   background-color: rgba(0, 0, 0, 0.5);
   padding: 1em 2em;
   text-transform: none;
@@ -346,8 +372,8 @@ body {
 
 .slippy-text {
   margin: 1vw 0 0 -300%;
-  transition: margin 750ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  font-size: 5rem;
+  /*font-size: 5rem;*/
+  font-size: 7vw;
   font-family: ViceGothic, sans-serif;
   line-height: 1;
   display: inline-block;
@@ -355,6 +381,12 @@ body {
   text-transform: uppercase;
   background-color: #000;
   color: #fff;
+}
+
+@media only screen and (min-width : 992px) {
+  .slippy-text {
+    transition: margin 750ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
 }
 
 .wormhole-street {
@@ -386,7 +418,7 @@ body {
 }
 
 .zoom-text {
-  font-size: 9vw;
+  font-size: 13vw;
   font-family: ViceGothic, sans-serif;
   line-height: .75;
   letter-spacing: -5px;
@@ -413,10 +445,21 @@ body {
 .zoomed-text span {
   background-color: #fff;
   color: #000;
-  padding: 34px 10px 0 10px;
-  font-size: 10vw;
+  /*padding: 34px 10px 0 10px;*/
+  padding: 8px 10px 0 10px;
+  font-size: 12vw;
 }
 
+@media only screen and (min-width : 992px) {
+  .zoomed-text span {
+    font-size: 11vw;
+    padding: 19px 13px 0 10px;
+  }
+
+  .zoom-text {
+    font-size: 9vw;
+  }
+}
 
 /* image switcher */
   .image-switcher {
@@ -474,6 +517,7 @@ body {
   position: fixed;
   top: 0; right: 0; bottom: 0; left:0;
 }
+
 
 /* animation & transition specific classes */
 

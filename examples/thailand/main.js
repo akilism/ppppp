@@ -149,7 +149,7 @@ function createViewport(Component, container) {
     }
 
     handleScroll(ev) {
-      var viewportLeft = $(ev.target).scrollLeft(),
+      var viewportLeft = 0, //$(ev.target).scrollLeft(),
           viewportTop = $(ev.target).scrollTop(),
           contentHeight = this.state.measurements.contentHeight,
           adjustedViewportTop = (viewportTop / this.state.measurements.viewportHeight) * (contentHeight * 0.1),
@@ -159,20 +159,12 @@ function createViewport(Component, container) {
           if(this.state.wormholeActive) {
             wormholeDist = this.state.wormholePosition ? viewportTop - this.state.wormholePosition : 0;
             viewportTop = this.state.wormholePosition ?  this.state.wormholePosition : viewportTop;
-            // console.log(viewportTop, ':', wormholeDist, ':', this.state.wormholePosition);
             pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
            } else {
             viewportTop = (viewportTop - wormholeDist < 0) ? 0 : viewportTop - wormholeDist;
             pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
-            // console.log('handleScroll pctScroll:', pctScroll);
            }
 
-      // console.log("handleScroll:wormholeDist:", wormholeDist);
-      // if(!this.state.wormholeActive) {
-      //   console.log("inactive pctScroll:", pctScroll);
-      // } else {
-      //   console.log("active pctScroll:", pctScroll);
-      // }
       // console.log("pctScroll:", pctScroll, " contentHeight:", contentHeight, " viewportTop:", viewportTop, " viewportHeight:", this.state.measurements.viewportHeight, "wormholeDist:", wormholeDist);
       this.setState({measurements: _.extend(this.state.measurements, {viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll, wormholeDist})});
     }
@@ -212,7 +204,6 @@ class Root extends React.Component {
     // down the street 13.782658, 100.516636
     // restaurant 13.782994, 100.515541
     // <SlideStreet startPos={{lat:13.782658, lng: 100.516636}} endPos={{lat: 13.782994, lng: 100.515541}} />
-    // ["Bangkok! ", " Oh ", " my ", " god. ", " I ", " have ", " just ", " landed ", " but ", " already ", " it's ", " kind ", " of ", " everything ", " I ", " wanted."]
 
     var images = ['khao_day.jpg', 'khao_famous_day.jpg', 'khao_cheap_eats_day.jpg', 'khao_hostel_day.jpg', 'khao_booze_day.jpg', 'khao_anything_day.jpg'];
     var altImages = ['khao_night.jpg', 'khao_famous_night.jpg', 'khao_cheap_eats_night.jpg', 'khao_hostel_night.jpg', 'khao_booze_night.jpg', 'khao_anything_night.jpg'];
@@ -232,7 +223,7 @@ class Root extends React.Component {
         <Title measurements={this.props.measurements} start={0} end={0.05} title="bangkok" subtitle="with Jourdan Dunn" backgroundImage="/thailand/bangkok.jpg" />
         <SlideMovie measurements={this.props.measurements} start={0.24} end={0.31} videoSrc="/thailand/market2.mp4" />
         <ImageSwitcher measurements={this.props.measurements} start={0.40} end={0.55} images={images} altImages={altImages} />
-        <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap food. ", " Cheap hostels. ", " Cheap booze. ", " You can find absolutely anything there."]} />
+        <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap eats. ", " Cheap hostels. ", " Cheap drinks. ", " You can find absolutely anything there."]} />
         <SlippyBlock measurements={this.props.measurements} start={0.31} end={0.41} />
         <ScrollGallery measurements={this.props.measurements} start={0.55} end={0.85} images={galleryImages} />
       </div>
@@ -819,7 +810,8 @@ class SlippyBlock extends ScanComponent {
       top: 0,
       adjustedPctScroll: 0,
       wormholeActive: false,
-      wormholeLength: 2500
+      wormholeLength: 2500,
+      zIndex: -1
     }
   }
 
@@ -912,6 +904,7 @@ class SlippyBlock extends ScanComponent {
         active = this.isActive(this.props.measurements),
         count = last_state.count,
         top,
+        zIndex = last_state.zIndex,
         $slipRoot = $(this.refs.slipRoot);
 
     if(adjustedPctScroll <= 0) {
@@ -933,7 +926,13 @@ class SlippyBlock extends ScanComponent {
       top = Math.linearTween(adjustedPctScroll, 0, viewportHeight, 0.85);
     }
 
-    return {active, count, top, adjustedPctScroll};
+    if(adjustedPctScroll > 0.05 && adjustedPctScroll < 1) {
+      zIndex = 100;
+    } else {
+      zIndex = -1;
+    }
+
+    return {active, count, zIndex, top, adjustedPctScroll};
   }
 
   getTextBlock(count) {
@@ -949,14 +948,14 @@ class SlippyBlock extends ScanComponent {
   render() {
     var textBlocks = (this.state.adjustedPctScroll > 0) ? this.getTextBlock(this.state.count) : [];
     return(
-      <div>
+      <div style={{ zIndex: this.state.zIndex }}>
         <div ref="slipRoot" className="slippy-block" style={{
           height: this.state.top,
-          zIndex: 100
+          zIndex: this.state.zIndex
         }}>
           {textBlocks}
         </div>
-        <div ref="mapHolder" className="wormhole-street" style={{zIndex: 100}}>
+        <div ref="mapHolder" className="wormhole-street" style={{zIndex: this.state.zIndex}}>
           <div ref="map" style={{
             width: this.props.measurements.viewportWidth,
             height: this.props.measurements.viewportHeight
