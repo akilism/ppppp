@@ -843,6 +843,16 @@ class SlippyBlock extends ScanComponent {
           return false;
         }
     });
+
+    var hammerSwipe = new Hammer(document.body);
+
+    hammerSwipe.on('swipe', (ev) => {
+        if(this.state.active) {
+          ev.preventDefault();
+          this.toggleWormhole();
+          return false;
+        }
+    });
   }
 
   toggleWormhole() {
@@ -1116,29 +1126,53 @@ class ImageSwitcher extends ScanComponent {
     return {defImage, altImage, imageIdx, active, display};
   }
 
+  showAltImage() {
+    let $alt = $(this.refs.altImage);
+    if(!$alt.hasClass("switch-from-left")) {
+      $(this.refs.altImage).addClass("switch-from-left");
+      $('.zoomed-text').addClass('pull-right');
+    }
+  }
+
+  hideAltImage() {
+    let $alt = $(this.refs.altImage);
+    if($alt.hasClass("switch-from-left")) {
+      $(this.refs.altImage).removeClass("switch-from-left");
+      $('.zoomed-text').removeClass('pull-right');
+    }
+  }
+
   componentDidMount() {
     $(window).on("keydown", (e) => {
       if(e.keyCode == 16 && this.state.active) {
         e.preventDefault();
-        let $alt = $(this.refs.altImage);
-        if(!$alt.hasClass("switch-from-left")) {
-          $(this.refs.altImage).addClass("switch-from-left");
-          $('.zoomed-text').addClass('pull-right');
-          // $('.zoomed-text span').addClass('flip-colors');
-        }
+        this.showAltImage();
       }
     });
 
     $(window).on("keyup", (e) => {
       if(e.keyCode == 16 && this.state.active) {
         e.preventDefault();
-        let $alt = $(this.refs.altImage);
-        if($alt.hasClass("switch-from-left")) {
-          $(this.refs.altImage).removeClass("switch-from-left");
-          $('.zoomed-text').removeClass('pull-right');
-          // $('.zoomed-text span').removeClass('flip-colors');
-        }
+        this.hideAltImage();
       }
+    });
+
+    var hammerSwipe = new Hammer(document.body);
+
+    hammerSwipe.on('swipeleft', (ev) => {
+        if(this.state.active) {
+          ev.preventDefault();
+          this.showAltImage();
+          return false;
+        }
+    });
+
+    hammerSwipe.on('swiperight', (ev) => {
+        if(this.state.active) {
+          ev.preventDefault();
+          this.hideAltImage();
+          return false;
+        }
     });
   }
 
@@ -1151,7 +1185,6 @@ class ImageSwitcher extends ScanComponent {
     );
   }
 }
-
 
 class ScrollGallery extends ScanComponent {
   constructor(props) {

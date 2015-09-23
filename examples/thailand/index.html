@@ -7,6 +7,7 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAST2EKzl1YTqN6nlrzX2FAfv2z9oKAwO4"></script>
     <link href='https://fonts.googleapis.com/css?family=Roboto:200,300,400,500,700' rel='stylesheet' type='text/css'>
     <link href='https://fonts.googleapis.com/css?family=Creepster' rel='stylesheet' type='text/css'>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.4/hammer.min.js"></script>
     <script async src="./build/main.js"></script>
     <style>
 
@@ -421,7 +422,7 @@ body {
   font-size: 13vw;
   font-family: ViceGothic, sans-serif;
   line-height: .75;
-  letter-spacing: -5px;
+  letter-spacing: -3px;
   text-transform: uppercase;
 }
 
@@ -458,6 +459,7 @@ body {
 
   .zoom-text {
     font-size: 9vw;
+    letter-spacing: -5px;
   }
 }
 
@@ -469,8 +471,8 @@ body {
   }
   .switcher-def {
     position: absolute;
-    width: 100vw;
     height: 100vh;
+    background-position: center center;
   }
 
   .switcher-alt {
@@ -479,8 +481,15 @@ body {
     left: 0;
     margin: 0 0 0 -300%;
     transition: margin 750ms ease-out;
-    width: 100vw;
     height: 100vh;
+    background-position: center center;
+  }
+
+  @media only screen and (min-width : 992px) {
+    .switcher-alt,
+    .switcher-def {
+      width: 100vw;
+    }
   }
 
   .switch-from-left {
