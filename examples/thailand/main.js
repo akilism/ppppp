@@ -1,10 +1,10 @@
 var $ = require('jquery');
-var React = require('react/addons');
+var React = require('react');
 var ReactDOM = require('react-dom');
 var _ = require('underscore');
 var directions = require('directions');
 var Conti = require('conti');
-var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+// var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
 var scaler = (function(currMin, currMax, otherMin, otherMax) {
   var left = currMax - currMin;
@@ -86,7 +86,8 @@ function createViewport(Component, container) {
     getChildContext() {
       return {
         getPercentage: this.getPct.bind(this),
-        getPercentageInverse: this.getInv.bind(this)
+        getPercentageInverse: this.getInv.bind(this),
+        toggleWormhole: this.toggleWormhole.bind(this)
       };
     }
 
@@ -104,12 +105,24 @@ function createViewport(Component, container) {
 
       this.setState({measurements: {
         viewportWidth, viewportHeight, viewportLeft: 0, viewportTop: 0,
-        contentHeight: (viewportHeight * 17), adjustedViewportTop: 0,
-        pctScroll: 0 }});
+        contentHeight: (viewportHeight * 20), adjustedViewportTop: 0,
+        pctScroll: 0, wormholeDist: 0 }, wormholeActive: false, wormholePosition: null});
     }
 
     componentDidMount() {
       $(window).on('scroll', _.throttle(this.handleScroll.bind(this), 10));
+    }
+
+    toggleWormhole() {
+      // console.log("viewport toggleWormhole:", this.state.wormholeActive);
+      var measurements = (this.state.wormholeActive) ? this.state.measurements : _.extend(this.state.measurements, {wormholeDist: 0});
+      this.setState(_.extend(this.state, {wormholeActive: !this.state.wormholeActive,
+          wormholePosition: this.state.measurements.viewportTop,
+          measurements: measurements}));
+    }
+
+    wormholeDistance() {
+        return this.state.wormholeActive ? this.state.wormholeDist : 0;
     }
 
     render() {
@@ -140,9 +153,28 @@ function createViewport(Component, container) {
           viewportTop = $(ev.target).scrollTop(),
           contentHeight = this.state.measurements.contentHeight,
           adjustedViewportTop = (viewportTop / this.state.measurements.viewportHeight) * (contentHeight * 0.1),
-          pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
-      // console.log("pctScroll:", pctScroll, " contentHeight:", contentHeight, " viewportTop:", viewportTop, " viewportHeight:", this.state.measurements.viewportHeight);
-      this.setState({measurements: _.extend(this.state.measurements, {viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll})});
+          wormholeDist = this.state.measurements.wormholeDist,
+          pctScroll;
+
+          if(this.state.wormholeActive) {
+            wormholeDist = this.state.wormholePosition ? viewportTop - this.state.wormholePosition : 0;
+            viewportTop = this.state.wormholePosition ?  this.state.wormholePosition : viewportTop;
+            // console.log(viewportTop, ':', wormholeDist, ':', this.state.wormholePosition);
+            pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
+           } else {
+            viewportTop = (viewportTop - wormholeDist < 0) ? 0 : viewportTop - wormholeDist;
+            pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
+            // console.log('handleScroll pctScroll:', pctScroll);
+           }
+
+      // console.log("handleScroll:wormholeDist:", wormholeDist);
+      // if(!this.state.wormholeActive) {
+      //   console.log("inactive pctScroll:", pctScroll);
+      // } else {
+      //   console.log("active pctScroll:", pctScroll);
+      // }
+      // console.log("pctScroll:", pctScroll, " contentHeight:", contentHeight, " viewportTop:", viewportTop, " viewportHeight:", this.state.measurements.viewportHeight, "wormholeDist:", wormholeDist);
+      this.setState({measurements: _.extend(this.state.measurements, {viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll, wormholeDist})});
     }
 
     bfs(ref) {
@@ -165,6 +197,7 @@ function createViewport(Component, container) {
   Viewport.childContextTypes = {
     getPercentage: React.PropTypes.func.isRequired,
     getPercentageInverse: React.PropTypes.func.isRequired,
+    toggleWormhole: React.PropTypes.func.isRequired
   };
 
   return Viewport;
@@ -183,14 +216,14 @@ class Root extends React.Component {
 
     var images = ['khao_day.jpg', 'khao_famous_day.jpg', 'khao_cheap_eats_day.jpg', 'khao_hostel_day.jpg', 'khao_booze_day.jpg', 'khao_anything_day.jpg'];
     var altImages = ['khao_night.jpg', 'khao_famous_night.jpg', 'khao_cheap_eats_night.jpg', 'khao_hostel_night.jpg', 'khao_booze_night.jpg', 'khao_anything_night.jpg'];
-    var galleryImages = [{file: 'cook0.png', caption: "&ldquo;But there are hidden gems in the quite side streets, locals secret spots and what not.&rdquo;"},
-    {file: 'cook1.png', caption: "&ldquo;I can smell the chillies down the block, clearly this is my kind of place.&rdquo;"},
-    {file: 'cook2.png', caption: "Pad Kra Pao Gai... Thai Basil Chicken. Oooh that heat, love that."},
-    {file: 'cook3.png', caption: "Chef Dunn in kitchen and shes got bellys to feed. Let's do this."},
-    {file: 'cook4.png', caption: "I wanna bring some heat so everyone's fucking coughing in this bitch."},
-    {file: 'cook5.png', caption: "Now we're going to find out if I'm the real deal or not.."},
-    {file: 'cook6.png', caption: "It's pretty good, it's real yummy."},
-    {file: 'cook7.png', caption: "Bo bo bo!"}];
+    var galleryImages = [{imagePath: '/thailand/cook1.png', caption: "But there are hidden gems in the quite side streets, them local secret spots and what not."},
+    {imagePath: '/thailand/cook0.png', caption: "I can smell the chillies down the block, clearly this is my kind of place."},
+    {imagePath: '/thailand/cook2.png', caption: "Pad Kra Pao Gai that good Thai Basil Chicken. Oooh that heat, love it."},
+    {imagePath: '/thailand/cook3.png', caption: "Chef Dunn in kitchen and shes got bellys to feed. Let's do this."},
+    {imagePath: '/thailand/cook4.png', caption: "I wanna bring some heat so everyone's fucking coughing in this bitch."},
+    {imagePath: '/thailand/cook5.png', caption: "Now we're going to find out if I'm the real deal or not.."},
+    {imagePath: '/thailand/cook6.png', caption: "It's pretty good, it's real yummy."},
+    {imagePath: '/thailand/cook7.png', caption: ""}];
     return (
       <div>
         <SlideBlock measurements={this.props.measurements} start={0.075} end={0.12} caption="&ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like a match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;" />
@@ -283,6 +316,7 @@ class ScanComponent extends Base {
 
 ScanComponent.contextTypes = {
   getPercentage: React.PropTypes.func.isRequired,
+  toggleWormhole: React.PropTypes.func.isRequired
 };
 
 class SlideComponent extends ScanComponent {
@@ -783,7 +817,9 @@ class SlippyBlock extends ScanComponent {
       count: 0,
       maxCount: 6,
       top: 0,
-      adjustedPctScroll: 0
+      adjustedPctScroll: 0,
+      wormholeActive: false,
+      wormholeLength: 2500
     }
   }
 
@@ -791,11 +827,86 @@ class SlippyBlock extends ScanComponent {
     this.setState(_.extend(this.state, this.adjust(this.state)));
   }
 
+  componentDidMount(){
+    var domNode = this.refs.map; //ReactDOM.findDOMNode();
+    var map = new google.maps.Map(domNode);
+    // replace "toner" here with "terrain" or "watercolor"
+    this.state.map = map;
+    this.state.streetView = map.getStreetView();
+    this.state.streetView.setVisible(true);
+    this.state.streetView.setOptions({ linksControl: false, panControl: false,
+      zoomControl: false, mapTypeControl: false,
+      streetViewControl: false, overviewMapControl: false,
+      addressControl: false, enableCloseButton: false});
+
+    var startPoint = new google.maps.LatLng(13.758980, 100.497201);
+    this.state.streetView.setPosition(startPoint);
+    this.state.streetView.setPov({heading: 77.68007576992042, pitch: 0, zoom: 1}); //64.9837616957764
+    $(domNode).css({"pointer-events": "none"});
+
+    $(window).on("keydown", (e) => {
+        if(e.keyCode == 16 && this.state.active){
+          e.preventDefault();
+          this.toggleWormhole();
+          return false;
+        }
+    });
+  }
+
+  toggleWormhole() {
+    // console.log('toggleWormhole:', !this.state.wormholeActive);
+
+    let $map = $(this.refs.mapHolder);
+    if($map.hasClass("fade-in")) {
+      $map.removeClass("fade-in");
+    } else {
+      $map.addClass("fade-in");
+    }
+
+    this.context.toggleWormhole();
+    this.setState(_.extend(this.state, {wormholeActive: !this.state.wormholeActive}));
+  }
+
   isActive(d){
     return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
   }
 
-  adjust(last_state, d) {
+  adjust(last_state) {
+    if(this.state.wormholeActive) {
+      return this.wormholeAdjust(last_state);
+    } else {
+      return this.regularAdjust(last_state);
+    }
+  }
+
+  wormholeAdjust(last_state) {
+    let {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, wormholeDist} = this.props.measurements,
+        pctScroll = wormholeDist / (this.state.wormholeLength - viewportHeight),
+        adjustedPctScroll = this.scaler(pctScroll),
+        active = this.isActive(this.props.measurements),
+        count = last_state.count,
+        top,
+        current_pov = this.state.streetView.getPov(),
+        newHeading = 77.68007576992042;
+
+    if(pctScroll < 0 || pctScroll > 1) {
+      this.toggleWormhole();
+      return {};
+    }
+
+    if(pctScroll < 0.85) {
+      newHeading = Math.linearTween(pctScroll, 77.68007576992042, 270, 1);
+    } else {
+      newHeading = 270;
+    }
+
+    current_pov.heading = newHeading;
+    this.state.streetView.setPov(current_pov);
+    // console.log("wormholeAdjust:", pctScroll);
+    return last_state;
+  }
+
+  regularAdjust(last_state) {
     let {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
         adjustedPctScroll = this.scaler(pctScroll),
         active = this.isActive(this.props.measurements),
@@ -838,11 +949,20 @@ class SlippyBlock extends ScanComponent {
   render() {
     var textBlocks = (this.state.adjustedPctScroll > 0) ? this.getTextBlock(this.state.count) : [];
     return(
-      <div ref="slipRoot" className="slippy-block" style={{
-        height: this.state.top,
-        zIndex: 100
-      }}>
-        {textBlocks}
+      <div>
+        <div ref="slipRoot" className="slippy-block" style={{
+          height: this.state.top,
+          zIndex: 100
+        }}>
+          {textBlocks}
+        </div>
+        <div ref="mapHolder" className="wormhole-street" style={{zIndex: 100}}>
+          <div ref="map" style={{
+            width: this.props.measurements.viewportWidth,
+            height: this.props.measurements.viewportHeight
+          }}>
+          </div>
+        </div>
       </div>
     )
   }
@@ -1033,6 +1153,7 @@ class ImageSwitcher extends ScanComponent {
   }
 }
 
+
 class ScrollGallery extends ScanComponent {
   constructor(props) {
     super(props);
@@ -1040,12 +1161,13 @@ class ScrollGallery extends ScanComponent {
       imageIdx: -1,
       active: false,
       images: [],
-      zIndex: 0
+      zIndex: 0,
+      adjustedPctScroll: -1
     };
   }
 
   componentWillMount() {
-    this.setState(_.extend(this.state, {imageCount: this.props.images.length-1}));
+    this.setState(_.extend(this.state, {imageCount: this.props.images.length-1, adjustedPctScroll: this.scaler(this.props.measurements.pctScroll)}));
   }
 
   componentWillReceiveProps() {
@@ -1081,22 +1203,115 @@ class ScrollGallery extends ScanComponent {
     if(imageIdx >= 0) {
       images = this.props.images.slice(0, imageIdx+1);
     }
-    return {active, display, imageIdx, images, zIndex};
+    return {active, display, imageIdx, images, zIndex, adjustedPctScroll};
   }
 
   render() {
-    var images = this.state.images.map((p, i) => {
+    var scrollDist = 1 / this.props.images.length;
+    var measurements = _.extend(_.clone(this.props.measurements), {pctScroll: this.state.adjustedPctScroll});
+    // console.log(measurements.pctScroll);
+    var images = this.props.images.map((p, i) => {
+      let start = i * scrollDist,
+      end = (scrollDist * i) + scrollDist;
       return (
-        <img src={p} className="scroll-gallery-image" key={p} />
+        <GalleryImage key={p.imagePath} measurements={measurements} start={start} end={end} caption={p.caption} bgImage={p.imagePath} />
       );
     });
     return (
       <div className="scroll-gallery" style={{display: this.state.display, zIndex: this.state.zIndex}}>
-        <ReactCSSTransitionGroup transitionName="scroll-gallery-image">
-          {images}
-        </ReactCSSTransitionGroup>
+        {images}
       </div>
     );
+  }
+}
+
+class GalleryImage extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      top: 0,
+      opacity: 0,
+      active: false,
+      caption: true,
+      display: 'none'
+    };
+  }
+
+  componentWillReceiveProps() {
+    this.setState(_.extend(this.state, this.adjust(this.state)));
+  }
+
+  componentWillMount() {
+    this.setState(_.extend(this.state, {top: this.props.measurements.viewportHeight}));
+  }
+
+  isActive(d){
+    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
+  }
+
+  adjust(last_state, d) {
+    let {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
+        active = this.isActive(this.props.measurements),
+        caption = last_state.caption,
+        opacity = last_state.opacity,
+        top = last_state.top,
+        display = last_state.display;
+
+    var conti = new Conti(0,0.5,"adjustedPctScroll", (pct, t) => {
+      t.opacity = 0;// Math.linearTween(pct, 0, 1, 0.5);
+      return t;
+    })
+    .abut(0.95, (pct, t) => {
+      t.opacity = Math.linearTween(pct, 0, 1, 0.5);
+      return t;
+    })
+    .abut(1, (pct, t) => {
+      t.opacity = Math.linearTween(pct, 1, 0, 0.5);
+      return t;
+    });
+
+    var trans_data = conti.run(_.extend(this.props.measurements, {adjustedPctScroll}), {});
+    // console.log(trans_data);
+    // if(adjustedPctScroll > 0.5) {
+    //   caption = true;
+    // } else {
+    //   caption = false;
+    // }
+    if(adjustedPctScroll < 0) {
+      top = viewportHeight;
+      // opacity = 0;
+      display = 'none';
+    } else if (adjustedPctScroll > 1) {
+      top = 0;
+      // opacity = 0;
+      // display = 'none';
+    } else {
+      top = Math.linearTween(adjustedPctScroll,viewportHeight,-viewportHeight,1);
+      // opacity = 1;
+      display = 'block';
+    }
+
+    return {active, opacity: trans_data.opacity, top, display, caption};
+  }
+
+  render() {
+    var bgImage = (this.props.bgImage) ? "url(" + this.props.bgImage + ")" : '';
+    return(
+      <div ref="slideRoot" className='bg-slide slide-block' style={{
+        top: this.state.top,
+        height: this.props.measurements.viewportHeight,
+        // zIndex: 200,
+        // opacity: this.state.opacity,
+        display: this.state.display,
+        backgroundImage: bgImage
+      }}>
+        <h5 className="slide-caption block-caption" style={{display: (this.state.caption && this.props.caption) ? 'block' : 'none',
+        opacity: this.state.opacity}}>
+          &ldquo;{this.props.caption}&rdquo;
+        </h5>
+      </div>
+    )
   }
 }
 

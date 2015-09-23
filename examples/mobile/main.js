@@ -86,7 +86,8 @@ function createViewport(Component, container) {
     getChildContext() {
       return {
         getPercentage: this.getPct.bind(this),
-        getPercentageInverse: this.getInv.bind(this)
+        getPercentageInverse: this.getInv.bind(this),
+        toggleWormhole: this.toggleWormhole.bind(this)
       };
     }
 
@@ -105,7 +106,11 @@ function createViewport(Component, container) {
       this.setState({measurements: {
         viewportWidth, viewportHeight, viewportLeft: 0, viewportTop: 0,
         contentHeight: (viewportHeight * 12), adjustedViewportTop: 0,
-        pctScroll: 0 }});
+        pctScroll: 0}, wormholeActive: false, wormholeDist: 0, wormholeStart: null});
+    }
+
+    toggleWormhole(active) {
+      this.setState(_.extend(this.state, {wormholeActive: !this.state.wormholeActive, wormholePosition: this.state.viewportTop, wormholeDist: 0}));
     }
 
     componentDidMount() {
@@ -140,9 +145,18 @@ function createViewport(Component, container) {
           viewportTop = $(ev.target).scrollTop(),
           contentHeight = this.state.measurements.contentHeight,
           adjustedViewportTop = (viewportTop / this.state.measurements.viewportHeight) * (contentHeight * 0.1),
-          pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
+          wormholeDist = this.state.wormholeDist,
+          pctScroll;
+
+          if(this.state.wormholeActive) {
+            wormholeDist = viewportTop - this.state.wormholeStart;
+            viewportTop = this.state.wormholeStart;
+            pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
+           } else {
+            pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight - this.state.wormholeDist);
+           }
       // console.log("pctScroll:", pctScroll, " contentHeight:", contentHeight, " viewportTop:", viewportTop, " viewportHeight:", this.state.measurements.viewportHeight);
-      this.setState({measurements: _.extend(this.state.measurements, {viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll})});
+      this.setState({measurements: _.extend(this.state.measurements, {viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll, wormholeDist})});
     }
 
     bfs(ref) {
@@ -263,6 +277,7 @@ class ScanComponent extends Base {
 
 ScanComponent.contextTypes = {
   getPercentage: React.PropTypes.func.isRequired,
+  toggleWormhole: React.PropTypes.func.isRequired
 };
 
 class SlideComponent extends ScanComponent {
