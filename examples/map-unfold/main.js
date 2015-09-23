@@ -234,8 +234,10 @@ class HomeMap extends ScanComponent {
         title: false,
         face: false,
         face_frame: 0,
-        zindex:100
+        zindex:100,
+        highlight: false
       };
+      TRV.homemap = this
     }
 
     togglePov(t,fn){
@@ -264,7 +266,7 @@ class HomeMap extends ScanComponent {
     componentDidMount(){
       var layer = "toner";
       var mapOptions = {
-        center: { lat: 40.71988, lng: -73.95726},
+        center: { lat: 40.71988, lng: -73.95826},
         zoom: 17,
         mapTypeId: layer,
         disableDefaultUI: true,
@@ -333,6 +335,12 @@ class HomeMap extends ScanComponent {
                 zIndex: 1,
                 icon: image
               });
+          marker.addListener("mouseover",function(){
+            TRV.homemap.setState({highlight:v.item});
+          })
+          marker.addListener("mouseout",function(){
+            TRV.homemap.setState({highlight:false});
+          })
          })
 
          var asap = {
@@ -342,12 +350,12 @@ class HomeMap extends ScanComponent {
               anchor: new google.maps.Point(40,55),
               zIndex: 10
          }
-          var marker = new google.maps.Marker({
+          TRV.asap_marker = new google.maps.Marker({
                 position: {lat: TRV.city["bar"].lat, lng: TRV.city["bar"].lng},
                 map: TRV.map,
                 zIndex: 10,
                 icon: asap
-              });
+           });
       })
       
       this.setUpPano();
@@ -434,6 +442,18 @@ class HomeMap extends ScanComponent {
 
       trans_data = pano_conti.run(d,trans_data)
 
+      var head_conti = new Conti(0,0.1,"pct_scroll",function(pct,t){
+        TRV.asap_marker.setPosition(new google.maps.LatLng(40.719770091561315, -73.9578366279602))
+      }).abut(0.2, function(pct,t){
+        var new_lat = Math.linearTween(pct,40.719770091561315,-0.00093512727,1)
+        var new_lng = Math.linearTween(pct,-73.9578366279602,0.00141620635,1)
+        TRV.asap_marker.setPosition(new google.maps.LatLng(new_lat,new_lng))
+      }).abut(1,function(pct,t){
+        TRV.asap_marker.setPosition(new google.maps.LatLng(40.718834964282536, -73.95642042160034))
+      })
+
+      head_conti.run(d,{})
+
       if(TRV.streetView){
         var current_pov = TRV.streetView.getPov();
         current_pov.pitch = trans_data.new_pitch;
@@ -447,6 +467,27 @@ class HomeMap extends ScanComponent {
         return (
           <div id="map-wrapper" style={{top: this.state.bg_top, zIndex: this.state.zindex}}>
                 <div id="map"/>
+                <h2 id="map-title" style={{
+                  display: this.state.caption ? "none" : "block"
+                }}>
+                    The itinerary
+                </h2>
+                <ol id="itinerary" style={{
+                  display: this.state.caption ? "none" : "block"
+                }}>
+                  <li id="hills-item" className={
+                    this.state.highlight === "hills-item" ? "highlight" : ""
+                  }>The hills</li>
+                    <li id="square-item" className={
+                    this.state.highlight === "square-item" ? "highlight" : ""
+                  }>The town square</li>
+                    <li id="crubby-item" className={
+                    this.state.highlight === "crubby-item" ? "highlight" : ""
+                  }>Crubby's Cool Club</li>
+                    <li id="club-item" className={
+                    this.state.highlight === "club-item" ? "highlight" : ""
+                  }>Cool Club #2</li>
+                </ol>
                 <h6 className="slide-words" style={{
                   top: this.state.new_slide + "%",
                   display: this.state.caption ? "block" : "none"
@@ -476,20 +517,27 @@ class Timebar extends ScanComponent {
       this.state = {
         asap_on: false,
         zoom: false,
-        playhead_left: -29
+        playhead_left: -29,
+        right: false,
+        current_dot: false
       };
       this.dots = {
         0: "",
         25: "I wanna get closer. Hold 'SHIFT' and scroll.",
         45: "What's over there? Hold 'SHIFT' to look around.",
         70: "Help that dude high-five me. Tap 'SHIFT' rapidly until we smack.",
-        85: "What happened last night? Tap 'SHIFT' to fill in the blanks ..."
+        85: "What happened last night? Tap 'SHIFT' to fill in the blanks ...",
+        91: "What city was I in? 'SHIFT'",
+        93: "Was I even at the beach? 'SHIFT'",
+        97: "SHIFT"
       }
+      TRV.timebar = this;
     }
 
     componentDidMount(){
         $(window).on("keydown",_.bind(function(e){
             if(e.keyCode === 16 && ! TRV.stop){
+              console.log(this.state.current_dot)
               $("#bass-hit")[0].play();
               this.setState({zoom: true})
             }
@@ -517,6 +565,8 @@ class Timebar extends ScanComponent {
         t.playhead_left = -29;
         t.asap_on = true;
         t.caption = false;
+        t.right = false;
+        t.current_dot = false;
         return t;
       }).abut(1,_.bind(function(pct,t){
         var near_dots = _(this.dots).map(function(title,dot){return [dot,Math.abs(dot - (pct * 100))]}),
@@ -530,8 +580,16 @@ class Timebar extends ScanComponent {
 
         if(asap_on){
           t.playhead_left = Math.linearTween(asap_on[0]/100, -20, track_width, 1);
+          t.current_dot = asap_on
         } else {
+          t.current_dot = false
           t.playhead_left = Math.linearTween(pct, -20, track_width, 1);
+        }
+
+        if(pct > 0.9){
+            t.right = true;
+        } else {
+            t.right = false;
         }
 
         t.asap_on = asap_on && asap_on[0];
@@ -576,6 +634,10 @@ class Timebar extends ScanComponent {
               <div className="track-dot" style={{left: "45%"}}/>
               <div className="track-dot" style={{left: "70%"}}/>
               <div className="track-dot" style={{left: "85%"}}/>
+              <div className="track-dot-s" style={{left: "91%"}}/>
+              <div className="track-dot-s" style={{left: "93%"}}/>
+              <div className="track-dot-s" style={{left: "97%"}}/>
+              <div className="track-dot" style={{left: "99%"}}/>
               <img src={this.state.asap_on ? "asap-head-yellow.png" : "asap-head.png"} id="playhead" style={{
                   display: this.state.zoom ? "none" : "block",
                   left: this.state.playhead_left
@@ -586,7 +648,7 @@ class Timebar extends ScanComponent {
               }}/>
               <div id="head-caption" className={ this.state.zoom ? "z" : ""} style={{
                 display: (this.state.caption ? "block" : "none"),
-                left: this.state.playhead_left + 40
+                left: this.state.right ? this.state.playhead_left -160 : this.state.playhead_left + 40
               }}>
                 {this.state.caption}
               </div>
@@ -720,7 +782,9 @@ class Slide5 extends ScanComponent {
       super(props);
       this.state = {
         perspective: 190,
-        hit: false
+        hit: false,
+        current_bg: 0,
+        current_mid: 0
       };
     }
 
@@ -741,7 +805,13 @@ class Slide5 extends ScanComponent {
         $(window).on("keydown",_.bind(function(e){
             var pct_scroll = $(window).scrollTop() / ($("body").height() - $(window).height());
             if(e.keyCode === 16 && pct_scroll > 0.9){
-                this.setState({hit:true})
+              if(TRV.timebar.state.current_dot && TRV.timebar.state.current_dot[0] === "91"){
+                var current_bg = this.state.current_bg;
+                this.setState({current_bg: (current_bg + 1) % 2})
+              } else if(TRV.timebar.state.current_dot && TRV.timebar.state.current_dot[0] === "93"){
+                var current_mid = this.state.current_mid;
+                this.setState({current_mid: (current_mid + 1) % 2})
+              }
             }
         },this))    
     }
@@ -750,8 +820,8 @@ class Slide5 extends ScanComponent {
           <div id="last-slide" style={{
             "-webkit-perspective": this.state.perspective
           }}>
-                <img id="split-bot" className="full-img" src="rocky-split-bot.png"/>
-                <img id="split-mid" className="full-img" src="rocky-split-mid.png" style={{
+            <img id="split-bot" className="full-img" src={"rocky-split-bot-"+this.state.current_bg+".png"}/>
+              <img id="split-mid" className="full-img" src={"rocky-split-mid-"+this.state.current_mid+".png"} style={{
                 }}/>
                 <img id="split-top" className="full-img" src="rocky-split-top.png" style={{
                 
@@ -832,7 +902,7 @@ class Slide4 extends ScanComponent {
         var conti = new Conti(0,0.9,"pct_scroll",function(pct,t){
           t.bg_top = 0;
           return t;
-        }).abut(0.95,function(pct,t){
+        }).abut(0.91,function(pct,t){
           t.bg_top = Math.linearTween(pct,0,target_height,1)
           return t;
         }).abut(1,function(pct,t){
@@ -1081,26 +1151,31 @@ TRV.city = {
       lat: 40.719770091561315,
       lng: -73.9578366279602,
       full_name: "Trilby's Bar",
+      item: "hills-item"
   },
   "park": {
       lat: 40.72061576057116,
       lng: -73.95473599433899,
       full_name: "City Park IV",
+      item: "hills-item"
   },
   "club": {
       lat: 40.71924154297441,
       lng: -73.9540708065033,
       full_name: "The Bounce Club",
+      item: "square-item"
   },
   "resto": {
       lat: 40.72007908725286,
       lng: -73.95987510681152,
       full_name: "Spicee's Meatball",
+      item: "crubby-item"
   },
   "afterhours": {
     lat: 40.71704598853704, 
     lng: -73.95642042160034,
-    full_name: "Furry's Bar"
+    full_name: "Furry's Bar",
+    item: "club-item"
   }
 }
 
