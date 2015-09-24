@@ -465,7 +465,7 @@ class WordMask extends ScanComponent {
         word: '',
         flickered: false
     };
-    this.wordScaler = scaler(this.props.start, this.props.end-0.05, 0, 1);
+    this.wordScaler = scaler(this.props.start, this.props.end-0.025, 0, 1);
   }
 
   flicker(count) {
@@ -811,7 +811,10 @@ class SlippyBlock extends ScanComponent {
       adjustedPctScroll: 0,
       wormholeActive: false,
       wormholeLength: 2500,
-      zIndex: -1
+      zIndex: -1,
+      svStart: [13.758118, 100.449034],
+      svEnd: [13.759744, 100.495667],
+      svCurrent: [13.758118, 100.449034]
     }
   }
 
@@ -830,8 +833,10 @@ class SlippyBlock extends ScanComponent {
       zoomControl: false, mapTypeControl: false,
       streetViewControl: false, overviewMapControl: false,
       addressControl: false, enableCloseButton: false});
-
-    var startPoint = new google.maps.LatLng(13.758980, 100.497201);
+    // 13.758980, 100.497201
+    //13.756476, 100.502104
+    console.log(this.state.svStart);
+    var startPoint = new google.maps.LatLng(13.759744, 100.495667);
     this.state.streetView.setPosition(startPoint);
     this.state.streetView.setPov({heading: 77.68007576992042, pitch: 0, zoom: 1}); //64.9837616957764
     $(domNode).css({"pointer-events": "none"});
