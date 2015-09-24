@@ -833,10 +833,8 @@ class SlippyBlock extends ScanComponent {
       zoomControl: false, mapTypeControl: false,
       streetViewControl: false, overviewMapControl: false,
       addressControl: false, enableCloseButton: false});
-    // 13.758980, 100.497201
-    //13.756476, 100.502104
-    console.log(this.state.svStart);
-    var startPoint = new google.maps.LatLng(13.759744, 100.495667);
+
+    var startPoint = new google.maps.LatLng(13.758980, 100.497201);
     this.state.streetView.setPosition(startPoint);
     this.state.streetView.setPov({heading: 77.68007576992042, pitch: 0, zoom: 1}); //64.9837616957764
     $(domNode).css({"pointer-events": "none"});
@@ -896,6 +894,7 @@ class SlippyBlock extends ScanComponent {
         current_pov = this.state.streetView.getPov(),
         newHeading = 77.68007576992042;
 
+
     if(pctScroll < 0 || pctScroll > 1) {
       this.toggleWormhole();
       return {};
@@ -903,6 +902,7 @@ class SlippyBlock extends ScanComponent {
 
     if(pctScroll < 0.85) {
       newHeading = Math.linearTween(pctScroll, 77.68007576992042, 270, 1);
+
     } else {
       newHeading = 270;
     }
