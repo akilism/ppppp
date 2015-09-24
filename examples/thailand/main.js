@@ -1062,6 +1062,7 @@ class ZoomWords extends ScanComponent {
 
   render() {
     var zoomText = this.getZoomText();
+    // {this.state.maskText}
     return(
       <div style={{display: this.state.display}}>
         <div className="bg-zoom zoom-text" style={{
@@ -1069,7 +1070,7 @@ class ZoomWords extends ScanComponent {
           WebkitBackgroundClip: this.state.clipMode,
           zIndex: 100 }}
           ref="bg">
-          {this.state.maskText}
+
           {zoomText}
         </div>
       </div>
