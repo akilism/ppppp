@@ -123,33 +123,17 @@ function createViewport(Component, container) {
     }
 
     toggleWormhole(wormholeJump) {
-      // var currentWormHoleDist = this.state.measurements.wormholeDist,
-      //     measurements = (this.state.wormholeActive) ? this.state.measurements : _.extend(this.state.measurements, {wormholeActive: !this.state.measurements.wormholeActive});
       wormholeJump = wormholeJump || this.state.wormholeJump;
-      // console.log("toggleWormhole", wormholeJump, measurements.wormholeActive);
+
       var newState = this.calculateMeasurements(!this.state.measurements.wormholeActive, wormholeJump);
       newState.measurements.wormholeActive = !this.state.measurements.wormholeActive;
       newState.wormholePosition = this.state.measurements.viewportTop;
-      // if(wormholeJump) {
-      //   console.log("WORMHOLEJUMP");
-      //   console.log("WORMHOLEJUMP");
-      //   console.log("WORMHOLEJUMP");
-      //   console.log("WORMHOLEJUMP");
-      // }
-      this.setState(function(prevState, currProps) {
-        // console.log('toggleWormhole: newState:', newState, 'prevState:', prevState);
-        return newState;
-      });
+      this.setState(newState);
     }
 
     handleScroll(ev) {
       var newState = this.calculateMeasurements(this.state.measurements.wormholeActive, this.state.wormholeJump);
-      // this.setState(newState);
-      this.setState(function(prevState, currProps) {
-        // console.log('handleScroll: newState:', newState, 'prevState:', prevState);
-        // newState.wormholeJump = null;
-        return newState;
-      });
+      this.setState(newState);
     }
 
     calculateMeasurements(wormholeActive, wormholeJump) {
@@ -169,13 +153,12 @@ function createViewport(Component, container) {
         wormholeDist = this.state.wormholePosition ? viewportTop - this.state.wormholePosition : 0;
         viewportTop = this.state.wormholePosition ?  this.state.wormholePosition : viewportTop;
       } else {
-        var wormTop = (viewportTop - wormholeDist);
+        // wormholeJump is the exit pctScroll location for the wormhole.
+        // This is calculated once when we jump out of a wormhole.
+        // That value is then applied on each new viewportTop when calculating the pctScroll.
         if(wormholeJump) {
           var jumpTop = wormholeJump * (contentHeight - this.state.measurements.viewportHeight);
-          jumpDiff = wormTop - jumpTop;
-          // console.log('wormholeJump', jumpTop, viewportTop, wormTop, jumpDiff);
-          // console.log((wormTop - jumpDiff) / (contentHeight - this.state.measurements.viewportHeight));
-          // console.log((wormTop + jumpDiff) / (contentHeight - this.state.measurements.viewportHeight));
+          jumpDiff = (viewportTop - wormholeDist) - jumpTop;
           wormholeJump = null;
         }
 
@@ -183,6 +166,7 @@ function createViewport(Component, container) {
       }
 
       pctScroll = (viewportTop - jumpDiff) / (contentHeight - this.state.measurements.viewportHeight);
+      //Ugly but stops the cards from scroll past 0.
       pctScroll = (pctScroll < 0) ? 0 : pctScroll;
 
       return {
@@ -206,6 +190,8 @@ function createViewport(Component, container) {
       );
     }
 
+    // These are probably not going to be used anymore. They were for
+    // finding a markers pctScroll and invScroll.
     getPct(ref, anchor) {
       var component = this.bfs(ref);
       return component.getPct(anchor);
@@ -231,6 +217,7 @@ function createViewport(Component, container) {
 
       return search(_.pairs(this.refs), ref, []);
     }
+    //End unused stuff.
   }
 
   Viewport.childContextTypes = {
@@ -1436,7 +1423,6 @@ class PathChoice extends ScanComponent {
     if(adjustments.callToggle) {
       this.context.toggleWormhole(adjustments.wormholeJump);
     }
-
     this.setState(adjustments);
   }
 
@@ -1470,12 +1456,13 @@ class PathChoice extends ScanComponent {
         pctWormholeScroll = wormholeDist / (this.state.wormholeLength - viewportHeight);
 
     // console.log("wormholeAdjust", pctWormholeScroll, wormholeActive);
+    // Exit out of wormhole locations.
     if (pctWormholeScroll < 0 && wormholeActive) {
       callToggle = true;
       wormholeJump = this.props.start;
     } else if (pctWormholeScroll >= 1 && wormholeActive) {
       callToggle = true;
-      wormholeJump = this.props.end - 0.001;
+      wormholeJump = this.props.end - 0.005;
     } else {
       callToggle = false;
       wormholeJump = null;
@@ -1494,7 +1481,6 @@ class PathChoice extends ScanComponent {
 
 
     // console.log("regularAdjust:", viewportTop, pctScroll, adjustedPctScroll);
-    // console.log("regularAdjust:", adjustedPctScroll);
     if(pctScroll < this.props.start) {
       zIndex = -1;
     } else if (pctScroll > this.props.end) {
@@ -1503,8 +1489,7 @@ class PathChoice extends ScanComponent {
       zIndex = 100;
     }
 
-    //togggle wormhole once you scroll card past 0.1 of it's internal scroll.
-    // console.log("regularAdjust", adjustedPctScroll, callToggle, pctWormholeScroll, wormholeActive);
+    //togggle wormhole once you scroll card past 0.1 of its internal scroll.
     callToggle = (!callToggle && adjustedPctScroll > 0.1 && adjustedPctScroll < 0.9);
 
 
