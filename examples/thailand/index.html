@@ -530,6 +530,53 @@ body {
 }
 
 
+/* Path chooser */
+
+.path-chooser {
+  font-family: 'ViceGothic';
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.choice-title {
+  font-size: 7vw;
+  margin: 0;
+  padding: 0;
+}
+
+.choice-list {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.choice-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.choice-item:first-child {
+  margin-right: 30px;
+}
+
+.active-choice {
+  box-shadow: 0 0 10px #f0f;
+}
+
+.choice-name {
+  font-size: 5vw;
+  display: block;
+}
+
+.choice-instructions {
+  font-size: 4vw;
+}
+
+
 /* animation & transition specific classes */
 
 @keyframes black-to-white {

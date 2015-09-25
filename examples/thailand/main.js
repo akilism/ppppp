@@ -214,18 +214,28 @@ class Root extends React.Component {
     {imagePath: '/thailand/cook4.png', caption: "I wanna bring some heat so everyone's fucking coughing in this bitch."},
     {imagePath: '/thailand/cook5.png', caption: "Now we're going to find out if I'm the real deal or not.."},
     {imagePath: '/thailand/cook6.png', caption: "It's pretty good, it's real yummy."},
-    {imagePath: '/thailand/cook7.png', caption: ""}];
+    {imagePath: '/thailand/cook7.png', caption: "That was amazing but I'm still on the prowl for more."}];
+    var pathChoices = [{ choiceImage: "/thailand/thai_basil_chicken_choice.gif",
+        name: "Thai Basil Chicken",
+        component: ScrollGallery,
+        props: {images: galleryImages}},
+      { choiceImage: "/thailand/bounce.gif",
+        name: "Thai Soup",
+        component: SlideMovie,
+        props: {videoSrc: "/thailand/soup_history.mp4", caption: "This soup was delicious but there must be more to eat."}}];
+
+    // <SlideBlock measurements={this.props.measurements} start={0.075} end={0.12} caption="&ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like a match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;" />
+    // <Timelapse measurements={this.props.measurements} start={0.05} end={0.12} imagePath="/thailand/table" frameCount={17} />
+    // <WordMask measurements={this.props.measurements} start={0.12} end={0.24} bgUrl="/thailand/biketomarket.gif" quote={["The thing is ", " I've never actually ", " been there. ", " That shit's ", " going to change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
+    // <Title measurements={this.props.measurements} start={0} end={0.05} title="bangkok" subtitle="with Jourdan Dunn" backgroundImage="/thailand/bangkok.jpg" />
+    // <SlideMovie measurements={this.props.measurements} start={0.24} end={0.31} videoSrc="/thailand/market2.mp4" />
+    // <ImageSwitcher measurements={this.props.measurements} start={0.40} end={0.55} images={images} altImages={altImages} />
+    // <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap eats. ", " Cheap hostels. ", " Cheap drinks. ", " You can find absolutely anything there."]} />
+    // <SlippyBlock measurements={this.props.measurements} start={0.31} end={0.41} />
     return (
       <div>
-        <SlideBlock measurements={this.props.measurements} start={0.075} end={0.12} caption="&ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like a match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;" />
-        <Timelapse measurements={this.props.measurements} start={0.05} end={0.12} imagePath="/thailand/table" frameCount={17} />
-        <WordMask measurements={this.props.measurements} start={0.12} end={0.24} bgUrl="/thailand/biketomarket.gif" quote={["The thing is ", " I've never actually ", " been there. ", " That shit's ", " going to change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
         <Title measurements={this.props.measurements} start={0} end={0.05} title="bangkok" subtitle="with Jourdan Dunn" backgroundImage="/thailand/bangkok.jpg" />
-        <SlideMovie measurements={this.props.measurements} start={0.24} end={0.31} videoSrc="/thailand/market2.mp4" />
-        <ImageSwitcher measurements={this.props.measurements} start={0.40} end={0.55} images={images} altImages={altImages} />
-        <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap eats. ", " Cheap hostels. ", " Cheap drinks. ", " You can find absolutely anything there."]} />
-        <SlippyBlock measurements={this.props.measurements} start={0.31} end={0.41} />
-        <ScrollGallery measurements={this.props.measurements} start={0.55} end={0.85} images={galleryImages} />
+        <PathChoice measurements={this.props.measurements} choices={pathChoices} start={0.05} end={0.15} title="Damn I'm fucking staaaarving..." instructions="Press shift to choose a meal, then continue on your journey." />
       </div>
     );
   }
@@ -1225,6 +1235,7 @@ class ScrollGallery extends ScanComponent {
         imageIdx,
         zIndex = last_state.zIndex;
 
+    // console.log('scrollGallery:measurements: ', pctScroll, ':', adjustedPctScroll);
     if(adjustedPctScroll < 0) {
       imageIdx = -1;
       display = 'none';
@@ -1350,6 +1361,153 @@ class GalleryImage extends ScanComponent {
         </h5>
       </div>
     )
+  }
+}
+
+class PathChoice extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      choice: null,
+      wormholeActive: false,
+      wormholeLength: 2500,
+      wormholeComponent: null,
+      wormholeMeasurements: {},
+      display: "flex",
+      zIndex: -1
+    };
+  }
+
+  componentWillMount() {
+    this.setState(_.extend(this.state, {choice: 0}));
+  }
+
+  componentWillReceiveProps() {
+    console.log("componentWillReceiveProps:", this.state.wormholeActive);
+    this.setState(_.extend(this.state, this.adjust(this.state)));
+  }
+
+  componentDidMount() {
+    $(window).on("keydown", (e) => {
+      // && !this.state.wormholeActive
+      if(e.keyCode == 16 && this.state.active) {
+        console.log("keydown: ", this.state.wormholeActive);
+        e.preventDefault();
+        this.switchChoice();
+      }
+    });
+  }
+
+  isActive(d){
+    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
+  }
+
+  adjust(last_state) {
+    if(this.state.wormholeActive) {
+      return this.wormholeAdjust(last_state);
+    } else {
+      return this.regularAdjust(last_state);
+    }
+  }
+
+  wormholeAdjust(last_state) {
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, wormholeDist} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
+        wormholeActive = last_state.wormholeActive,
+        pctWormholeScroll = wormholeDist / (this.state.wormholeLength - viewportHeight);
+
+    console.log("pctWormholeScroll", pctWormholeScroll);
+    if(pctWormholeScroll < 0) {
+      this.toggleWormhole();
+    }
+
+    return {wormholeMeasurements: _.extend(this.state.wormholeMeasurements, {pctScroll: pctWormholeScroll})};
+  }
+
+  toggleWormhole() {
+      console.log("toggle wormhole");
+      this.context.toggleWormhole();
+      this.setState(_.extend(this.state, {wormholeActive: !this.state.wormholeActive}));
+  }
+
+  regularAdjust(last_state) {
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, wormholeDist} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
+        pctWormholeScroll = wormholeDist / (this.state.wormholeLength - viewportHeight),
+        active = this.isActive(this.props.measurements),
+        wormholeActive = last_state.wormholeActive,
+        zIndex = last_state.zIndex;
+
+    // console.log("pctScroll:", pctScroll);
+    // console.log("regularAdjust:", pctWormholeScroll);
+    if(pctScroll < this.props.start) {
+      zIndex = -1;
+    } else if (pctScroll > this.props.end) {
+      zIndex = -1;
+    } else {
+      zIndex = 100;
+    }
+
+    //togggle wormhole once you scroll card past 0.1 of it's internal scroll.
+    if(!this.state.wormholeActive && (adjustedPctScroll > 0.1 && adjustedPctScroll < 1)) {
+      console.log('regularAdjust:', adjustedPctScroll, pctScroll);
+      this.toggleWormhole();
+    }
+
+    return {active, zIndex, wormholeMeasurements: _.extend(_.clone(this.props.measurements), {pctScroll: pctWormholeScroll})};
+  }
+
+  getChoices() {
+    var choices = this.props.choices.map((p, i) => {
+      var active = (this.state.choice === i);
+      var className = (active) ? "active-choice choice-item" : "choice-item";
+      return (
+        <li key={i} className={className}>
+        <img src={p.choiceImage} />
+        <span className="choice-name">{p.name}</span>
+        </li>
+      );
+    });
+    return (
+      <ul className="choice-list">
+        {choices}
+      </ul>
+    );
+  }
+
+  switchChoice() {
+    let choice = (this.state.choice === this.props.choices.length - 1) ? 0 : this.state.choice + 1;
+    this.setState(_.extend(this.state, {choice: choice}));
+  }
+
+  getWormholeComponent() {
+    let choice = this.props.choices[this.state.choice];
+    // return new choice.component(_.extend(choice.props, {measurements: this.state.wormholeMeasurements, start: 0, end: 1}));
+    let wormholeComponent = choice.component;
+    return (
+      <wormholeComponent {...choice.props} measurements={this.state.wormholeMeasurements} />
+    );
+  }
+
+  render() {
+    var choices = this.getChoices();
+    var wormholeComponent; // = (this.state.wormholeComponent) ? this.state.wormholeComponent : '';
+    if(this.state.wormholeActive) {
+      let choice = this.props.choices[this.state.choice];
+      wormholeComponent = <choice.component {...choice.props} measurements={this.state.wormholeMeasurements} start={0} end={1} />;
+    } else {
+      wormholeComponent = "";
+    }
+    return (
+      <div style={{position: "fixed", top: 0, left: 0, zIndex: this.state.zIndex}}>
+        <div className="path-chooser" style={{display: this.state.display}}>
+          <h5 className="choice-title">{this.props.title}</h5>
+          {choices}
+          <span className="choice-instructions">{this.props.instructions}</span>
+        </div>
+        {wormholeComponent}
+      </div>
+    );
   }
 }
 
