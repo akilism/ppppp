@@ -113,6 +113,8 @@ function createViewport(Component, container) {
             pctScroll: 0,
             wormholeDist: 0,
             wormholeActive: false },
+        wormholeJump: null,
+        jumpDiff: 0,
         wormholePosition: null});
     }
 
@@ -120,17 +122,76 @@ function createViewport(Component, container) {
       $(window).on('scroll', _.throttle(this.handleScroll.bind(this), 10));
     }
 
-    toggleWormhole() {
-      // console.log("viewport toggleWormhole:", this.state.wormholeActive);
-      var currentWormHoleDist = this.state.measurements.wormholeDist,
-          measurements = (this.state.wormholeActive) ? this.state.measurements : _.extend(this.state.measurements, {wormholeDist: 0, wormholeActive: !this.state.measurements.wormholeActive});
-      this.setState(_.extend(this.state, { wormholePosition: this.state.measurements.viewportTop,
-          measurements: measurements}));
+    toggleWormhole(wormholeJump) {
+      // var currentWormHoleDist = this.state.measurements.wormholeDist,
+      //     measurements = (this.state.wormholeActive) ? this.state.measurements : _.extend(this.state.measurements, {wormholeActive: !this.state.measurements.wormholeActive});
+      wormholeJump = wormholeJump || this.state.wormholeJump;
+      // console.log("toggleWormhole", wormholeJump, measurements.wormholeActive);
+      var newState = this.calculateMeasurements(!this.state.measurements.wormholeActive, wormholeJump);
+      newState.measurements.wormholeActive = !this.state.measurements.wormholeActive;
+      newState.wormholePosition = this.state.measurements.viewportTop;
+      // if(wormholeJump) {
+      //   console.log("WORMHOLEJUMP");
+      //   console.log("WORMHOLEJUMP");
+      //   console.log("WORMHOLEJUMP");
+      //   console.log("WORMHOLEJUMP");
+      // }
+      this.setState(function(prevState, currProps) {
+        // console.log('toggleWormhole: newState:', newState, 'prevState:', prevState);
+        return newState;
+      });
     }
 
-    wormholeDistance() {
-        return this.state.measurements.wormholeActive ? this.state.wormholeDist : 0;
+    handleScroll(ev) {
+      var newState = this.calculateMeasurements(this.state.measurements.wormholeActive, this.state.wormholeJump);
+      // this.setState(newState);
+      this.setState(function(prevState, currProps) {
+        // console.log('handleScroll: newState:', newState, 'prevState:', prevState);
+        // newState.wormholeJump = null;
+        return newState;
+      });
     }
+
+    calculateMeasurements(wormholeActive, wormholeJump) {
+      var viewportLeft = 0, //$(ev.target).scrollLeft(),
+          viewportTop = $(window).scrollTop(),
+          contentHeight = this.state.measurements.contentHeight,
+          adjustedViewportTop = (viewportTop / this.state.measurements.viewportHeight) * (contentHeight * 0.1),
+          wormholeDist = this.state.measurements.wormholeDist,
+          jumpDiff = this.state.jumpDiff,
+          pctScroll;
+
+      // when the wormhole is active viewport top is set to the wormhole activation point. this effectively
+      // freezes the non-wormhole components in place to their pre-wormhole positions.
+      // when the wormhole is off we subtract the wormhole travelled distance from the viewport top so that
+      // pctScroll is calculated as if you never scrolled into the wormhole.
+      if(wormholeActive) {
+        wormholeDist = this.state.wormholePosition ? viewportTop - this.state.wormholePosition : 0;
+        viewportTop = this.state.wormholePosition ?  this.state.wormholePosition : viewportTop;
+      } else {
+        var wormTop = (viewportTop - wormholeDist);
+        if(wormholeJump) {
+          var jumpTop = wormholeJump * (contentHeight - this.state.measurements.viewportHeight);
+          jumpDiff = wormTop - jumpTop;
+          // console.log('wormholeJump', jumpTop, viewportTop, wormTop, jumpDiff);
+          // console.log((wormTop - jumpDiff) / (contentHeight - this.state.measurements.viewportHeight));
+          // console.log((wormTop + jumpDiff) / (contentHeight - this.state.measurements.viewportHeight));
+          wormholeJump = null;
+        }
+
+        viewportTop = (viewportTop - wormholeDist < 0) ? 0 : (viewportTop - wormholeDist);
+      }
+
+      pctScroll = (viewportTop - jumpDiff) / (contentHeight - this.state.measurements.viewportHeight);
+      pctScroll = (pctScroll < 0) ? 0 : pctScroll;
+
+      return {
+        wormholeJump,
+        jumpDiff,
+        measurements: _.extend(this.state.measurements, {viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll, wormholeDist})
+      };
+    }
+
 
     render() {
       var style = {
@@ -153,27 +214,6 @@ function createViewport(Component, container) {
     getInv(ref, anchor) {
       var component = this.bfs(ref);
       return component.getInv(anchor);
-    }
-
-    handleScroll(ev) {
-      var viewportLeft = 0, //$(ev.target).scrollLeft(),
-          viewportTop = $(ev.target).scrollTop(),
-          contentHeight = this.state.measurements.contentHeight,
-          adjustedViewportTop = (viewportTop / this.state.measurements.viewportHeight) * (contentHeight * 0.1),
-          wormholeDist = this.state.measurements.wormholeDist,
-          pctScroll;
-
-          if(this.state.measurements.wormholeActive) {
-            wormholeDist = this.state.wormholePosition ? viewportTop - this.state.wormholePosition : 0;
-            viewportTop = this.state.wormholePosition ?  this.state.wormholePosition : viewportTop;
-            pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
-           } else {
-            viewportTop = (viewportTop - wormholeDist < 0) ? 0 : viewportTop - wormholeDist;
-            pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
-           }
-
-      // console.log("pctScroll:", pctScroll, " contentHeight:", contentHeight, " viewportTop:", viewportTop, " viewportHeight:", this.state.measurements.viewportHeight, "wormholeDist:", wormholeDist);
-      this.setState({measurements: _.extend(this.state.measurements, {viewportLeft, viewportTop, contentHeight, adjustedViewportTop, pctScroll, wormholeDist})});
     }
 
     bfs(ref) {
@@ -242,7 +282,8 @@ class Root extends React.Component {
     return (
       <div>
         <Title measurements={this.props.measurements} start={0} end={0.05} title="bangkok" subtitle="with Jourdan Dunn" backgroundImage="/thailand/bangkok.jpg" />
-        <PathChoice measurements={this.props.measurements} choices={pathChoices} start={0.05} end={0.15} title="Damn I'm fucking staaaarving..." instructions="Press shift to choose a meal, then continue on your journey." />
+        <PathChoice measurements={this.props.measurements} choices={pathChoices} start={0.05} end={0.15} title="Damn I'm fucking staaaarving..." instructions="sshhhiiiiifffftttt" />
+        <WordMask measurements={this.props.measurements} start={0.15} end={0.24} bgUrl="/thailand/biketomarket.gif" quote={["The thing is ", " I've never actually ", " been there. ", " That shit's ", " going to change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
       </div>
     );
   }
@@ -336,7 +377,7 @@ class SlideComponent extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   adjust(last_state) {
@@ -379,7 +420,7 @@ class Title extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   isActive(d){
@@ -435,7 +476,7 @@ class Timelapse extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   isActive(d){
@@ -501,11 +542,11 @@ class WordMask extends ScanComponent {
   }
 
   componentWillMount() {
-    this.setState(_.extend(this.state, {wordCount: this.props.quote.length-1, bgUrl: this.props.bgUrl}));
+    this.setState({wordCount: this.props.quote.length-1, bgUrl: this.props.bgUrl});
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   isActive(d){
@@ -611,11 +652,11 @@ class SlideMovie extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   componentWillMount() {
-    this.setState(_.extend(this.state, {top: this.props.measurements.viewportHeight}));
+    this.setState({top: this.props.measurements.viewportHeight});
   }
 
   isActive(d){
@@ -710,11 +751,11 @@ class SlideBlock extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   componentWillMount() {
-    this.setState(_.extend(this.state, {top: this.props.measurements.viewportHeight}));
+    this.setState({top: this.props.measurements.viewportHeight});
   }
 
   isActive(d){
@@ -791,7 +832,7 @@ class SlippyText extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   isActive(d){
@@ -836,7 +877,7 @@ class SlippyBlock extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   componentDidMount(){
@@ -886,7 +927,7 @@ class SlippyBlock extends ScanComponent {
     }
 
     this.context.toggleWormhole();
-    this.setState(_.extend(this.state, {wormholeActive: !this.state.wormholeActive}));
+    this.setState({wormholeActive: !this.state.wormholeActive});
   }
 
   isActive(d){
@@ -1015,11 +1056,11 @@ class ZoomWords extends ScanComponent {
   }
 
   componentWillMount() {
-    this.setState(_.extend(this.state, {wordCount: this.props.quote.length-1, bgUrl: this.props.bgUrl}));
+    this.setState({wordCount: this.props.quote.length-1, bgUrl: this.props.bgUrl});
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   isActive(d){
@@ -1112,11 +1153,11 @@ class ImageSwitcher extends ScanComponent {
   }
 
   componentWillMount() {
-    this.setState(_.extend(this.state, {imageCount: this.props.images.length-1}));
+    this.setState({imageCount: this.props.images.length-1});
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   isActive(d){
@@ -1222,11 +1263,11 @@ class ScrollGallery extends ScanComponent {
   }
 
   componentWillMount() {
-    this.setState(_.extend(this.state, {imageCount: this.props.images.length-1, adjustedPctScroll: this.scaler(this.props.measurements.pctScroll)}));
+    this.setState({imageCount: this.props.images.length-1, adjustedPctScroll: this.scaler(this.props.measurements.pctScroll)});
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   isActive(d){
@@ -1294,11 +1335,11 @@ class GalleryImage extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    this.setState(this.adjust(this.state));
   }
 
   componentWillMount() {
-    this.setState(_.extend(this.state, {top: this.props.measurements.viewportHeight}));
+    this.setState( {top: this.props.measurements.viewportHeight});
   }
 
   isActive(d){
@@ -1380,22 +1421,23 @@ class PathChoice extends ScanComponent {
       wormholeLength: 2500,
       wormholeComponent: null,
       wormholeMeasurements: {},
+      wormholeJump: null,
       display: "flex",
       zIndex: -1
     };
   }
 
   componentWillMount() {
-    this.setState(_.extend(this.state, {choice: 0}));
+    this.setState({choice: 0});
   }
 
   componentWillReceiveProps() {
     var adjustments = this.adjust(this.state);
     if(adjustments.callToggle) {
-      this.context.toggleWormhole();
+      this.context.toggleWormhole(adjustments.wormholeJump);
     }
 
-    this.setState(_.extend(this.state, adjustments));
+    this.setState(adjustments);
   }
 
   componentDidMount() {
@@ -1424,11 +1466,22 @@ class PathChoice extends ScanComponent {
     var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, wormholeDist, wormholeActive} = this.props.measurements,
         adjustedPctScroll = this.scaler(pctScroll),
         callToggle = last_state.callToggle,
+        wormholeJump,
         pctWormholeScroll = wormholeDist / (this.state.wormholeLength - viewportHeight);
-    // console.log("wormholeAdjust", pctWormholeScroll, wormholeActive);
-    callToggle = (pctWormholeScroll < 0 && wormholeActive);
 
-    return {callToggle, wormholeMeasurements: _.extend(this.state.wormholeMeasurements, {pctScroll: pctWormholeScroll})};
+    // console.log("wormholeAdjust", pctWormholeScroll, wormholeActive);
+    if (pctWormholeScroll < 0 && wormholeActive) {
+      callToggle = true;
+      wormholeJump = this.props.start;
+    } else if (pctWormholeScroll >= 1 && wormholeActive) {
+      callToggle = true;
+      wormholeJump = this.props.end - 0.001;
+    } else {
+      callToggle = false;
+      wormholeJump = null;
+    }
+
+    return {callToggle, wormholeJump, wormholeMeasurements: _.extend(this.state.wormholeMeasurements, {pctScroll: pctWormholeScroll})};
   }
 
   regularAdjust(last_state) {
@@ -1440,8 +1493,8 @@ class PathChoice extends ScanComponent {
         zIndex = last_state.zIndex;
 
 
-    // console.log("pctScroll:", pctScroll);
-    // console.log("regularAdjust:", pctWormholeScroll);
+    // console.log("regularAdjust:", viewportTop, pctScroll, adjustedPctScroll);
+    // console.log("regularAdjust:", adjustedPctScroll);
     if(pctScroll < this.props.start) {
       zIndex = -1;
     } else if (pctScroll > this.props.end) {
@@ -1452,7 +1505,8 @@ class PathChoice extends ScanComponent {
 
     //togggle wormhole once you scroll card past 0.1 of it's internal scroll.
     // console.log("regularAdjust", adjustedPctScroll, callToggle, pctWormholeScroll, wormholeActive);
-    callToggle = (!callToggle && adjustedPctScroll > 0.1 && adjustedPctScroll < 1);
+    callToggle = (!callToggle && adjustedPctScroll > 0.1 && adjustedPctScroll < 0.9);
+
 
     return {active, zIndex, callToggle, wormholeMeasurements: _.extend(_.clone(this.props.measurements), {pctScroll: pctWormholeScroll})};
   }
@@ -1477,13 +1531,12 @@ class PathChoice extends ScanComponent {
 
   switchChoice() {
     let choice = (this.state.choice === this.props.choices.length - 1) ? 0 : this.state.choice + 1;
-    this.setState(_.extend(this.state, {choice: choice}));
+    this.setState({choice: choice});
   }
 
   render() {
     var choices = this.getChoices();
     var wormholeComponent;
-    console.log("render:", this.props.measurements.wormholeActive);
     if(this.props.measurements.wormholeActive) {
       let choice = this.props.choices[this.state.choice];
       wormholeComponent = <choice.component {...choice.props} measurements={this.state.wormholeMeasurements} start={0} end={1} />;
@@ -1514,7 +1567,7 @@ class GoogleCardLink extends React.Component {
 
   handleClick(e) {
     // console.log(e, this.props.cardData);
-    this.setState(_.extend(this.state, {screenCoords: [e.clientX, e.clientY], showCard: (!this.state.showCard)}));
+    this.setState({screenCoords: [e.clientX, e.clientY], showCard: (!this.state.showCard)});
   }
 
   render() {
