@@ -103,10 +103,17 @@ function createViewport(Component, container) {
         throw new Error("Viewport must have a non-zero width and height");
       }
 
-      this.setState({measurements: {
-        viewportWidth, viewportHeight, viewportLeft: 0, viewportTop: 0,
-        contentHeight: (viewportHeight * 20), adjustedViewportTop: 0,
-        pctScroll: 0, wormholeDist: 0 }, wormholeActive: false, wormholePosition: null});
+      this.setState({measurements:
+          { viewportWidth,
+            viewportHeight,
+            viewportLeft: 0,
+            viewportTop: 0,
+            contentHeight: (viewportHeight * 20),
+            adjustedViewportTop: 0,
+            pctScroll: 0,
+            wormholeDist: 0,
+            wormholeActive: false },
+        wormholePosition: null});
     }
 
     componentDidMount() {
@@ -115,14 +122,14 @@ function createViewport(Component, container) {
 
     toggleWormhole() {
       // console.log("viewport toggleWormhole:", this.state.wormholeActive);
-      var measurements = (this.state.wormholeActive) ? this.state.measurements : _.extend(this.state.measurements, {wormholeDist: 0});
-      this.setState(_.extend(this.state, {wormholeActive: !this.state.wormholeActive,
-          wormholePosition: this.state.measurements.viewportTop,
+      var currentWormHoleDist = this.state.measurements.wormholeDist,
+          measurements = (this.state.wormholeActive) ? this.state.measurements : _.extend(this.state.measurements, {wormholeDist: 0, wormholeActive: !this.state.measurements.wormholeActive});
+      this.setState(_.extend(this.state, { wormholePosition: this.state.measurements.viewportTop,
           measurements: measurements}));
     }
 
     wormholeDistance() {
-        return this.state.wormholeActive ? this.state.wormholeDist : 0;
+        return this.state.measurements.wormholeActive ? this.state.wormholeDist : 0;
     }
 
     render() {
@@ -156,7 +163,7 @@ function createViewport(Component, container) {
           wormholeDist = this.state.measurements.wormholeDist,
           pctScroll;
 
-          if(this.state.wormholeActive) {
+          if(this.state.measurements.wormholeActive) {
             wormholeDist = this.state.wormholePosition ? viewportTop - this.state.wormholePosition : 0;
             viewportTop = this.state.wormholePosition ?  this.state.wormholePosition : viewportTop;
             pctScroll = viewportTop / (contentHeight - this.state.measurements.viewportHeight);
@@ -1369,7 +1376,7 @@ class PathChoice extends ScanComponent {
     super(props);
     this.state = {
       choice: null,
-      wormholeActive: false,
+      callToggle: false,
       wormholeLength: 2500,
       wormholeComponent: null,
       wormholeMeasurements: {},
@@ -1383,15 +1390,18 @@ class PathChoice extends ScanComponent {
   }
 
   componentWillReceiveProps() {
-    console.log("componentWillReceiveProps:", this.state.wormholeActive);
-    this.setState(_.extend(this.state, this.adjust(this.state)));
+    var adjustments = this.adjust(this.state);
+    if(adjustments.callToggle) {
+      this.context.toggleWormhole();
+    }
+
+    this.setState(_.extend(this.state, adjustments));
   }
 
   componentDidMount() {
     $(window).on("keydown", (e) => {
-      // && !this.state.wormholeActive
-      if(e.keyCode == 16 && this.state.active) {
-        console.log("keydown: ", this.state.wormholeActive);
+      // console.log("keydown: callToggle:", this.state.callToggle, 'wormholeActive:',this.props.measurements.wormholeActive);
+      if(e.keyCode == 16 && this.state.active && !this.props.measurements.wormholeActive) {
         e.preventDefault();
         this.switchChoice();
       }
@@ -1403,7 +1413,7 @@ class PathChoice extends ScanComponent {
   }
 
   adjust(last_state) {
-    if(this.state.wormholeActive) {
+    if(this.props.measurements.wormholeActive) {
       return this.wormholeAdjust(last_state);
     } else {
       return this.regularAdjust(last_state);
@@ -1411,32 +1421,24 @@ class PathChoice extends ScanComponent {
   }
 
   wormholeAdjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, wormholeDist} = this.props.measurements,
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, wormholeDist, wormholeActive} = this.props.measurements,
         adjustedPctScroll = this.scaler(pctScroll),
-        wormholeActive = last_state.wormholeActive,
+        callToggle = last_state.callToggle,
         pctWormholeScroll = wormholeDist / (this.state.wormholeLength - viewportHeight);
+    // console.log("wormholeAdjust", pctWormholeScroll, wormholeActive);
+    callToggle = (pctWormholeScroll < 0 && wormholeActive);
 
-    console.log("pctWormholeScroll", pctWormholeScroll);
-    if(pctWormholeScroll < 0) {
-      this.toggleWormhole();
-    }
-
-    return {wormholeMeasurements: _.extend(this.state.wormholeMeasurements, {pctScroll: pctWormholeScroll})};
-  }
-
-  toggleWormhole() {
-      console.log("toggle wormhole");
-      this.context.toggleWormhole();
-      this.setState(_.extend(this.state, {wormholeActive: !this.state.wormholeActive}));
+    return {callToggle, wormholeMeasurements: _.extend(this.state.wormholeMeasurements, {pctScroll: pctWormholeScroll})};
   }
 
   regularAdjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, wormholeDist} = this.props.measurements,
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, wormholeDist, wormholeActive} = this.props.measurements,
         adjustedPctScroll = this.scaler(pctScroll),
         pctWormholeScroll = wormholeDist / (this.state.wormholeLength - viewportHeight),
         active = this.isActive(this.props.measurements),
-        wormholeActive = last_state.wormholeActive,
+        callToggle = last_state.callToggle,
         zIndex = last_state.zIndex;
+
 
     // console.log("pctScroll:", pctScroll);
     // console.log("regularAdjust:", pctWormholeScroll);
@@ -1449,12 +1451,10 @@ class PathChoice extends ScanComponent {
     }
 
     //togggle wormhole once you scroll card past 0.1 of it's internal scroll.
-    if(!this.state.wormholeActive && (adjustedPctScroll > 0.1 && adjustedPctScroll < 1)) {
-      console.log('regularAdjust:', adjustedPctScroll, pctScroll);
-      this.toggleWormhole();
-    }
+    // console.log("regularAdjust", adjustedPctScroll, callToggle, pctWormholeScroll, wormholeActive);
+    callToggle = (!callToggle && adjustedPctScroll > 0.1 && adjustedPctScroll < 1);
 
-    return {active, zIndex, wormholeMeasurements: _.extend(_.clone(this.props.measurements), {pctScroll: pctWormholeScroll})};
+    return {active, zIndex, callToggle, wormholeMeasurements: _.extend(_.clone(this.props.measurements), {pctScroll: pctWormholeScroll})};
   }
 
   getChoices() {
@@ -1463,8 +1463,8 @@ class PathChoice extends ScanComponent {
       var className = (active) ? "active-choice choice-item" : "choice-item";
       return (
         <li key={i} className={className}>
-        <img src={p.choiceImage} />
-        <span className="choice-name">{p.name}</span>
+          <img style={{height: 270}} src={p.choiceImage} />
+          <span className="choice-name">{p.name}</span>
         </li>
       );
     });
@@ -1480,19 +1480,11 @@ class PathChoice extends ScanComponent {
     this.setState(_.extend(this.state, {choice: choice}));
   }
 
-  getWormholeComponent() {
-    let choice = this.props.choices[this.state.choice];
-    // return new choice.component(_.extend(choice.props, {measurements: this.state.wormholeMeasurements, start: 0, end: 1}));
-    let wormholeComponent = choice.component;
-    return (
-      <wormholeComponent {...choice.props} measurements={this.state.wormholeMeasurements} />
-    );
-  }
-
   render() {
     var choices = this.getChoices();
-    var wormholeComponent; // = (this.state.wormholeComponent) ? this.state.wormholeComponent : '';
-    if(this.state.wormholeActive) {
+    var wormholeComponent;
+    console.log("render:", this.props.measurements.wormholeActive);
+    if(this.props.measurements.wormholeActive) {
       let choice = this.props.choices[this.state.choice];
       wormholeComponent = <choice.component {...choice.props} measurements={this.state.wormholeMeasurements} start={0} end={1} />;
     } else {
