@@ -258,17 +258,19 @@ class Root extends React.Component {
         component: SlideMovie,
         props: {videoSrc: "/thailand/soup_history.mp4", caption: "This soup was delicious but there must be more to eat."}}];
 
-
+    // <SlideBlock measurements={this.props.measurements} start={0.075} end={0.12} caption="&ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like a match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;" />
+    // <Timelapse measurements={this.props.measurements} start={0.05} end={0.12} imagePath="/thailand/table" frameCount={17} />
+    // <WordMask measurements={this.props.measurements} start={0.12} end={0.24} bgUrl="/thailand/biketomarket.gif" quote={["The thing is ", " I've never actually ", " been there. ", " That shit's ", " going to change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
+    // <Title measurements={this.props.measurements} start={0} end={0.05} title="bangkok" subtitle="with Jourdan Dunn" backgroundImage="/thailand/bangkok.jpg" />
+    // <SlideMovie measurements={this.props.measurements} start={0.24} end={0.31} videoSrc="/thailand/market2.mp4" />
+    // <ImageSwitcher measurements={this.props.measurements} start={0.40} end={0.55} images={images} altImages={altImages} />
+    // <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap eats. ", " Cheap hostels. ", " Cheap drinks. ", " You can find absolutely anything there."]} />
+    // <SlippyBlock measurements={this.props.measurements} start={0.31} end={0.41} />
     return (
       <div>
-        <SlideBlock measurements={this.props.measurements} start={0.075} end={0.12} caption="&ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like a match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;" />
-        <Timelapse measurements={this.props.measurements} start={0.05} end={0.12} imagePath="/thailand/table" frameCount={17} />
-        <WordMask measurements={this.props.measurements} start={0.12} end={0.24} bgUrl="/thailand/biketomarket.gif" quote={["The thing is ", " I've never actually ", " been there. ", " That shit's ", " going to change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
         <Title measurements={this.props.measurements} start={0} end={0.05} title="bangkok" subtitle="with Jourdan Dunn" backgroundImage="/thailand/bangkok.jpg" />
-        <SlideMovie measurements={this.props.measurements} start={0.24} end={0.31} videoSrc="/thailand/market2.mp4" />
-        <ImageSwitcher measurements={this.props.measurements} start={0.40} end={0.55} images={images} altImages={altImages} />
-        <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap eats. ", " Cheap hostels. ", " Cheap drinks. ", " You can find absolutely anything there."]} />
-        <SlippyBlock measurements={this.props.measurements} start={0.31} end={0.41} />
+        <PathChoice measurements={this.props.measurements} choices={pathChoices} start={0.05} end={0.15} title="Damn I'm fucking staaaarving..." instructions="sshhhiiiiifffftttt" />
+        <WordMask measurements={this.props.measurements} start={0.15} end={0.24} bgUrl="/thailand/biketomarket.gif" quote={["The thing is ", " I've never actually ", " been there. ", " That shit's ", " going to change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
       </div>
     );
   }
