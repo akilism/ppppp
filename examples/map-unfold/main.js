@@ -918,7 +918,7 @@ class Slide4 extends ScanComponent {
         var src ="bass-casino.mp3"
         var audio = new Audio();
         audio.src = src;
-        //audio.autoplay = true;
+        audio.autoplay = true;
         audio.id = "bass-casino";
         document.getElementById("slide4").appendChild(audio)
         // analyser stuff
