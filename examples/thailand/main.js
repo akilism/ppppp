@@ -259,6 +259,7 @@ class Root extends React.Component {
         <ImageSwitcher measurements={this.props.measurements} start={0.40} end={0.55} images={images} altImages={altImages} />
         <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap eats. ", " Cheap hostels. ", " Cheap drinks. ", " You can find absolutely anything there."]} />
         <SlippyBlock measurements={this.props.measurements} start={0.31} end={0.41} />
+        <ScrollGallery measurements={this.props.measurements} start={0.55} end={1} images={galleryImages} />
       </div>
     );
   }
