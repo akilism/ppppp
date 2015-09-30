@@ -188,9 +188,11 @@ class Root extends React.Component {
   }
 
   render() {
+    // <PixelTransition measurements={this.props.measurements} start={0} end={0.5} imagePath="/akilpixi/wiki.jpg" imagePath2="/akilpixi/gza.jpg" />
+    // <PixelFace measurements={this.props.measurements} start={0} end={0.1} imagePath="/akilpixi/ratking.jpg" />
     return (
       <div>
-       <PixelFace measurements={this.props.measurements} start={0} end={0.1} imagePath="/akilpixi/ratking.jpg" />
+        <ScrambleMask measurements={this.props.measurements} start={0} end={0.1} imagePath="/akilpixi/ratking.jpg" />
       </div>
     );
   }
@@ -268,6 +270,26 @@ class ScanComponent extends Base {
   adjust() {
     throw "You must override adjust"
   }
+
+  errorInput() {
+    //shake screen or something here.
+    console.error("ERROR INPUT!!!!");
+    $(".stage-bg").addClass("shake");
+
+    setTimeout(() => {
+      $(".stage-bg").removeClass("shake");
+    }, 100);
+  }
+
+  bindHandlers() {
+    $(window).on("keydown", (e) => {
+        if(e.keyCode == 16){
+          e.preventDefault();
+          this.errorInput();
+          return false;
+        }
+    });
+  }
 }
 
 ScanComponent.contextTypes = {
@@ -275,12 +297,108 @@ ScanComponent.contextTypes = {
   toggleWormhole: React.PropTypes.func.isRequired
 };
 
+class PixelTransition extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      maxCellSize: 50
+    };
+  }
+
+  componentDidMount() {
+    this.renderer = new PIXI.WebGLRenderer(990,660, {transparent: true});
+    this.refs.stage.appendChild(this.renderer.view);
+    this.stage = new PIXI.Container();
+    this.filter = new PIXI.filters.PixelateFilter();
+    this.filter.size =  new PIXI.Point(1, 1);
+    this.stage.filters = [this.filter];
+    var image1Texture = new PIXI.Texture.fromImage(this.props.imagePath);
+    var image2Texture = new PIXI.Texture.fromImage(this.props.imagePath2);
+    this.image1 = new PIXI.Sprite(image1Texture);
+    this.image2 = new PIXI.Sprite(image2Texture);
+    this.image1.position.x = 0;
+    this.image1.position.y = 0;
+    this.image2.position.x = 0;
+    this.image2.position.y = 0;
+    this.image2.alpha = 0;
+    this.stage.addChild(this.image1);
+    this.stage.addChild(this.image2);
+    this.animate();
+    this.bindHandlers();
+  }
+
+  componentWillReceiveProps() { this.setState(this.adjust(this.state)); }
+
+  isActive(d){ return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end); }
+
+  adjust(last_state) {
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
+        active = this.isActive(this.props.measurements),
+        maxCellSize = this.state.maxCellSize,
+        animate = last_state.animate;
+
+    var conti = new Conti(0,0.25,"adjustedPctScroll", (pct, t) => {
+      t.cellSize = Math.linearTween(pct, 1, this.state.maxCellSize, 1);
+      t.alpha1 = 1;
+      t.alpha2 = 0;
+      return t;
+    }).abut(0.28, (pct, t) => {
+      t.cellSize = this.state.maxCellSize;
+      t.alpha1 = 1;
+      t.alpha2 = 0;
+      return t;
+    }).abut(0.35, (pct, t) => {
+      t.cellSize = this.state.maxCellSize;
+      t.alpha1 = Math.linearTween(pct, 1, 0, 1);
+      t.alpha2 = Math.linearTween(pct, 0, 1, 1);
+      return t;
+    }).abut(0.75, (pct, t) => {
+      t.cellSize = Math.linearTween(pct, this.state.maxCellSize, -this.state.maxCellSize, 1);
+      t.alpha1 = 0;
+      t.alpha2 = 1;
+      return t;
+    }).abut(1, (pct, t) => {
+      t.cellSize = 1;
+      t.alpha1 = 0;
+      t.alpha2 = 1;
+      return t;
+    });
+
+    var contiData = conti.run(_.extend(this.props.measurements, {adjustedPctScroll}), {});
+    contiData.cellSize = (contiData.cellSize < 1) ? 1 : contiData.cellSize;
+    // contiData.alpha2 = (adjustedPctScroll >= 1) ? 1 : contiData.alpha2;
+    this.filter.size = new PIXI.Point(contiData.cellSize, contiData.cellSize);
+    this.image1.alpha = contiData.alpha1;
+    this.image2.alpha = contiData.alpha2;
+    return {animate: animate};
+  }
+
+  animate() {
+    requestAnimationFrame(() => { this.animate(); });
+    // if(this.state.animate) {
+    //   var size = Math.round(Math.random() * this.state.maxCellSize);
+    //   this.filter.size = new PIXI.Point(size, size);
+    // }
+    this.renderer.render(this.stage);
+  }
+
+  render() {
+    //backgroundImage: "url(" + this.props.imagePath + ")",
+    return(
+      <div className="stage-bg" style={{position: "fixed", width: 990, height: 660}}>
+        <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
+      </div>
+    )
+  }
+}
+
 
 class PixelFace extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-        maxCellSize: 25,
+        maxCellSize: 15,
         animate: true
     };
   }
@@ -323,9 +441,10 @@ class PixelFace extends ScanComponent {
     this.filter = new PIXI.filters.PixelateFilter();
     this.filter.size =  new PIXI.Point(this.state.maxCellSize, this.state.maxCellSize);
     this.stage.filters = [this.filter];
-    // this.head();
-    this.body();
+    this.head();
+    // this.body();
     this.animate();
+    this.bindHandlers();
   }
 
   animate() {
@@ -389,6 +508,118 @@ class PixelFace extends ScanComponent {
     )
   }
 }
+
+class ScrambleMask extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+        maxCellSize: 15,
+        animate: true
+    };
+  }
+
+  componentWillReceiveProps() {
+    this.setState(this.adjust(this.state));
+  }
+
+  isActive(d){
+    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
+  }
+
+  adjust(last_state) {
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
+        active = this.isActive(this.props.measurements),
+        maxCellSize = this.state.maxCellSize,
+        animate = last_state.animate;
+
+    if(pctScroll < this.props.start + 0.005) {
+      animate = true;
+      this.filter.size =  new PIXI.Point(maxCellSize, maxCellSize);
+    } else if (pctScroll > this.props.end) {
+      animate = false;
+      this.filter.size =  new PIXI.Point(1, 1);
+    } else {
+      // console.log(1 - adjustedPctScroll);
+      animate = false;
+      let size = Math.min(maxCellSize, (1 - adjustedPctScroll) * maxCellSize);
+      this.filter.size = new PIXI.Point(size, size);
+    }
+
+    return {animate: animate};
+  }
+
+  componentDidMount() {
+    this.renderer = new PIXI.WebGLRenderer(990,660, {transparent: true});
+    this.refs.stage.appendChild(this.renderer.view);
+    this.stage = new PIXI.Container();
+    this.filter = new PIXI.filters.PixelateFilter();
+    this.filter.size =  new PIXI.Point(this.state.maxCellSize, this.state.maxCellSize);
+    this.stage.filters = [this.filter];
+    this.head();
+    this.animate();
+    this.bindHandlers();
+  }
+
+  randomizePositions() {
+    var pos = _.shuffle(this.positions);
+    this.hak.position.x = pos[0][0];
+    this.hak.position.y = pos[0][1];
+    this.wiki.position.x = pos[1][0];
+    this.wiki.position.y = pos[1][1];
+    this.sportingLife.position.x = pos[2][0];
+    this.sportingLife.position.y = pos[2][1];
+  }
+
+  animate() {
+    requestAnimationFrame(() => { this.animate(); });
+    if(this.state.animate) {
+      var size = Math.round(Math.random() * this.state.maxCellSize);
+      this.filter.size = new PIXI.Point(size, size);
+      this.randomizePositions();
+    } else {
+      this.hak.position.x = this.positions[0][0];
+      this.hak.position.y = this.positions[0][1];
+      this.wiki.position.x = this.positions[1][0];
+      this.wiki.position.y = this.positions[1][1];
+      this.sportingLife.position.x = this.positions[2][0];
+      this.sportingLife.position.y = this.positions[2][1];
+    }
+    this.renderer.render(this.stage);
+  }
+
+  head() {
+    var hakFrame = new PIXI.Rectangle(65, 0, 125, 140);
+    var wikiFrame = new PIXI.Rectangle(445, 80, 140, 140); //PIXI.Rectangle(310, 180, 340, 270);
+    var sportingLifeFrame = new PIXI.Rectangle(800, 30, 130, 125);
+    var baseTexture = PIXI.BaseTexture.fromImage(this.props.imagePath);
+    var hakTexture = new PIXI.Texture(baseTexture, hakFrame);
+    var wikiTexture = new PIXI.Texture(baseTexture, wikiFrame);
+    var sportingLifeTexture = new PIXI.Texture(baseTexture, sportingLifeFrame);
+    this.hak = new PIXI.Sprite(hakTexture);
+    this.wiki = new PIXI.Sprite(wikiTexture);
+    this.sportingLife = new PIXI.Sprite(sportingLifeTexture);
+    this.hak.position.x = 65;
+    this.hak.position.y = 0;
+    this.wiki.position.x = 445;
+    this.wiki.position.y = 80;
+    this.sportingLife.position.x = 800;
+    this.sportingLife.position.y = 30;
+    this.positions = [[65, 0], [445, 80], [800,30]];
+    this.stage.addChild(this.hak);
+    this.stage.addChild(this.wiki);
+    this.stage.addChild(this.sportingLife);
+  }
+
+  render() {
+    return(
+      <div className="stage-bg" style={{backgroundImage: "url(" + this.props.imagePath + ")", position: "fixed", width: 990, height: 660}}>
+        <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
+      </div>
+    )
+  }
+}
+
 
 function embedComponent(Component, container, callback) {
   $(container).empty();
