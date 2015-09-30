@@ -190,7 +190,7 @@ class Root extends React.Component {
   render() {
     return (
       <div>
-       <PixelFace measurements={this.props.measurements} start={0} end={0.25} imagePath="/akilpixi/ratking.jpg" />
+       <PixelFace measurements={this.props.measurements} start={0} end={0.1} imagePath="/akilpixi/ratking.jpg" />
       </div>
     );
   }
@@ -280,7 +280,8 @@ class PixelFace extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-        maxCellSize: 25
+        maxCellSize: 25,
+        animate: true
     };
   }
 
@@ -296,31 +297,50 @@ class PixelFace extends ScanComponent {
     var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
         adjustedPctScroll = this.scaler(pctScroll),
         active = this.isActive(this.props.measurements),
-        maxCellSize = this.state.maxCellSize;
+        maxCellSize = this.state.maxCellSize,
+        animate = last_state.animate;
 
-    if(pctScroll < this.props.start) {
+    if(pctScroll < this.props.start + 0.005) {
+      animate = true;
       this.filter.size =  new PIXI.Point(maxCellSize, maxCellSize);
     } else if (pctScroll > this.props.end) {
+      animate = false;
       this.filter.size =  new PIXI.Point(1, 1);
     } else {
       // console.log(1 - adjustedPctScroll);
+      animate = false;
       let size = Math.min(maxCellSize, (1 - adjustedPctScroll) * maxCellSize);
       this.filter.size = new PIXI.Point(size, size);
     }
 
-    return {};
+    return {animate: animate};
   }
 
   componentDidMount() {
-    this.renderer = new PIXI.WebGLRenderer(636,380, {transparent: true});
+    this.renderer = new PIXI.WebGLRenderer(990,660, {transparent: true});
     this.refs.stage.appendChild(this.renderer.view);
     this.stage = new PIXI.Container();
     this.filter = new PIXI.filters.PixelateFilter();
     this.filter.size =  new PIXI.Point(this.state.maxCellSize, this.state.maxCellSize);
     this.stage.filters = [this.filter];
-    var hakFrame = new PIXI.Rectangle(45, 90, 125, 125);
-    var wikiFrame = new PIXI.Rectangle(200, 130, 125, 140); //PIXI.Rectangle(310, 180, 340, 270);
-    var sportingLifeFrame = new PIXI.Rectangle(45, 90, 125, 125);
+    // this.head();
+    this.body();
+    this.animate();
+  }
+
+  animate() {
+    requestAnimationFrame(() => { this.animate(); });
+    if(this.state.animate) {
+      var size = Math.round(Math.random() * this.state.maxCellSize);
+      this.filter.size = new PIXI.Point(size, size);
+    }
+    this.renderer.render(this.stage);
+  }
+
+  head() {
+    var hakFrame = new PIXI.Rectangle(65, 0, 125, 140);
+    var wikiFrame = new PIXI.Rectangle(445, 80, 140, 140); //PIXI.Rectangle(310, 180, 340, 270);
+    var sportingLifeFrame = new PIXI.Rectangle(800, 30, 130, 125);
     var baseTexture = PIXI.BaseTexture.fromImage(this.props.imagePath);
     var hakTexture = new PIXI.Texture(baseTexture, hakFrame);
     var wikiTexture = new PIXI.Texture(baseTexture, wikiFrame);
@@ -328,26 +348,42 @@ class PixelFace extends ScanComponent {
     var hak = new PIXI.Sprite(hakTexture);
     var wiki = new PIXI.Sprite(wikiTexture);
     var sportingLife = new PIXI.Sprite(sportingLifeTexture);
-    hak.position.x = 45;
-    hak.position.y = 90;
-    wiki.position.x = 200;
-    wiki.position.y = 130;
-    sportingLife.position.x = 200;
-    sportingLife.position.y = 130;
+    hak.position.x = 65;
+    hak.position.y = 0;
+    wiki.position.x = 445;
+    wiki.position.y = 80;
+    sportingLife.position.x = 800;
+    sportingLife.position.y = 30;
     this.stage.addChild(hak);
     this.stage.addChild(wiki);
     this.stage.addChild(sportingLife);
-    this.animate();
   }
 
-  animate() {
-    requestAnimationFrame(() => { this.animate(); });
-    this.renderer.render(this.stage);
+  body() {
+    var hakFrame = new PIXI.Rectangle(0, 0, 270, 660);
+    var wikiFrame = new PIXI.Rectangle(380, 80, 260, 580); //PIXI.Rectangle(310, 180, 340, 270);
+    var sportingLifeFrame = new PIXI.Rectangle(715, 30, 275, 630);
+    var baseTexture = PIXI.BaseTexture.fromImage(this.props.imagePath);
+    var hakTexture = new PIXI.Texture(baseTexture, hakFrame);
+    var wikiTexture = new PIXI.Texture(baseTexture, wikiFrame);
+    var sportingLifeTexture = new PIXI.Texture(baseTexture, sportingLifeFrame);
+    var hak = new PIXI.Sprite(hakTexture);
+    var wiki = new PIXI.Sprite(wikiTexture);
+    var sportingLife = new PIXI.Sprite(sportingLifeTexture);
+    hak.position.x = 0;
+    hak.position.y = 0;
+    wiki.position.x = 380;
+    wiki.position.y = 80;
+    sportingLife.position.x = 715;
+    sportingLife.position.y = 30;
+    this.stage.addChild(hak);
+    this.stage.addChild(wiki);
+    this.stage.addChild(sportingLife);
   }
 
   render() {
     return(
-      <div className="stage-bg" style={{backgroundImage: "url(" + this.props.imagePath + ")", position: "fixed", width: 636, height: 380}}>
+      <div className="stage-bg" style={{backgroundImage: "url(" + this.props.imagePath + ")", position: "fixed", width: 990, height: 660}}>
         <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
       </div>
     )
