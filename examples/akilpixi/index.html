@@ -670,6 +670,28 @@ body {
     opacity: 0;
   }
 }
+
+@keyframes shake {
+  from {
+    transform: translate(-30px, 10px);
+  }
+
+  75% {
+    transform: translate(-30px, 50px);
+  }
+
+  25% {
+    transform: translate(30px, -50px);
+  }
+
+  to {
+    transform: translate(30px, -30px);
+  }
+}
+
+.shake {
+  animation: shake 50ms infinite;
+}
 </style>
   </head>
   <body>
