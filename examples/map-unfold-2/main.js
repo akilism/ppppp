@@ -36,9 +36,9 @@ class Conti {
     }
 
     abut(next_end,fn){
-        var new_conti = new Conti(this.end, next_end, this.key, fn)        
+        var new_conti = new Conti(this.end, next_end, this.key, fn)
         new_conti.isActive = _.bind(function(data){
-            
+
             var left_isActive = this.isActive(data),
                 this_isActive = data[this.key] >= new_conti.start && data[this.key] < new_conti.end;
             return left_isActive || this_isActive;
@@ -80,12 +80,12 @@ window.TRV = {
   scan_components: [],
   getMarkers: function(scroll_top, window_height) {
     scroll_top = -1 * scroll_top;
-    
+
     return _.reduce($(".marker-p"),  function(acc, p) {
 
       acc[p.id] = function(anchor) {
         if(typeof(anchor) === "undefined"){
-          var anchor = 0.0; 
+          var anchor = 0.0;
         }
 
         var $p = $(p),
@@ -94,7 +94,7 @@ window.TRV = {
           scroll_anchor = scroll_top + (window_height * anchor),
           pct_elapsed,
           pct_elapsed_raw;
-          
+
         if (el_top > scroll_anchor) {
           pct_elapsed = 0;
         } else if (el_top + el_height < scroll_anchor) {
@@ -102,7 +102,7 @@ window.TRV = {
         } else {
           pct_elapsed = (scroll_anchor - el_top) / el_height;
         }
-        pct_elapsed_raw = (scroll_anchor - el_top) / el_height; 
+        pct_elapsed_raw = (scroll_anchor - el_top) / el_height;
         return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed, pct_elapsed_raw: pct_elapsed_raw};
       };
 
@@ -111,12 +111,12 @@ window.TRV = {
   },
   getMarkersInv: function(scroll_top, window_height) {
     scroll_top = -1 * scroll_top;
-  
+
     return _.reduce($(".marker-p"),  function(acc, p) {
 
       acc[p.id] = function(anchor) {
         if(typeof(anchor) === "undefined"){
-          var anchor = 0.0; 
+          var anchor = 0.0;
         }
 
         var $p = $(p),
@@ -125,7 +125,7 @@ window.TRV = {
           el_anchor = el_top + (el_height * anchor),
           pct_elapsed,
           pct_elapsed_raw;
-          
+
         if (el_anchor > scroll_top + window_height) {
           pct_elapsed = 0;
         } else if (el_anchor < scroll_top) {
@@ -133,7 +133,7 @@ window.TRV = {
         } else {
           pct_elapsed = 1 - ((el_anchor - scroll_top) / window_height);
         }
-        pct_elapsed_raw = 1 - ((el_anchor - scroll_top) / window_height); 
+        pct_elapsed_raw = 1 - ((el_anchor - scroll_top) / window_height);
         return {el_id: $(p).attr("id"), pct_elapsed: pct_elapsed, pct_elapsed_raw: pct_elapsed_raw};
       };
 
@@ -141,7 +141,7 @@ window.TRV = {
     }, {});
   },
   bot2Top: function(){
-  
+
   }
 };
 
@@ -258,7 +258,7 @@ class HomeMap extends ScanComponent {
       TRV.streetView.setVisible(true);
       TRV.streetView.setOptions( {linksControl: false,panControl: false, zoomControl: false, mapTypeControl: false, streetViewControl: false, overviewMapControl: false, addressControl: false, enableCloseButton: false})
 
-      var startPoint = new google.maps.LatLng(43.29638, 5.377674); 
+      var startPoint = new google.maps.LatLng(43.29638, 5.377674);
       TRV.streetView.setPosition(startPoint)
       TRV.streetView.setPov({heading: 77.68007576992042, pitch: 64.9837616957764, zoom: 1})
       $('#pano1').css({"pointer-events": "none"})
@@ -284,7 +284,7 @@ class HomeMap extends ScanComponent {
           mapOptions);
       map.mapTypes.set(layer, new google.maps.StamenMapType(layer));
       TRV.map = map;
-      
+
       google.maps.event.addListenerOnce(map, 'idle', function(){
         var topRight = map.getProjection().fromLatLngToPoint(map.getBounds().getNorthEast());
         var bottomLeft = map.getProjection().fromLatLngToPoint(map.getBounds().getSouthWest());
@@ -358,7 +358,7 @@ class HomeMap extends ScanComponent {
                 icon: asap
            });
       })
-      
+
       this.setUpPano();
       $(window).on("keydown",_.bind(function(e){
           if(e.keyCode == 16 && this.state.zindex < 100){
@@ -408,7 +408,7 @@ class HomeMap extends ScanComponent {
         t.zindex = 96;
         return t;
       })
- 
+
       var trans_data = conti.run(d,{})
 
       var pano_conti = new Conti(0,0.45,"pct_scroll",function(clamped_pct, t){
@@ -508,7 +508,7 @@ class HomeMap extends ScanComponent {
                   zIndex:20
                 }} src={"spin/head_" + this.state.face_frame + ".png"}/>
             </div>
-        )   
+        )
     }
 }
 
@@ -544,7 +544,7 @@ class Timebar extends ScanComponent {
             }
             if(e.keyCode === 16){
             }
-        },this))    
+        },this))
         $(window).on("keyup",_.bind(function(e){
             if(e.keyCode === 16 && ! TRV.stop){
               $("#bass-hit-2")[0].play();
@@ -557,7 +557,7 @@ class Timebar extends ScanComponent {
                 TRV.stop = false;
               },300)
             }
-        },this))    
+        },this))
     }
 
     adjust(last,d){
@@ -572,7 +572,7 @@ class Timebar extends ScanComponent {
       }).abut(1,_.bind(function(pct,t){
         var near_dots = _(this.dots).map(function(title,dot){return [dot,Math.abs(dot - (pct * 100))]}),
         asap_on = _(near_dots).find(function(dot){return dot[1] < 1});
-        
+
         if(asap_on && this.dots[asap_on[0]].length > 0){
           t.caption = this.dots[asap_on[0]];
         } else {
@@ -597,7 +597,7 @@ class Timebar extends ScanComponent {
 
         return t;
       },this))
- 
+
       var trans_data = conti.run(d,{})
 
       if(trans_data.asap_on && ! this.state.asap_on){
@@ -703,7 +703,7 @@ class Slide5 extends ScanComponent {
           t.perspective = Math.linearTween(pct,190,50,1)
           return t;
         })
-   
+
         var trans_data = conti.run(d,{})
 
         return trans_data;
@@ -720,7 +720,7 @@ class Slide5 extends ScanComponent {
                 this.setState({current_mid: (current_mid + 1) % 2})
               }
             }
-        },this))    
+        },this))
     }
     render(){
         return (
@@ -731,7 +731,7 @@ class Slide5 extends ScanComponent {
               <img id="split-mid" className="full-img" src={"rocky-split-mid-"+this.state.current_mid+".png"} style={{
                 }}/>
                 <img id="split-top" className="full-img" src="rocky-split-top.png" style={{
-                
+
                     display: this.state.hit ? "none" : "block"
                 }}/>
 
@@ -767,7 +767,7 @@ class Slide2 extends ScanComponent {
           t.bg_top = target_height;
           return t;
         })
-   
+
         var trans_data = conti.run(d,{frame: new_frame})
 
         return trans_data;
@@ -776,15 +776,15 @@ class Slide2 extends ScanComponent {
         $(window).on("keydown",_.bind(function(e){
             if(e.keyCode === 16){
               var pct_scroll = $(window).scrollTop() / ($("body").height() - $(window).height());
-              var new_frame = Math.round(pct_scroll/0.002) % 14; 
+              var new_frame = Math.round(pct_scroll/0.002) % 14;
               this.setState({frames: 14, base_bg: "barbie-gif-2", frame: new_frame})
             }
-        },this))    
+        },this))
         $(window).on("keyup",_.bind(function(e){
             if(e.keyCode === 16){
               this.setState({frames: 20, base_bg: "barbie-gif"})
             }
-        },this))    
+        },this))
     }
     render(){
         return (
@@ -816,7 +816,7 @@ class Slide4 extends ScanComponent {
           t.bg_top = target_height;
           return t;
         })
-   
+
         var trans_data = conti.run(d,{})
 
         return trans_data;
@@ -832,7 +832,7 @@ class Slide4 extends ScanComponent {
         var context = new webkitAudioContext();
         var analyser = context.createAnalyser();
         analyser.fftSize = 2048;
-         
+
         // connect the stuff up to eachother
         var source = context.createMediaElementSource(audio);
         source.connect(analyser);
@@ -856,7 +856,7 @@ class Slide4 extends ScanComponent {
         noise.noise = 0
         var split = new PIXI.filters.RGBSplitFilter();
         split.red = (new PIXI.Point(0, 0))
-        split.green = (new PIXI.Point(0, 0)) 
+        split.green = (new PIXI.Point(0, 0))
         split.blue = (new PIXI.Point(0, 0))
         sprite.filters = [blur]
 
@@ -890,15 +890,15 @@ class Slide4 extends ScanComponent {
                 draw_new = false
             }
 
-            
+
             renderer.render(stage);
         }
 
         $(window).on("keydown",_.bind(function(e){
             if(e.keyCode === 16 && $(window).scrollTop() > 20300){
-                draw_new = true; 
+                draw_new = true;
             }
-        },this))    
+        },this))
     }
     render(){
         return (
@@ -934,7 +934,7 @@ class Slide3 extends ScanComponent {
           t.bg_top = target_height;
           return t;
         })
-   
+
         var trans_data = conti.run(d,{})
 
         return trans_data;
@@ -966,10 +966,10 @@ class Slide3 extends ScanComponent {
                     } else {
                         this.setState({burst: TRV.burst_i, up: true, hit: true})
                     }
-                },this),66) 
+                },this),66)
               }
             }
-        },this))    
+        },this))
         $(window).on("keyup",_.bind(function(e){
             if(e.keyCode === 16){
                 clearInterval(TRV.shrink);
@@ -978,10 +978,10 @@ class Slide3 extends ScanComponent {
                     this.setState({current_step: current_step});
                     if(current_step === 0){
                         clearInterval(TRV.shrink);
-                    } 
+                    }
                 },this),66)
             }
-        },this))    
+        },this))
     }
     render(){
         var scale_x = Math.linearTween(this.state.current_step,1,1.7,30);
@@ -1031,7 +1031,7 @@ class Title extends ScanComponent {
     var dest_top = -1 * $(window).height();
     if(d.pct_scroll < 0.1){
         var new_top = Math.linearTween(d.pct_scroll, 0, dest_top, 0.1);
-    } else if (d.pct_scroll) { 
+    } else if (d.pct_scroll) {
         var new_top = dest_top;
     }
     return {bg_top: new_top};
@@ -1079,7 +1079,7 @@ TRV.city = {
       item: "crubby-item"
   },
   "afterhours": {
-    lat: 40.71704598853704, 
+    lat: 40.71704598853704,
     lng: -73.95642042160034,
     full_name: "Furry's Bar",
     item: "club-item"
