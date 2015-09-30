@@ -4,7 +4,6 @@ var ReactDOM = require('react-dom');
 var _ = require('underscore');
 var directions = require('directions');
 var Conti = require('conti');
-// var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
 var scaler = (function(currMin, currMax, otherMin, otherMax) {
   var left = currMax - currMin;
@@ -21,15 +20,6 @@ var scaler = (function(currMin, currMax, otherMin, otherMax) {
 
 window.Conti = Conti;
 window.jQ = $;
-
-/*
-  // Progress V.
-  <div className="v-white-glow"/>
-  <div className="v-white">
-    <div className="v-red" style={{height: this.state.redh}}/>
-  </div>
-  <div className="full-black" style={{opacity: this.state.black}}/>
-*/
 
 Math.linearTween = function (t, b, c, d) {
   //
@@ -436,9 +426,9 @@ class Title extends ScanComponent {
 
   render() {
     return(
-      <div className='bg-slide title-slide' style={{
+      <div className="bg-slide title-slide" style={{
         height: this.props.measurements.viewportHeight,
-        top: this.state.top,
+        transform: "translate(0, " + this.state.top + "px)",
         backgroundImage: "url('" + this.props.backgroundImage + "')",
         backgroundSize: "cover"
       }}>
@@ -504,8 +494,8 @@ class WordMask extends ScanComponent {
         wordCount: 0,
         wordIdx: -1,
         played: false,
-        clipMode: 'text',
-        word: '',
+        clipMode: "text",
+        word: "",
         flickered: false
     };
     this.wordScaler = scaler(this.props.start, this.props.end-0.025, 0, 1);
@@ -513,12 +503,12 @@ class WordMask extends ScanComponent {
 
   flicker(count) {
     if(count === 0) {
-      $(this.refs.bg).css('-webkit-background-clip', 'initial');
+      $(this.refs.bg).css("-webkit-background-clip", "initial");
       return;
     } else if(count % 2 === 0) {
-      $(this.refs.bg).css('-webkit-background-clip', 'initial');
+      $(this.refs.bg).css("-webkit-background-clip", "initial");
     } else {
-      $(this.refs.bg).css('-webkit-background-clip', 'text');
+      $(this.refs.bg).css("-webkit-background-clip", "text");
     }
 
     setTimeout(() => {
@@ -555,16 +545,16 @@ class WordMask extends ScanComponent {
 
     if(adjustedPctScroll < 0) {
       wordIdx = -1;
-      clipMode = 'text';
+      clipMode = "text";
       flickered = false;
     } else {
       wordIdx = Math.round(this.state.wordCount * adjustWordScroll);
-      clipMode = 'text';
+      clipMode = "text";
     }
 
     //flash in the background
     if(wordIdx > this.state.wordCount) {
-      clipMode = '';
+      clipMode = "";
       wordIdx = this.state.wordCount+1;
 
       if(!this.state.flickered) {
@@ -605,7 +595,7 @@ class WordMask extends ScanComponent {
   render() {
     return(
       <div>
-        <div className="bg-mask mask-text" style={{backgroundImage: 'url(' + this.state.bgUrl + ')', WebkitBackgroundClip: this.state.clipMode }} ref="bg">
+        <div className="bg-mask mask-text" style={{backgroundImage: "url(" + this.state.bgUrl + ")", WebkitBackgroundClip: this.state.clipMode }} ref="bg">
           {this.state.maskText}
         </div>
         <span ref="text" className="mask-text text"><span ref="hide" className="hide">{this.state.text}</span><span ref="show" className="show">{this.state.word}</span></span>
@@ -704,18 +694,18 @@ class SlideMovie extends ScanComponent {
   }
 
   render() {
-    var controls = (this.props.controls) ? 'controls' : '';
-    var loop = (this.props.loop) ? 'loop' : '';
+    var controls = (this.props.controls) ? "controls" : "";
+    var loop = (this.props.loop) ? "loop" : "";
     return(
-      <div ref="slideRoot" className='bg-slide bg-video' style={{
-        top: this.state.top,
+      <div ref="slideRoot" className="bg-slide bg-video" style={{
+        transform: "translate(0, " + this.state.top + "px)",
         height: this.props.measurements.viewportHeight,
         zIndex: 100
       }}>
         <video ref="video" className="slide-video" controls>
           <source ref="videoSrc" type="video/mp4" src={this.props.videoSrc} />
         </video>
-        <h5 className="slide-caption video-caption" style={{display: this.state.caption ? 'block' : 'none'}}>
+        <h5 className="slide-caption video-caption" style={{display: this.state.caption ? "block" : "none"}}>
           &ldquo;It's amazing this <GoogleCardLink cssClass="video-link" cardData={this.state.cardData} text="market" />.&rdquo;
         </h5>
       </div>
@@ -731,7 +721,7 @@ class SlideBlock extends ScanComponent {
       opacity: 0,
       active: false,
       caption: true,
-      display: 'none'
+      display: "none"
     };
   }
 
@@ -777,15 +767,15 @@ class SlideBlock extends ScanComponent {
     if(adjustedPctScroll < 0) {
       top = viewportHeight;
       opacity = 0;
-      display = 'none';
+      display = "none";
     } else if (adjustedPctScroll > 1) {
       top = 0;
       opacity = 0;
-      display = 'none';
+      display = "none";
     } else {
       top = trans_data.top;
       opacity = trans_data.opacity;
-      display = 'block';
+      display = "block";
     }
 
     return {active, opacity, top, display};
@@ -793,14 +783,14 @@ class SlideBlock extends ScanComponent {
 
   render() {
     return(
-      <div ref="slideRoot" className='bg-slide slide-block' style={{
-        top: this.state.top,
+      <div ref="slideRoot" className="bg-slide slide-block" style={{
+        transform: "transform(0, " + this.state.top + "px)",
         height: this.props.measurements.viewportHeight,
         zIndex: 200,
         opacity: this.state.opacity,
         display: this.state.display
       }}>
-        <h5 className="slide-caption block-caption" style={{display: this.state.caption ? 'block' : 'none'}}>
+        <h5 className="slide-caption block-caption" style={{display: this.state.caption ? "block" : "none"}}>
           {this.props.caption}
         </h5>
       </div>
@@ -847,7 +837,7 @@ class SlippyBlock extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-      caption: 'Off to Khao San Road.',
+      caption: "Off to Khao San Road.",
       count: 0,
       maxCount: 6,
       top: 0,
@@ -892,7 +882,7 @@ class SlippyBlock extends ScanComponent {
 
     var hammerSwipe = new Hammer(document.body);
 
-    hammerSwipe.on('swipe', (ev) => {
+    hammerSwipe.on("swipe", (ev) => {
         if(this.state.active) {
           ev.preventDefault();
           this.toggleWormhole();
@@ -968,17 +958,17 @@ class SlippyBlock extends ScanComponent {
     if(adjustedPctScroll <= 0) {
       top = 0;
       count = 0;
-      if($slipRoot.hasClass('fadezzz')) {
-        $slipRoot.removeClass('fadezzz');
+      if($slipRoot.hasClass("fadezzz")) {
+        $slipRoot.removeClass("fadezzz");
       }
     } else if (adjustedPctScroll > 1) {
       top = viewportHeight;
-      if(!$slipRoot.hasClass('fadezzz')) {
-        $slipRoot.addClass('fadezzz');
+      if(!$slipRoot.hasClass("fadezzz")) {
+        $slipRoot.addClass("fadezzz");
       }
     } else {
-      if($slipRoot.hasClass('fadezzz')) {
-        $slipRoot.removeClass('fadezzz');
+      if($slipRoot.hasClass("fadezzz")) {
+        $slipRoot.removeClass("fadezzz");
       }
       count = Math.round(this.state.maxCount * adjustedPctScroll);
       top = Math.linearTween(adjustedPctScroll, 0, viewportHeight, 0.85);
@@ -1033,9 +1023,9 @@ class ZoomWords extends ScanComponent {
         maskText: [],
         wordCount: 0,
         wordIdx: -1,
-        clipMode: 'none',
-        display: 'none',
-        word: '',
+        clipMode: "none",
+        display: "none",
+        word: "",
         flickered: false
     };
   }
@@ -1065,13 +1055,13 @@ class ZoomWords extends ScanComponent {
         newTop;
 
     if(pctScroll < this.props.start) {
-      display = 'none';
+      display = "none";
       wordIdx = -1;
     } else if (pctScroll > this.props.end) {
       wordIdx = this.state.wordCount+1;
-      display = 'block';
+      display = "block";
     } else {
-      display = 'block';
+      display = "block";
       wordIdx = Math.min(this.state.wordCount, Math.round(this.state.wordCount * adjustedPctScroll));
     }
 
@@ -1102,7 +1092,7 @@ class ZoomWords extends ScanComponent {
   getZoomText() {
     return (
       <div className="zoomed-text" style={{
-        display: (this.state.word) ? 'flex' : 'none'
+        display: (this.state.word) ? "flex" : "none"
       }}>
         <span ref="zoomText">{this.state.word}</span>
       </div>);
@@ -1114,7 +1104,7 @@ class ZoomWords extends ScanComponent {
     return(
       <div style={{display: this.state.display}}>
         <div className="bg-zoom zoom-text" style={{
-          backgroundImage: (this.state.bgUrl) ? 'url(' + this.state.bgUrl + ')' : '',
+          backgroundImage: (this.state.bgUrl) ? "url(" + this.state.bgUrl + ")" : "",
           WebkitBackgroundClip: this.state.clipMode,
           zIndex: 100 }}
           ref="bg">
@@ -1161,12 +1151,12 @@ class ImageSwitcher extends ScanComponent {
     // console.log(adjustedPctScroll);
     if(pctScroll < this.props.start) {
       imageIdx = -1;
-      display = 'none';
+      display = "none";
     } else if (pctScroll > this.props.end) {
       imageIdx = this.state.imageCount;
-      display = 'block';
+      display = "block";
     } else {
-      display = 'block';
+      display = "block";
       imageIdx = Math.min(this.state.imageCount, Math.round(this.state.imageCount * adjustedPctScroll));
     }
 
@@ -1179,7 +1169,7 @@ class ImageSwitcher extends ScanComponent {
     let $alt = $(this.refs.altImage);
     if(!$alt.hasClass("switch-from-left")) {
       $(this.refs.altImage).addClass("switch-from-left");
-      $('.zoomed-text').addClass('pull-right');
+      $(".zoomed-text").addClass("pull-right");
     }
   }
 
@@ -1187,7 +1177,7 @@ class ImageSwitcher extends ScanComponent {
     let $alt = $(this.refs.altImage);
     if($alt.hasClass("switch-from-left")) {
       $(this.refs.altImage).removeClass("switch-from-left");
-      $('.zoomed-text').removeClass('pull-right');
+      $(".zoomed-text").removeClass("pull-right");
     }
   }
 
@@ -1208,7 +1198,7 @@ class ImageSwitcher extends ScanComponent {
 
     var hammerSwipe = new Hammer(document.body);
 
-    hammerSwipe.on('swipeleft', (ev) => {
+    hammerSwipe.on("swipeleft", (ev) => {
         if(this.state.active) {
           ev.preventDefault();
           this.showAltImage();
@@ -1216,7 +1206,7 @@ class ImageSwitcher extends ScanComponent {
         }
     });
 
-    hammerSwipe.on('swiperight', (ev) => {
+    hammerSwipe.on("swiperight", (ev) => {
         if(this.state.active) {
           ev.preventDefault();
           this.hideAltImage();
@@ -1268,16 +1258,16 @@ class ScrollGallery extends ScanComponent {
         imageIdx,
         zIndex = last_state.zIndex;
 
-    // console.log('scrollGallery:measurements: ', pctScroll, ':', adjustedPctScroll);
+    // console.log("scrollGallery:measurements: ", pctScroll, ":", adjustedPctScroll);
     if(adjustedPctScroll < 0) {
       imageIdx = -1;
-      display = 'none';
+      display = "none";
       zIndex = 0;
     } else if (adjustedPctScroll > 1) {
       imageIdx = this.state.imageCount;
-      display = 'block';
+      display = "block";
     } else {
-      display = 'block';
+      display = "block";
       imageIdx = Math.min(this.state.imageCount, Math.round(this.state.imageCount * adjustedPctScroll));
       zIndex = 103;
     }
@@ -1315,7 +1305,7 @@ class GalleryImage extends ScanComponent {
       opacity: 0,
       active: false,
       caption: true,
-      display: 'none'
+      display: "none"
     };
   }
 
@@ -1363,32 +1353,32 @@ class GalleryImage extends ScanComponent {
     if(adjustedPctScroll < 0) {
       top = viewportHeight;
       // opacity = 0;
-      display = 'none';
+      display = "none";
     } else if (adjustedPctScroll > 1) {
       top = 0;
       // opacity = 0;
-      // display = 'none';
+      // display = "none";
     } else {
       top = Math.linearTween(adjustedPctScroll,viewportHeight,-viewportHeight,1);
       // opacity = 1;
-      display = 'block';
+      display = "block";
     }
 
     return {active, opacity: trans_data.opacity, top, display, caption};
   }
 
   render() {
-    var bgImage = (this.props.bgImage) ? "url(" + this.props.bgImage + ")" : '';
+    var bgImage = (this.props.bgImage) ? "url(" + this.props.bgImage + ")" : "";
     return(
-      <div ref="slideRoot" className='bg-slide slide-block' style={{
-        top: this.state.top,
+      <div ref="slideRoot" className="bg-slide slide-block" style={{
+        transform: "translate(0, " + this.state.top + "px)",
         height: this.props.measurements.viewportHeight,
         // zIndex: 200,
         // opacity: this.state.opacity,
         display: this.state.display,
         backgroundImage: bgImage
       }}>
-        <h5 className="slide-caption block-caption" style={{display: (this.state.caption && this.props.caption) ? 'block' : 'none',
+        <h5 className="slide-caption block-caption" style={{display: (this.state.caption && this.props.caption) ? "block" : "none",
         opacity: this.state.opacity}}>
           &ldquo;{this.props.caption}&rdquo;
         </h5>
@@ -1585,7 +1575,7 @@ class GoogleCard extends React.Component {
   }
 
   render() {
-    var showCard = (this.props.show) ? 'visible' : 'hidden';
+    var showCard = (this.props.show) ? "visible" : "hidden";
     return (
       <div ref="googleCard" className="google-card" style={{visibility: showCard}}>
           <div ref="cardMap" className="google-card-map">
