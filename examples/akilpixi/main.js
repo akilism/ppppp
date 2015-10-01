@@ -190,9 +190,13 @@ class Root extends React.Component {
   render() {
     // <PixelTransition measurements={this.props.measurements} start={0} end={0.5} imagePath="/akilpixi/wiki.jpg" imagePath2="/akilpixi/gza.jpg" />
     // <PixelFace measurements={this.props.measurements} start={0} end={0.1} imagePath="/akilpixi/ratking.jpg" />
+    // <ScrambleMask measurements={this.props.measurements} start={0} end={0.1} imagePath="/akilpixi/ratking.jpg" />
     return (
       <div>
         <ScrambleMask measurements={this.props.measurements} start={0} end={0.1} imagePath="/akilpixi/ratking.jpg" />
+        <audio id="sfxError">
+          <source src="/akilpixi/error.wav" type="audio/wav" />
+        </audio>
       </div>
     );
   }
@@ -275,7 +279,10 @@ class ScanComponent extends Base {
     //shake screen or something here.
     console.error("ERROR INPUT!!!!");
     $(".stage-bg").addClass("shake");
-
+    // $("#sfxError")[0].stop();
+    var $sfxError = $("#sfxError");
+    $sfxError[0].currentTime = 0;
+    $sfxError[0].play();
     setTimeout(() => {
       $(".stage-bg").removeClass("shake");
     }, 100);
@@ -392,7 +399,6 @@ class PixelTransition extends ScanComponent {
     )
   }
 }
-
 
 class PixelFace extends ScanComponent {
   constructor(props) {
@@ -574,7 +580,7 @@ class ScrambleMask extends ScanComponent {
   animate() {
     requestAnimationFrame(() => { this.animate(); });
     if(this.state.animate) {
-      var size = Math.round(Math.random() * this.state.maxCellSize);
+      var size = Math.max(3, Math.round(Math.random() * this.state.maxCellSize));
       this.filter.size = new PIXI.Point(size, size);
       this.randomizePositions();
     } else {
