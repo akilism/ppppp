@@ -669,6 +669,87 @@ body {
     opacity: 0;
   }
 }
+
+/* progress bar */
+.progress-bar {
+  position: fixed;
+  z-index: 10000;
+  /*height: 75px;*/
+  width: 97%;
+  bottom: 52px;
+  margin: 0 20px;
+  display: flex;
+  align-items: center;
+}
+
+.progress-back {
+  background-color: rgba(142, 142, 142, 0.55);
+  height: 8px;
+  width: 100%;
+  position: absolute;
+  /*border: 2px solid #0ff;*/
+  left: 0;
+}
+
+.progress-fill {
+  height: 8px;
+  background-color: #0ff;
+  position: absolute;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.progress-playhead {
+  position: relative;
+  height: 75px;
+  width: 55px;
+  z-index: 1000;
+}
+
+.playhead-default {
+  left: 50px;
+}
+
+.playhead-perspective {
+  left: 25px;
+  animation: pulse 1s infinite alternate-reverse;
+}
+
+.playhead-action {
+
+}
+
+.playhead-split {
+
+}
+
+.progress-indicator {
+      height: 26px;
+    width: 26px;
+    border-radius: 50%;
+    border: 7px solid #0ff;
+    /* border-color: #D0D012; */
+    background-color: #fff;
+    display: inline-block;
+    position: fixed;
+}
+
+.progress-indicator-passed {
+  background-color: #0ff;
+}
+
+@keyframes pulse {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.5);
+  }
+
+}
 </style>
   </head>
   <body>

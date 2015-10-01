@@ -248,7 +248,15 @@ class Root extends React.Component {
         component: SlideMovie,
         props: {videoSrc: "/thailand/soup_history.mp4", caption: "This soup was delicious but there must be more to eat."}}];
 
-
+    var indicators = [{head: "default", start: 0, end: 0.05},
+                      // {head: "default", start: 0.05, end: 0.12},
+                      {head: "perspective", start: 0.12, end: 0.24},
+                      {head: "action", start: 0.24, end: 0.31},
+                      {head: "perspective", start: 0.31, end: 0.41},
+                      {head: "perspective", start: 0.40, end:0.55},
+                      {head: "default", start: 0.55, end:1},
+                      {head: "default", start: 0.075, end: 0.12},
+                      {head: "default", start: 1}  ];
     return (
       <div>
         <SlideBlock measurements={this.props.measurements} start={0.075} end={0.12} caption="&ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like a match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;" />
@@ -260,6 +268,7 @@ class Root extends React.Component {
         <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap eats. ", " Cheap hostels. ", " Cheap drinks. ", " You can find absolutely anything there."]} />
         <SlippyBlock measurements={this.props.measurements} start={0.31} end={0.41} />
         <ScrollGallery measurements={this.props.measurements} start={0.55} end={1} images={galleryImages} />
+        <ProgressBar measurements={this.props.measurements} indicators={indicators} />
       </div>
     );
   }
@@ -344,12 +353,38 @@ ScanComponent.contextTypes = {
   toggleWormhole: React.PropTypes.func.isRequired
 };
 
-class SlideComponent extends ScanComponent {
+
+class ProgressBar extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-      top: 0
+      progress: 0,
+      progressPx: 0,
+      progressPct: 0,
+      playhead: "default" //"default, perspective, play, split"
+    };
+  }
+
+  handleClick(i, evt) {
+    var indicator = this.props.progressIndicators[i];
+    indicator.show = true;
+    if(this.state.activeIndicator.name === indicator.name) {
+      this.setState(_.extend(this.state, {activeIndicator: {show: false}}));
+    } else {
+      this.setState(_.extend(this.state, {activeIndicator: indicator}));
+      this.setCard(evt.clientX, evt.clientY);
     }
+  }
+
+  getCurrentIndicator() {
+    var pctScroll = this.props.measurements.pctScroll;
+    return this.props.progressIndicators.filter((i) => {
+      return pctScroll >= i.startPosition && pctScroll < i.endPosition;
+    })[0];
+  }
+
+  componentWillMount() {
+    this.setState(_.extend(this.state, {barWidth: (this.props.measurements.viewportWidth - 80)}));
   }
 
   componentWillReceiveProps() {
@@ -357,33 +392,55 @@ class SlideComponent extends ScanComponent {
   }
 
   adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements;
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, viewportWidth} = this.props.measurements,
+      playhead = last_state.playhead,
+      currentIndicactor = this.props.indicators.filter((i) => {
+        return (pctScroll >= i.start && pctScroll < i.end);
+      })[0];
 
-    var destTop = viewportHeight * -1,
-      newTop;
-
-    if (pctScroll >= this.props.end) {
-        newTop = destTop;
-    } else if(pctScroll >= this.props.start){
-        newTop = Math.linearTween((pctScroll-this.props.start), 0, destTop, 0.1);
-    } else {
-      newTop = 0;
+    if(currentIndicactor && currentIndicactor.head) {
+      playhead = currentIndicactor.head;
     }
 
-    return {top: newTop};
+    return {progressPx: Math.round(this.state.barWidth * pctScroll), progressPct: (pctScroll * 100), playhead};
+  }
+
+  buildIndicator(i, idx) {
+    var r = 5;
+    var classes = (i.start < this.props.measurements.pctScroll) ? "progress-indicator progress-indicator-passed" : "progress-indicator";
+
+    var xPos = i.start * this.state.barWidth;
+    return (
+      <div key={idx} className={classes} style={{transform: "translate(" + xPos + "px, -9px)"}}></div>
+      );
+  }
+
+  getCurrentplayhead() {
+    var className = "progress-playhead";
+    switch (this.state.playhead) {
+      case "perspective":
+        return {className: className + " playhead-perspective", src: "/thailand/6th_eye.svg"};
+      case "action":
+        return {className: className + " playhead-action", src: "/map-unfold/asap-head.png"};
+      case "split":
+        return {className: className + " playhead-split", src: "/map-unfold/asap-head.png"};
+      default:
+        return {className: className + " playhead-default", src: "/map-unfold/asap-head.png"};
+    }
   }
 
   render() {
-    // width: this.props.measurements.viewportWidth
-    return(
-      <div className='bg-slide' style={{
-        top: this.state.top,
-        backgroundColor: this.props.backgroundColor,
-        height: this.props.measurements.viewportHeight,
-      }}>
-       {this.props.backgroundColor}
+    var playhead = this.getCurrentplayhead();
+    var indicators = this.props.indicators.map(this.buildIndicator, this);
+    return (
+      <div className="progress-bar">
+        <div className="progress-back"></div>
+        <div className="progress-fill" style={{width: this.state.progressPx}}>
+          <img src={playhead.src} id="playhead" className={playhead.className}/>
+        </div>
+        {indicators}
       </div>
-    )
+    );
   }
 }
 
@@ -563,7 +620,7 @@ class WordMask extends ScanComponent {
       }
       flickered = true;
       if (this.refs.welcome.paused && !this.state.played && this.state.active) {
-        this.refs.welcome.play();
+        // this.refs.welcome.play();
         played = true;
       }
     }
@@ -697,6 +754,7 @@ class SlideMovie extends ScanComponent {
   render() {
     var controls = (this.props.controls) ? "controls" : "";
     var loop = (this.props.loop) ? "loop" : "";
+    // {this.props.videoSrc}
     return(
       <div ref="slideRoot" className="bg-slide bg-video" style={{
         transform: "translate(0, " + this.state.top + "px)",
@@ -704,7 +762,7 @@ class SlideMovie extends ScanComponent {
         zIndex: 100
       }}>
         <video ref="video" className="slide-video" controls>
-          <source ref="videoSrc" type="video/mp4" src={this.props.videoSrc} />
+          <source ref="videoSrc" type="video/mp4" src="" />
         </video>
         <h5 className="slide-caption video-caption" style={{display: this.state.caption ? "block" : "none"}}>
           &ldquo;It's amazing this <GoogleCardLink cssClass="video-link" cardData={this.state.cardData} text="market" />.&rdquo;
