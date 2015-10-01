@@ -37,6 +37,7 @@ body {
 }
 
 .bg-slide {
+  background-size: contain;
   position: fixed;
   width: 100%;
   display: flex;
@@ -693,7 +694,7 @@ body {
 
 .progress-fill {
   height: 8px;
-  background-color: #0ff;
+  background-color: #ff0;
   position: absolute;
   left: 0;
   display: flex;
@@ -701,43 +702,52 @@ body {
   justify-content: flex-end;
 }
 
+
 .progress-playhead {
   position: relative;
   height: 75px;
   width: 55px;
   z-index: 1000;
+  /*left: 10px;*/
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: right center;
 }
 
 .playhead-default {
-  left: 50px;
+  /*left: 50px;*/
+  /*background-image: url('/map-unfold/asap-head.png');*/
 }
 
 .playhead-perspective {
-  left: 25px;
-  animation: pulse 1s infinite alternate-reverse;
+  background-image: url('/thailand/6th_eye.svg');
+  /*left: 25px;*/
+  animation: pulse 1s infinite alternate;
 }
 
 .playhead-action {
-
+  background-image: url('/thailand/2600.png');
+  animation: pulse 1s infinite alternate;
 }
 
 .playhead-split {
-
+  background-image: url('/map-unfold/asap-head.png');
+  animation: pulse 1s infinite alternate;
 }
 
 .progress-indicator {
-      height: 26px;
+    height: 26px;
     width: 26px;
     border-radius: 50%;
-    border: 7px solid #0ff;
+    /*border: 7px solid;*/
     /* border-color: #D0D012; */
-    background-color: #fff;
+    background-color: #ff0;
     display: inline-block;
     position: fixed;
 }
 
 .progress-indicator-passed {
-  background-color: #0ff;
+  background-color: #ff0;
 }
 
 @keyframes pulse {
@@ -746,9 +756,29 @@ body {
   }
 
   to {
-    transform: scale(1.5);
+    transform: scale(1.15);
   }
+}
 
+.minimal {
+  bottom: 15px;
+}
+
+.minimal .progress-back,
+.minimal .progress-fill {
+  height: 5px;
+}
+
+.minimal .progress-playhead {
+  position: fixed;
+  top: 10px;
+  right: 20px;
+}
+
+.minimal .progress-indicator {
+  height: 10px;
+  width: 10px;
+  margin-top: -3px;
 }
 </style>
   </head>

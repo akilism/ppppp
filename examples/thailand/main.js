@@ -411,7 +411,7 @@ class ProgressBar extends ScanComponent {
 
     var xPos = i.start * this.state.barWidth;
     return (
-      <div key={idx} className={classes} style={{transform: "translate(" + xPos + "px, -9px)"}}></div>
+      <div key={idx} className={classes} style={{transform: "translate(" + xPos + "px, 0)"}}></div>
       );
   }
 
@@ -421,7 +421,7 @@ class ProgressBar extends ScanComponent {
       case "perspective":
         return {className: className + " playhead-perspective", src: "/thailand/6th_eye.svg"};
       case "action":
-        return {className: className + " playhead-action", src: "/map-unfold/asap-head.png"};
+        return {className: className + " playhead-action", src: "/thailand/2600.png"};
       case "split":
         return {className: className + " playhead-split", src: "/map-unfold/asap-head.png"};
       default:
@@ -432,13 +432,16 @@ class ProgressBar extends ScanComponent {
   render() {
     var playhead = this.getCurrentplayhead();
     var indicators = this.props.indicators.map(this.buildIndicator, this);
+    // <img src={playhead.src} id="playhead" className={playhead.className}/>
+    // style={{transform: "translate(" + (this.state.progressPx-5) + "px,0)"}}
     return (
-      <div className="progress-bar">
+
+      <div className="progress-bar minimal">
         <div className="progress-back"></div>
         <div className="progress-fill" style={{width: this.state.progressPx}}>
-          <img src={playhead.src} id="playhead" className={playhead.className}/>
         </div>
         {indicators}
+        <div className={playhead.className}></div>
       </div>
     );
   }
