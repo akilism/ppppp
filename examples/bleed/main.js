@@ -699,6 +699,7 @@ class Slide0 extends ScanComponent {
         )
     }
 }
+
 class Slide1 extends ScanComponent {
     constructor(props) {
       super(props);
