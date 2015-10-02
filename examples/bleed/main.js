@@ -185,6 +185,7 @@ class TestComponent extends React.Component {
     return (
       <div style={{position: 'relative', width: '100%', height: '100%'}}>
         <Slide1/>
+        <Slide0/>
       </div>
     );
   }
@@ -654,6 +655,50 @@ class Timebar extends ScanComponent {
 
 }
 
+class Slide0 extends ScanComponent {
+    constructor(props) {
+      super(props);
+      this.state = {
+        bg_top: 0,
+        frame: 0,
+      };
+    }
+
+    adjust(last,d){
+
+        var conti = new Conti(0,0.08,"pct_scroll",function(pct,t){
+          var new_frame = (d.pct_scroll / 0.001) % 9
+          t.frame = new_frame
+          t.bg_top = 0
+          return t;
+        }).abut(0.1,function(pct,t){
+          var new_frame = (d.pct_scroll / 0.001) % 9
+          var new_top = -1 * $(window).height()
+          t.frame = new_frame
+          t.bg_top = Math.linearTween(pct,0,new_top,1)
+          return t;
+        }).abut(1,function(pct,t){
+          var new_top = -1 * $(window).height()
+          t.frame = 0
+          t.bg_top = new_top
+          return t;
+        })
+   
+        var trans_data = conti.run(d,{})
+        return trans_data
+    }
+    render(){
+        return (
+          <Flipbook.P id="slide0" baseName="erik-gif" frames={9} frame={this.state.frame} style={{
+            top: this.state.bg_top,
+          }}>
+                <div className="vid-title big">
+                    WE TALKED FOR A FEW HOURS
+                </div>
+            </Flipbook.P>
+        )
+    }
+}
 class Slide1 extends ScanComponent {
     constructor(props) {
       super(props);
