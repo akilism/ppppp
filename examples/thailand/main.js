@@ -361,7 +361,9 @@ class ProgressBar extends ScanComponent {
       progress: 0,
       progressPx: 0,
       progressPct: 0,
-      playhead: "default" //"default, perspective, play, split"
+      playhead: "default", //"default, perspective, play, split"
+      hint: "",
+      hintBoxStyle: { display: "none" }
     };
   }
 
@@ -429,6 +431,37 @@ class ProgressBar extends ScanComponent {
     }
   }
 
+  handleMouseMove(evt) {
+    if(this.state.playhead === "default") {
+      this.setState({hintBoxStyle: {display: "none"}});
+      return;
+    }
+
+    let hint = "",
+        x = evt.clientX - 260,
+        y = evt.clientY,
+        hintBoxStyle = {display: "block", left: x, top: y};
+
+    switch (this.state.playhead) {
+      case "perspective":
+        hint = "Hit shift to get a different perspective.";
+        break;
+      case "action":
+        hint = "Push enter to perform a trick.";
+        break;
+      case "split":
+        hint = "Shift? Enter? Maybe both?";
+        break;
+    }
+
+    this.setState({hint, hintBoxStyle});
+  }
+
+  handleMouseOut(evt) {
+    let hintBoxStyle = {display: "none"};
+    this.setState({hintBoxStyle});
+  }
+
   render() {
     var playhead = this.getCurrentplayhead();
     var indicators = this.props.indicators.map(this.buildIndicator, this);
@@ -436,12 +469,13 @@ class ProgressBar extends ScanComponent {
     // style={{transform: "translate(" + (this.state.progressPx-5) + "px,0)"}}
     return (
 
-      <div className="progress-bar minimal">
+      <div className="progress-bar minimal" style={{width: this.state.barWidth}}>
         <div className="progress-back"></div>
         <div className="progress-fill" style={{width: this.state.progressPx}}>
         </div>
         {indicators}
-        <div className={playhead.className}></div>
+        <div onMouseOut={this.handleMouseOut.bind(this)} onMouseMove={this.handleMouseMove.bind(this)} className={playhead.className}></div>
+        <div className="hint-box" ref="hintBox" style={this.state.hintBoxStyle}>{this.state.hint}</div>
       </div>
     );
   }
