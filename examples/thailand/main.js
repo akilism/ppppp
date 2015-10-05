@@ -248,15 +248,15 @@ class Root extends React.Component {
         component: SlideMovie,
         props: {videoSrc: "/thailand/soup_history.mp4", caption: "This soup was delicious but there must be more to eat."}}];
 
-    var indicators = [{head: "default", start: 0, end: 0.05},
+    var indicators = [{head: "default", start: 0, end: 0.05, style: 'major'},
                       // {head: "default", start: 0.05, end: 0.12},
-                      {head: "perspective", start: 0.12, end: 0.24},
-                      {head: "action", start: 0.24, end: 0.31},
-                      {head: "perspective", start: 0.31, end: 0.41},
-                      {head: "perspective", start: 0.40, end:0.55},
-                      {head: "default", start: 0.55, end:1},
-                      {head: "default", start: 0.075, end: 0.12},
-                      {head: "default", start: 1}  ];
+                      {head: "perspective", start: 0.12, end: 0.24, style: 'minor'},
+                      {head: "action", start: 0.24, end: 0.31, style: 'minor'},
+                      {head: "perspective", start: 0.31, end: 0.41, style: 'minor'},
+                      {head: "perspective", start: 0.40, end:0.55, style: 'major'},
+                      {head: "default", start: 0.55, end:1, style: 'major'},
+                      {head: "default", start: 0.075, end: 0.12, style: 'minor'},
+                      {head: "default", start: 1, style: 'major'}  ];
     return (
       <div>
         <SlideBlock measurements={this.props.measurements} start={0.075} end={0.12} caption="&ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like a match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;" />
@@ -409,7 +409,11 @@ class ProgressBar extends ScanComponent {
 
   buildIndicator(i, idx) {
     var r = 5;
-    var classes = (i.start < this.props.measurements.pctScroll) ? "progress-indicator progress-indicator-passed" : "progress-indicator";
+
+    var classes = (i.style === "minor") ? "progress-indicator-minor" : "progress-indicator-major";
+    if (i.start < this.props.measurements.pctScroll) {
+      classes = classes + " progress-indicator-passed";
+    }
 
     var xPos = i.start * this.state.barWidth;
     return (

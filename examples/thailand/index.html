@@ -736,9 +736,20 @@ body {
   animation: pulse 1s infinite alternate;
 }
 
-.progress-indicator {
+.progress-indicator-major {
     height: 26px;
     width: 26px;
+    border-radius: 50%;
+    /*border: 7px solid;*/
+    /* border-color: #D0D012; */
+    background-color: #ff0;
+    display: inline-block;
+    position: fixed;
+}
+
+.progress-indicator-minor {
+    height: 16px;
+    width: 16px;
     border-radius: 50%;
     /*border: 7px solid;*/
     /* border-color: #D0D012; */
@@ -781,6 +792,20 @@ body {
   width: 10px;
   margin-top: -3px;
 }
+
+
+.minimal .progress-indicator-major {
+    height: 10px;
+    width: 10px;
+    margin-top: -3px;
+}
+
+.minimal .progress-indicator-minor {
+    height: 7px;
+    width: 7px;
+    margin-top: -1px;
+}
+
 
 .hint-box {
   width: 250px;
