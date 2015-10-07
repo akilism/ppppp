@@ -312,6 +312,134 @@ class Shade extends ScanComponent {
         maxCellSize: 15,
         animate: true
     };
+
+    //"  gl_FragColor.r = abs(sin(u_time / 50.0));",
+    this.fragmentShader = ["precision mediump float;",
+      "uniform vec2 resolution;",
+      "uniform vec2 mouse;",
+      "uniform float scroll;",
+      "uniform float time;",
+      "void main() {",
+      "  vec2 st = gl_FragCoord.xy / resolution;",
+      "  gl_FragColor.r = 0.0;",
+      "  gl_FragColor.g = st.y;",
+      "  gl_FragColor.b = abs(cos(scroll));",
+      "  gl_FragColor.a = scroll;",
+      "}"].join('');
+    this.fragmentShader = ["precision mediump float;",
+      "uniform vec2 resolution;",
+      "uniform vec2 mouse;",
+      "uniform float scroll;",
+      "uniform float time;",
+      "float field(in vec3 p,float s) {",
+      "  float _time = time / 30.0;",
+      "  float strength = 7. + .03 * log(1.e-6 + fract(sin(_time) * 4373.11));",
+      "  float accum = s/4.;",
+      "  float prev = 0.;",
+      "  float tw = 0.;",
+      "  for (int i = 0; i < 26; ++i) {",
+      "    float mag = dot(p, p);",
+      "    p = abs(p) / mag + vec3(-.5, -.4, -1.5);",
+      "    float w = exp(-float(i) / 7.);",
+      "    accum += w * exp(-strength * pow(abs(mag - prev), 2.2));",
+      "    tw += w;",
+      "    prev = mag;",
+      "  }",
+      "  return max(0., 5. * accum / tw - .7);",
+      "}",
+      "float field2(in vec3 p, float s) {",
+      "  float _time = time / 30.0;",
+      "  float strength = 7. + .03 * log(1.e-6 + fract(sin(_time) * 4373.11));",
+      "  float accum = s/4.;",
+      "  float prev = 0.;",
+      "  float tw = 0.;",
+      "  for (int i = 0; i < 18; ++i) {",
+      "    float mag = dot(p, p);",
+      "    p = abs(p) / mag + vec3(-.5, -.4, -1.5);",
+      "    float w = exp(-float(i) / 7.);",
+      "    accum += w * exp(-strength * pow(abs(mag - prev), 2.2));",
+      "    tw += w;",
+      "    prev = mag;",
+      "  }",
+      "  return max(0., 5. * accum / tw - .7);",
+      "}",
+      "vec3 nrand3( vec2 co )",
+      "{",
+      "  vec3 a = fract( cos( co.x*8.3e-3 + co.y )*vec3(1.3e5, 4.7e5, 2.9e5) );",
+      "  vec3 b = fract( sin( co.x*0.3e-3 + co.y )*vec3(8.1e5, 1.0e5, 0.1e5) );",
+      "  vec3 c = mix(a, b, 0.5);",
+      "  return c;",
+      "}",
+      "void main() {",
+      "  float _time = time / 30.0;",
+      "  vec2 uv = 2. * gl_FragCoord.xy / resolution.xy - 1.;",
+      "  vec2 uvs = uv * resolution.xy / max(resolution.x, resolution.y);",
+      "  vec3 p = vec3(uvs / 4., 0) + vec3(1., -1.3, 0.);",
+      "  p += .2 * vec3(sin(_time / 16.), sin(_time / 12.),  sin(_time / 128.));",
+      "  float freqs[4];",
+      "  float t = field(p,freqs[2]);",
+      "  float v = (1. - exp((abs(uv.x) - 1.) * 6.)) * (1. - exp((abs(uv.y) - 1.) * 6.));",
+      "  vec3 p2 = vec3(uvs / (4.+sin(_time*0.11)*0.2+0.2+sin(_time*0.15)*0.3+0.4), 1.5) + vec3(2., -1.3, -1.);",
+      "  p2 += 0.25 * vec3(sin(_time / 16.), sin(_time / 12.),  sin(_time / 128.));",
+      "  float t2 = field2(p2,freqs[3]);",
+      "  vec4 c2 = mix(.4, 1., v) * vec4(1.3 * t2 * t2 * t2 ,1.8  * t2 * t2 , t2* freqs[0], t2);",
+      "  vec2 seed = p.xy * 2.0; ",
+      "  seed = floor(seed * resolution.x);",
+      "  vec3 rnd = nrand3( seed );",
+      "  vec4 starcolor = vec4(pow(rnd.y,40.0));",
+      "  vec2 seed2 = p2.xy * 2.0;",
+      "  seed2 = floor(seed2 * resolution.x);",
+      "  vec3 rnd2 = nrand3( seed2 );",
+      "  starcolor += vec4(pow(rnd2.y,40.0));",
+      "  gl_FragColor = mix(freqs[3]-.3, 1., v) * vec4(1.5*freqs[2] * t * t* t , 1.2*freqs[1] * t * t, freqs[3]*t, 1.0)+c2+starcolor;",
+      "}"].join('');
+    this.fragmentShader = ["precision mediump float;",
+      "uniform vec2 resolution;",
+      "uniform vec2 mouse;",
+      "uniform vec2 time;",
+      "float plot(vec2 st, float pct) {",
+      "  return smoothstep(pct - 0.01, pct, st.y) - smoothstep(pct, pct + 0.01, st.y);",
+      "}",
+      "void main() {",
+      "  vec2 st = gl_FragCoord.xy / resolution;",
+      "  float y = sin(st.x);",
+      "  vec3 color = vec3(y);",
+      "  float pct = plot(st, y);",
+      "  color = (1.0 - pct) * color + pct * vec3(0.0,1.0,0.0);",
+      "  gl_FragColor = vec4(color, 1.0);",
+      "}"].join('');
+    this.fragmentShader = ["precision mediump float;",
+        "uniform vec2 resolution;",
+        "uniform vec2 mouse;",
+        "uniform float scroll;",
+        "uniform float time;",
+        "float field(in vec3 p) {",
+        "  float _time = time / 30.0;",
+        "  float strength = 7. + .03 * log(1.e-6 + fract(sin(_time) * 4373.11));",
+        "  float accum = 0.;",
+        "  float prev = 0.;",
+        "  float tw = 0.;",
+        "  for (int i = 0; i < 32; ++i) {",
+        "    float mag = dot(p, p);",
+        "    p = abs(p) / mag + vec3(-.5, -.4, -1.5);",
+        "    float w = exp(-float(i) / 7.);",
+        "    accum += w * exp(-strength * pow(abs(mag - prev), 2.3));",
+        "    tw += w;",
+        "    prev = mag;",
+        "  }",
+        "  return max(0., 5. * accum / tw - .7);",
+        "}",
+        "void main() {",
+        "  float _time = time / 30.0;",
+        "  float _scroll = scroll * 100.0;",
+        "  vec2 uv = 2. * gl_FragCoord.xy / resolution.xy - 1.;",
+        "  vec2 uvs = uv * resolution.xy / max(resolution.x, resolution.y);",
+        "  vec3 p = vec3(uvs / 4., 0) + vec3(1., -1.3, 0.);",
+        "  p += .2 * vec3(sin(_scroll / 16.), sin(_scroll / 12.),  sin(_time / 128.));",
+        "  float t = field(p);",
+        "  float v = (1. - exp((abs(uv.x) - 1.) * 6.)) * (1. - exp((abs(uv.y) - 1.) * 6.));",
+        "  gl_FragColor = mix(.4, 1., v) * vec4(1.8 * t * t * t, 1.4 * t * t, t, 1.0);",
+        "}"].join('');
   }
 
   componentWillReceiveProps() {
@@ -322,6 +450,13 @@ class Shade extends ScanComponent {
     return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
   }
 
+  randomFill(width, height) {
+    var arr = _.flatten(Array(width*height).fill(0).map(() => {
+      return (Math.random() > 0.75) ? [255.0,255.0,255.0,255.0] : [0.0,0.0,0.0,255.0];
+    }));
+    return new Uint8ClampedArray(arr);
+  }
+
   adjust(last_state) {
     var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
         adjustedPctScroll = this.scaler(pctScroll),
@@ -329,416 +464,77 @@ class Shade extends ScanComponent {
         maxCellSize = this.state.maxCellSize,
         animate = last_state.animate;
 
-    // if(pctScroll < this.props.start + 0.005) {
-    //   animate = true;
-    //   this.filter.size =  new PIXI.Point(maxCellSize, maxCellSize);
-    // } else if (pctScroll > this.props.end) {
-    //   animate = false;
-    //   this.filter.size =  new PIXI.Point(1, 1);
-    // } else {
-    //   // console.log(1 - adjustedPctScroll);
-    //   animate = false;
-    //   let size = Math.min(maxCellSize, (1 - adjustedPctScroll) * maxCellSize);
-    //   this.filter.size = new PIXI.Point(size, size);
-    // }
+    if(active) {
+      this.shader.uniforms.scroll.value = adjustedPctScroll;
+    }
 
     return {animate: false};
   }
 
+  makeInitialGameState(width, height) {
+    var fill = this.randomFill(width, height);
+    var initialStage = new PIXI.Container();
+    var renderer = new PIXI.CanvasRenderer(width, height, null, true);
+    var context = renderer.context;
+    var imageData = new ImageData(fill, width, height);
+
+    this.refs.stage.appendChild(renderer.view);
+    renderer.render(initialStage);
+    context.putImageData(imageData, 0, 0);
+    return renderer.view;
+  };
+
   componentDidMount() {
-    var uniforms = {
-      resolution: {
-        type: "2f",
-        value: {
-          x: 990,
-          y: 660
-        }
-      },
-      time: {
-        type: "1f",
-        value: 0
-      },
-      mouse: {
-        type: "2f",
-        value: {
-          x: 0,
-          y: 0
-        }
-      }
-    };
-    this.renderer = new PIXI.WebGLRenderer(990,660, {transparent: true});
+    //var initialState = this.makeInitialGameState(this.props.measurements.viewportWidth, this.props.measurements.viewportHeight-0);
+    var bg = PIXI.Sprite.fromImage("http://www.goodboydigital.com/pixijs/examples/25/test_BG.jpg");
+    //var initialTexture = PIXI.Texture.fromCanvas(initialState);
+    var initialTexture = PIXI.Texture.EMPTY;
+    // var bg = new PIXI.Sprite(initialTexture);
+    bg.width = this.props.measurements.viewportWidth;
+    bg.height = this.props.measurements.viewportHeight-0;
+
+    // bg.texture = initialTexture;
+    this.renderer = new PIXI.WebGLRenderer(this.props.measurements.viewportWidth,this.props.measurements.viewportHeight-0, {transparent: true});
     this.refs.stage.appendChild(this.renderer.view);
-    this.stage = new PIXI.Stage(0x0, true);
-    // this.shaderManger = new PIXI.ShaderManager(this.renderer);
-    this.shader = new PIXI.AbstractFilter('/shader/life.glsl', uniforms);
+
+    this.stage = new PIXI.Container();
+    this.uniforms = {
+      resolution: { type: "v2", value: {x: this.props.measurements.viewportWidth, y: this.props.measurements.viewportHeight-0}},
+      prevState: { type: "sampler2D", value: initialTexture },
+      // redraw: {type: "bool", value: false},
+      time: {type: "1f", value: 0.0},
+      mouse: { type: "v2", value: {x: 0.0, y: 0.0}},
+      scroll: {type: "1f", value: 0.0}
+    };
+
+    this.shader = new PIXI.AbstractFilter(null, this.fragmentShader, this.uniforms);
     this.count = 0;
+
+    bg.shader = this.shader;
+    this.interactionManager = new PIXI.interaction.InteractionManager(this.renderer);
+    this.stage.addChild(bg);
     this.animate();
+    // this.renderer.render(this.stage);
+    // debugger;
     this.bindHandlers();
   }
 
   animate() {
     requestAnimationFrame(() => { this.animate(); });
-    //var mouse = this.stage.getMousePosition();
-
+    var mouse = this.interactionManager.mouse.global;
     this.shader.uniforms.time.value = this.count;
+
     if (mouse.x > 0 && mouse.y > 0) {  // If mouse is over stage
-      this.shader.uniforms.mouse.value = {
-        x: 0,
-        y: 0
-      };
+      this.shader.uniforms.mouse.value = {x: mouse.x, y: mouse.y};
     }
+
     this.count++;
-    this.shader.syncUniforms();
-    this.renderer.render(this.stage);
-  }
-
-  // head() {
-  //   var hakFrame = new PIXI.Rectangle(65, 0, 125, 140);
-  //   var wikiFrame = new PIXI.Rectangle(445, 80, 140, 140); //PIXI.Rectangle(310, 180, 340, 270);
-  //   var sportingLifeFrame = new PIXI.Rectangle(800, 30, 130, 125);
-  //   var baseTexture = PIXI.BaseTexture.fromImage(this.props.imagePath);
-  //   var hakTexture = new PIXI.Texture(baseTexture, hakFrame);
-  //   var wikiTexture = new PIXI.Texture(baseTexture, wikiFrame);
-  //   var sportingLifeTexture = new PIXI.Texture(baseTexture, sportingLifeFrame);
-  //   var hak = new PIXI.Sprite(hakTexture);
-  //   var wiki = new PIXI.Sprite(wikiTexture);
-  //   var sportingLife = new PIXI.Sprite(sportingLifeTexture);
-  //   hak.position.x = 65;
-  //   hak.position.y = 0;
-  //   wiki.position.x = 445;
-  //   wiki.position.y = 80;
-  //   sportingLife.position.x = 800;
-  //   sportingLife.position.y = 30;
-  //   this.stage.addChild(hak);
-  //   this.stage.addChild(wiki);
-  //   this.stage.addChild(sportingLife);
-  // }
-
-  render() {
-    return(
-      <div className="stage-bg" style={{position: "fixed", width: 990, height: 660}}>
-        <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
-      </div>
-    )
-  }
-}
-
-class PixelTransition extends ScanComponent {
-  constructor(props) {
-    super(props);
-    this.state = {
-      maxCellSize: 50
-    };
-  }
-
-  componentDidMount() {
-    this.renderer = new PIXI.WebGLRenderer(990,660, {transparent: true});
-    this.refs.stage.appendChild(this.renderer.view);
-    this.stage = new PIXI.Container();
-    this.filter = new PIXI.filters.PixelateFilter();
-    this.filter.size =  new PIXI.Point(1, 1);
-    this.stage.filters = [this.filter];
-    var image1Texture = new PIXI.Texture.fromImage(this.props.imagePath);
-    var image2Texture = new PIXI.Texture.fromImage(this.props.imagePath2);
-    this.image1 = new PIXI.Sprite(image1Texture);
-    this.image2 = new PIXI.Sprite(image2Texture);
-    this.image1.position.x = 0;
-    this.image1.position.y = 0;
-    this.image2.position.x = 0;
-    this.image2.position.y = 0;
-    this.image2.alpha = 0;
-    this.stage.addChild(this.image1);
-    this.stage.addChild(this.image2);
-    this.animate();
-    this.bindHandlers();
-  }
-
-  componentWillReceiveProps() { this.setState(this.adjust(this.state)); }
-
-  isActive(d){ return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end); }
-
-  adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
-        adjustedPctScroll = this.scaler(pctScroll),
-        active = this.isActive(this.props.measurements),
-        maxCellSize = this.state.maxCellSize,
-        animate = last_state.animate;
-
-    var conti = new Conti(0,0.25,"adjustedPctScroll", (pct, t) => {
-      t.cellSize = Math.linearTween(pct, 1, this.state.maxCellSize, 1);
-      t.alpha1 = 1;
-      t.alpha2 = 0;
-      return t;
-    }).abut(0.28, (pct, t) => {
-      t.cellSize = this.state.maxCellSize;
-      t.alpha1 = 1;
-      t.alpha2 = 0;
-      return t;
-    }).abut(0.35, (pct, t) => {
-      t.cellSize = this.state.maxCellSize;
-      t.alpha1 = Math.linearTween(pct, 1, 0, 1);
-      t.alpha2 = Math.linearTween(pct, 0, 1, 1);
-      return t;
-    }).abut(0.75, (pct, t) => {
-      t.cellSize = Math.linearTween(pct, this.state.maxCellSize, -this.state.maxCellSize, 1);
-      t.alpha1 = 0;
-      t.alpha2 = 1;
-      return t;
-    }).abut(1, (pct, t) => {
-      t.cellSize = 1;
-      t.alpha1 = 0;
-      t.alpha2 = 1;
-      return t;
-    });
-
-    var contiData = conti.run(_.extend(this.props.measurements, {adjustedPctScroll}), {});
-    contiData.cellSize = (contiData.cellSize < 1) ? 1 : contiData.cellSize;
-    // contiData.alpha2 = (adjustedPctScroll >= 1) ? 1 : contiData.alpha2;
-    this.filter.size = new PIXI.Point(contiData.cellSize, contiData.cellSize);
-    this.image1.alpha = contiData.alpha1;
-    this.image2.alpha = contiData.alpha2;
-    return {animate: animate};
-  }
-
-  animate() {
-    requestAnimationFrame(() => { this.animate(); });
-    // if(this.state.animate) {
-    //   var size = Math.round(Math.random() * this.state.maxCellSize);
-    //   this.filter.size = new PIXI.Point(size, size);
-    // }
     this.renderer.render(this.stage);
   }
 
   render() {
-    //backgroundImage: "url(" + this.props.imagePath + ")",
     return(
-      <div className="stage-bg" style={{position: "fixed", width: 990, height: 660}}>
-        <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
-      </div>
-    )
-  }
-}
-
-class PixelFace extends ScanComponent {
-  constructor(props) {
-    super(props);
-    this.state = {
-        maxCellSize: 15,
-        animate: true
-    };
-  }
-
-  componentWillReceiveProps() {
-    this.setState(this.adjust(this.state));
-  }
-
-  isActive(d){
-    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
-  }
-
-  adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
-        adjustedPctScroll = this.scaler(pctScroll),
-        active = this.isActive(this.props.measurements),
-        maxCellSize = this.state.maxCellSize,
-        animate = last_state.animate;
-
-    if(pctScroll < this.props.start + 0.005) {
-      animate = true;
-      this.filter.size =  new PIXI.Point(maxCellSize, maxCellSize);
-    } else if (pctScroll > this.props.end) {
-      animate = false;
-      this.filter.size =  new PIXI.Point(1, 1);
-    } else {
-      // console.log(1 - adjustedPctScroll);
-      animate = false;
-      let size = Math.min(maxCellSize, (1 - adjustedPctScroll) * maxCellSize);
-      this.filter.size = new PIXI.Point(size, size);
-    }
-
-    return {animate: animate};
-  }
-
-  componentDidMount() {
-    this.renderer = new PIXI.WebGLRenderer(990,660, {transparent: true});
-    this.refs.stage.appendChild(this.renderer.view);
-    this.stage = new PIXI.Container();
-    this.filter = new PIXI.filters.PixelateFilter();
-    this.filter.size =  new PIXI.Point(this.state.maxCellSize, this.state.maxCellSize);
-    this.stage.filters = [this.filter];
-    this.head();
-    // this.body();
-    this.animate();
-    this.bindHandlers();
-  }
-
-  animate() {
-    requestAnimationFrame(() => { this.animate(); });
-    if(this.state.animate) {
-      var size = Math.round(Math.random() * this.state.maxCellSize);
-      this.filter.size = new PIXI.Point(size, size);
-    }
-    this.renderer.render(this.stage);
-  }
-
-  head() {
-    var hakFrame = new PIXI.Rectangle(65, 0, 125, 140);
-    var wikiFrame = new PIXI.Rectangle(445, 80, 140, 140); //PIXI.Rectangle(310, 180, 340, 270);
-    var sportingLifeFrame = new PIXI.Rectangle(800, 30, 130, 125);
-    var baseTexture = PIXI.BaseTexture.fromImage(this.props.imagePath);
-    var hakTexture = new PIXI.Texture(baseTexture, hakFrame);
-    var wikiTexture = new PIXI.Texture(baseTexture, wikiFrame);
-    var sportingLifeTexture = new PIXI.Texture(baseTexture, sportingLifeFrame);
-    var hak = new PIXI.Sprite(hakTexture);
-    var wiki = new PIXI.Sprite(wikiTexture);
-    var sportingLife = new PIXI.Sprite(sportingLifeTexture);
-    hak.position.x = 65;
-    hak.position.y = 0;
-    wiki.position.x = 445;
-    wiki.position.y = 80;
-    sportingLife.position.x = 800;
-    sportingLife.position.y = 30;
-    this.stage.addChild(hak);
-    this.stage.addChild(wiki);
-    this.stage.addChild(sportingLife);
-  }
-
-  body() {
-    var hakFrame = new PIXI.Rectangle(0, 0, 270, 660);
-    var wikiFrame = new PIXI.Rectangle(380, 80, 260, 580); //PIXI.Rectangle(310, 180, 340, 270);
-    var sportingLifeFrame = new PIXI.Rectangle(715, 30, 275, 630);
-    var baseTexture = PIXI.BaseTexture.fromImage(this.props.imagePath);
-    var hakTexture = new PIXI.Texture(baseTexture, hakFrame);
-    var wikiTexture = new PIXI.Texture(baseTexture, wikiFrame);
-    var sportingLifeTexture = new PIXI.Texture(baseTexture, sportingLifeFrame);
-    var hak = new PIXI.Sprite(hakTexture);
-    var wiki = new PIXI.Sprite(wikiTexture);
-    var sportingLife = new PIXI.Sprite(sportingLifeTexture);
-    hak.position.x = 0;
-    hak.position.y = 0;
-    wiki.position.x = 380;
-    wiki.position.y = 80;
-    sportingLife.position.x = 715;
-    sportingLife.position.y = 30;
-    this.stage.addChild(hak);
-    this.stage.addChild(wiki);
-    this.stage.addChild(sportingLife);
-  }
-
-  render() {
-    return(
-      <div className="stage-bg" style={{backgroundImage: "url(" + this.props.imagePath + ")", position: "fixed", width: 990, height: 660}}>
-        <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
-      </div>
-    )
-  }
-}
-
-class ScrambleMask extends ScanComponent {
-  constructor(props) {
-    super(props);
-    this.state = {
-        maxCellSize: 15,
-        animate: true
-    };
-  }
-
-  componentWillReceiveProps() {
-    this.setState(this.adjust(this.state));
-  }
-
-  isActive(d){
-    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
-  }
-
-  adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
-        adjustedPctScroll = this.scaler(pctScroll),
-        active = this.isActive(this.props.measurements),
-        maxCellSize = this.state.maxCellSize,
-        animate = last_state.animate;
-
-    if(pctScroll < this.props.start + 0.005) {
-      animate = true;
-      this.filter.size =  new PIXI.Point(maxCellSize, maxCellSize);
-    } else if (pctScroll > this.props.end) {
-      animate = false;
-      this.filter.size =  new PIXI.Point(1, 1);
-    } else {
-      // console.log(1 - adjustedPctScroll);
-      animate = false;
-      let size = Math.min(maxCellSize, (1 - adjustedPctScroll) * maxCellSize);
-      this.filter.size = new PIXI.Point(size, size);
-    }
-
-    return {animate: animate};
-  }
-
-  componentDidMount() {
-    this.renderer = new PIXI.WebGLRenderer(990,660, {transparent: true});
-    this.refs.stage.appendChild(this.renderer.view);
-    this.stage = new PIXI.Container();
-    this.filter = new PIXI.filters.PixelateFilter();
-    this.filter.size =  new PIXI.Point(this.state.maxCellSize, this.state.maxCellSize);
-    this.stage.filters = [this.filter];
-    this.head();
-    this.animate();
-    this.bindHandlers();
-  }
-
-  randomizePositions() {
-    var pos = _.shuffle(this.positions);
-    this.hak.position.x = pos[0][0];
-    this.hak.position.y = pos[0][1];
-    this.wiki.position.x = pos[1][0];
-    this.wiki.position.y = pos[1][1];
-    this.sportingLife.position.x = pos[2][0];
-    this.sportingLife.position.y = pos[2][1];
-  }
-
-  animate() {
-    requestAnimationFrame(() => { this.animate(); });
-    if(this.state.animate) {
-      var size = Math.max(3, Math.round(Math.random() * this.state.maxCellSize));
-      this.filter.size = new PIXI.Point(size, size);
-      this.randomizePositions();
-    } else {
-      this.hak.position.x = this.positions[0][0];
-      this.hak.position.y = this.positions[0][1];
-      this.wiki.position.x = this.positions[1][0];
-      this.wiki.position.y = this.positions[1][1];
-      this.sportingLife.position.x = this.positions[2][0];
-      this.sportingLife.position.y = this.positions[2][1];
-    }
-    this.renderer.render(this.stage);
-  }
-
-  head() {
-    var hakFrame = new PIXI.Rectangle(65, 0, 125, 140);
-    var wikiFrame = new PIXI.Rectangle(445, 80, 140, 140); //PIXI.Rectangle(310, 180, 340, 270);
-    var sportingLifeFrame = new PIXI.Rectangle(800, 30, 130, 125);
-    var baseTexture = PIXI.BaseTexture.fromImage(this.props.imagePath);
-    var hakTexture = new PIXI.Texture(baseTexture, hakFrame);
-    var wikiTexture = new PIXI.Texture(baseTexture, wikiFrame);
-    var sportingLifeTexture = new PIXI.Texture(baseTexture, sportingLifeFrame);
-    this.hak = new PIXI.Sprite(hakTexture);
-    this.wiki = new PIXI.Sprite(wikiTexture);
-    this.sportingLife = new PIXI.Sprite(sportingLifeTexture);
-    this.hak.position.x = 65;
-    this.hak.position.y = 0;
-    this.wiki.position.x = 445;
-    this.wiki.position.y = 80;
-    this.sportingLife.position.x = 800;
-    this.sportingLife.position.y = 30;
-    this.positions = [[65, 0], [445, 80], [800,30]];
-    this.stage.addChild(this.hak);
-    this.stage.addChild(this.wiki);
-    this.stage.addChild(this.sportingLife);
-  }
-
-  render() {
-    return(
-      <div className="stage-bg" style={{backgroundImage: "url(" + this.props.imagePath + ")", position: "fixed", width: 990, height: 660}}>
+      <div className="stage-bg" style={{position: "fixed", width: this.props.measurements.viewportWidth, height: this.props.measurements.viewportHeight-0}}>
         <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
       </div>
     )
