@@ -313,242 +313,49 @@ class Shade extends ScanComponent {
         animate: true
     };
 
-    //"  gl_FragColor.r = abs(sin(u_time / 50.0));",
-    // this.fragmentShader = ["precision mediump float;",
-    //   "uniform vec2 resolution;",
-    //   "uniform vec2 mouse;",
-    //   "uniform float scroll;",
-    //   "uniform float time;",
-    //   "uniform sampler2D uSampler;",
-    //   "void main() {",
-    //   "  vec2 st = gl_FragCoord.xy / resolution;",
-    //   "  gl_FragColor.r = st.x;",
-    //   "  gl_FragColor.g = st.y;",
-    //   "  gl_FragColor.b = abs(cos(scroll));",
-    //   "  gl_FragColor.a = 1.0;",
-    //   "  gl_FragColor = texture2D(uSampler, st);",
-    //   "}"].join('');
-
-    // this.fragmentShader = ["precision mediump float;",
-    //   "uniform vec2 resolution;",
-    //   "uniform vec2 mouse;",
-    //   "uniform float scroll;",
-    //   "uniform float time;",
-    //   "float field(in vec3 p,float s) {",
-    //   "  float _time = time / 30.0;",
-    //   "  float strength = 7. + .03 * log(1.e-6 + fract(sin(_time) * 4373.11));",
-    //   "  float accum = s/4.;",
-    //   "  float prev = 0.;",
-    //   "  float tw = 0.;",
-    //   "  for (int i = 0; i < 26; ++i) {",
-    //   "    float mag = dot(p, p);",
-    //   "    p = abs(p) / mag + vec3(-.5, -.4, -1.5);",
-    //   "    float w = exp(-float(i) / 7.);",
-    //   "    accum += w * exp(-strength * pow(abs(mag - prev), 2.2));",
-    //   "    tw += w;",
-    //   "    prev = mag;",
-    //   "  }",
-    //   "  return max(0., 5. * accum / tw - .7);",
-    //   "}",
-    //   "float field2(in vec3 p, float s) {",
-    //   "  float _time = time / 30.0;",
-    //   "  float strength = 7. + .03 * log(1.e-6 + fract(sin(_time) * 4373.11));",
-    //   "  float accum = s/4.;",
-    //   "  float prev = 0.;",
-    //   "  float tw = 0.;",
-    //   "  for (int i = 0; i < 18; ++i) {",
-    //   "    float mag = dot(p, p);",
-    //   "    p = abs(p) / mag + vec3(-.5, -.4, -1.5);",
-    //   "    float w = exp(-float(i) / 7.);",
-    //   "    accum += w * exp(-strength * pow(abs(mag - prev), 2.2));",
-    //   "    tw += w;",
-    //   "    prev = mag;",
-    //   "  }",
-    //   "  return max(0., 5. * accum / tw - .7);",
-    //   "}",
-    //   "vec3 nrand3( vec2 co )",
-    //   "{",
-    //   "  vec3 a = fract( cos( co.x*8.3e-3 + co.y )*vec3(1.3e5, 4.7e5, 2.9e5) );",
-    //   "  vec3 b = fract( sin( co.x*0.3e-3 + co.y )*vec3(8.1e5, 1.0e5, 0.1e5) );",
-    //   "  vec3 c = mix(a, b, 0.5);",
-    //   "  return c;",
-    //   "}",
-    //   "void main() {",
-    //   "  float _time = time / 30.0;",
-    //   "  vec2 uv = 2. * gl_FragCoord.xy / resolution.xy - 1.;",
-    //   "  vec2 uvs = uv * resolution.xy / max(resolution.x, resolution.y);",
-    //   "  vec3 p = vec3(uvs / 4., 0) + vec3(1., -1.3, 0.);",
-    //   "  p += .2 * vec3(sin(_time / 16.), sin(_time / 12.),  sin(_time / 128.));",
-    //   "  float freqs[4];",
-    //   "  float t = field(p,freqs[2]);",
-    //   "  float v = (1. - exp((abs(uv.x) - 1.) * 6.)) * (1. - exp((abs(uv.y) - 1.) * 6.));",
-    //   "  vec3 p2 = vec3(uvs / (4.+sin(_time*0.11)*0.2+0.2+sin(_time*0.15)*0.3+0.4), 1.5) + vec3(2., -1.3, -1.);",
-    //   "  p2 += 0.25 * vec3(sin(_time / 16.), sin(_time / 12.),  sin(_time / 128.));",
-    //   "  float t2 = field2(p2,freqs[3]);",
-    //   "  vec4 c2 = mix(.4, 1., v) * vec4(1.3 * t2 * t2 * t2 ,1.8  * t2 * t2 , t2* freqs[0], t2);",
-    //   "  vec2 seed = p.xy * 2.0; ",
-    //   "  seed = floor(seed * resolution.x);",
-    //   "  vec3 rnd = nrand3( seed );",
-    //   "  vec4 starcolor = vec4(pow(rnd.y,40.0));",
-    //   "  vec2 seed2 = p2.xy * 2.0;",
-    //   "  seed2 = floor(seed2 * resolution.x);",
-    //   "  vec3 rnd2 = nrand3( seed2 );",
-    //   "  starcolor += vec4(pow(rnd2.y,40.0));",
-    //   "  gl_FragColor = mix(freqs[3]-.3, 1., v) * vec4(1.5*freqs[2] * t * t* t , 1.2*freqs[1] * t * t, freqs[3]*t, 1.0)+c2+starcolor;",
-    //   "}"].join('');
-
-    // this.fragmentShader = ["precision mediump float;",
-    //   "uniform vec2 resolution;",
-    //   "uniform vec2 mouse;",
-    //   "uniform vec2 time;",
-    //   "float plot(vec2 st, float pct) {",
-    //   "  return smoothstep(pct - 0.01, pct, st.y) - smoothstep(pct, pct + 0.01, st.y);",
-    //   "}",
-    //   "void main() {",
-    //   "  vec2 st = gl_FragCoord.xy / resolution;",
-    //   "  float y = sin(st.x);",
-    //   "  vec3 color = vec3(y);",
-    //   "  float pct = plot(st, y);",
-    //   "  color = (1.0 - pct) * color + pct * vec3(0.0,1.0,0.0);",
-    //   "  gl_FragColor = vec4(color, 1.0);",
-    //   "}"].join('');
-
-    // this.fragmentShader = ["precision mediump float;",
-    //     "uniform vec2 resolution;",
-    //     "uniform vec2 mouse;",
-    //     "uniform float scroll;",
-    //     "uniform float time;",
-    //     "float field(in vec3 p) {",
-    //     "  float _time = time / 30.0;",
-    //     "  float strength = 7. + .03 * log(1.e-6 + fract(sin(_time) * 4373.11));",
-    //     "  float accum = 0.;",
-    //     "  float prev = 0.;",
-    //     "  float tw = 0.;",
-    //     "  for (int i = 0; i < 32; ++i) {",
-    //     "    float mag = dot(p, p);",
-    //     "    p = abs(p) / mag + vec3(-.5, -.4, -1.5);",
-    //     "    float w = exp(-float(i) / 7.);",
-    //     "    accum += w * exp(-strength * pow(abs(mag - prev), 2.3));",
-    //     "    tw += w;",
-    //     "    prev = mag;",
-    //     "  }",
-    //     "  return max(0., 5. * accum / tw - .7);",
-    //     "}",
-    //     "void main() {",
-    //     "  float _time = time / 30.0;",
-    //     "  float _scroll = scroll * 100.0;",
-    //     "  vec2 uv = 2. * gl_FragCoord.xy / resolution.xy - 1.;",
-    //     "  vec2 uvs = uv * resolution.xy / max(resolution.x, resolution.y);",
-    //     "  vec3 p = vec3(uvs / 4., 0) + vec3(1., -1.3, 0.);",
-    //     "  p += .2 * vec3(sin(_time / 16.), sin(_time / 12.),  sin(_scroll / 128.));",
-    //     "  float t = field(p);",
-    //     "  float v = (1. - exp((abs(uv.x) - 1.) * 6.)) * (1. - exp((abs(uv.y) - 1.) * 6.));",
-    //     "  gl_FragColor = mix(.4, 1., v) * vec4(1.8 * t * t * t, 1.4 * t * t, t, 1.0);",
-    //     "}"].join('');
-
-        // this.fragmentShader = ["precision mediump float;",
-        //   "uniform vec2 resolution;",
-        //   "uniform vec2 mouse;",
-        //   "uniform float scroll;",
-        //   "uniform float time;",
-        //   "vec3 hash33(vec3 p){     ",
-        //   "    float n = sin(dot(p, vec3(7, 157, 113)));    ",
-        //   "    return fract(vec3(2097152, 262144, 32768)*n); ",
-        //   "}",
-        //   "float voronoi(vec3 p){",
-        //   "  vec3 b, r, g = floor(p);",
-        //   "  p = fract(p);",
-        //   "  float d = 1.; ",
-        //   "    for(float j = -1.; j < 1.01; j++) {",
-        //   "      for(float i = -1.; i < 1.01; i++) {",
-        //   "        b = vec3(i, j, -1.);",
-        //   "        r = b - p + hash33(g+b);",
-        //   "        d = min(d, dot(r,r));",
-        //   "        b.z = 0.0;",
-        //   "        r = b - p + hash33(g+b);",
-        //   "        d = min(d, dot(r,r));",
-        //   "        b.z = 1.;",
-        //   "        r = b - p + hash33(g+b);",
-        //   "        d = min(d, dot(r,r));",
-        //   "      }",
-        //   "  }",
-        //   "  return d;",
-        //   "}",
-        //   "vec3 hsv2rgb (in float h, in float s, in float v) {",
-        //   "  return v * (1.0 + 0.5 * s * (cos (2.0 * 3.1415926535898 * (h + vec3 (0.0, 2.0 / 3.0, 1.0 / 3.0))) - 1.0));",
-        //   "}",
-        //   "float noiseLayers(in vec3 p) {",
-        //   "    float _time = time / 30.0;",
-        //   "    float _scroll = scroll * 50.0;",
-        //   "    vec3 t = vec3(0., 0., p.z+sin(_scroll*.25));",
-        //   "    const int iter = 5; ",
-        //   "    float tot = 0., sum = 0., amp = 1.;",
-        //   "    for (int i = 0; i < iter; i++) {",
-        //   "        tot += voronoi(p + t) * amp;",
-        //   "        p *= 2.0;",
-        //   "        t *= 1.5; ",
-        //   "        sum += amp; ",
-        //   "        amp *= 0.5;",
-        //   "    }",
-        //   "    return tot/sum;",
-        //   "}",
-        //   "void main() {",
-        // "  float _time = time / 30.0;",
-        // "  float _scroll = scroll * 10.0;",
-        // "  vec2 uv = (gl_FragCoord.xy - resolution.xy*0.5) / resolution.x;",
-        // "  float light = smoothstep (-0.7, 0.7, cos (cos(_time*1.2)));",
-        // "  vec3 rd = normalize(vec3(uv.x, uv.y, 3.1415926535898/8.));",
-        // "  float cs = cos(_scroll*0.125), si = sin(_scroll*0.125);",
-        // "  rd.xy *= mat2(cs, -si, si, cs);",
-        // "  float c = noiseLayers(rd*.7);",
-        // "  c *= sqrt(c*(1.-length(uv)))+sin(1.-length(uv))*2.;",
-        // "  vec3 col = vec3(c);",
-        // "  vec3 col2 =  hsv2rgb(length(uv) * 0.6 + _time * .5, 0.9, light);",
-        // "  col = mix(col, col.xyz*.3+c*.86, (rd.x*rd.y)*.45);",
-        // "  col *= mix(col, col2, 1.-length(uv));",
-        // "  gl_FragColor = vec4(clamp(col, 0., 1.), 1.);",
-        // "}"].join('');
-
-        this.fragmentShader = ["precision mediump float;",
-          "uniform vec2 resolution;",
-          "uniform vec2 mouse;",
-          "uniform float scroll;",
-          "uniform float time;",
-          "uniform sampler2D uSampler;",
-          "vec2 random2(vec2 st){",
-          "    st = vec2(dot(st, vec2(127.1,311.7)), dot(st, vec2(269.5,183.3)));",
-          "    return -1.0 + 2.0 * fract(sin(st) * 43758.5453123);",
-          "}",
-          "float noise(vec2 st) {",
-          "    vec2 i = floor(st);",
-          "    vec2 f = fract(st);",
-          "    vec2 u = f*f*(3.0-2.0*f);",
-          "    return mix(mix(dot(random2(i + vec2(0.0,0.0)), f - vec2(0.0,0.0)),",
-          "                     dot(random2(i + vec2(1.0,0.0)), f - vec2(1.0,0.0)), u.x),",
-          "                mix(dot(random2(i + vec2(0.0,1.0)), f - vec2(0.0,1.0)),",
-          "                     dot(random2(i + vec2(1.0,1.0)), f - vec2(1.0,1.0)), u.x), u.y);",
-          "}",
-          "void main() {",
-          "  vec2 st = gl_FragCoord.xy / resolution;",
-          "  vec2 st_mouse = mouse.xy / resolution.xy;",
-          "  vec3 color = vec3(0.0);",
-          "  vec2 pos;",
-          "  float n2;",
-          "  vec3 c = vec3(0.0);",
-          "  mat2 m = mat2(1.6, 1.2, -1.2, 1.6);",
-          "  for(float i = 0.0; i <20.0; i++) {",
-          "    pos = ((st * cos(0.5 * i + 0.50) + 0.25 * (time/60.0)) * 15.0) * scroll;",
-          "    n2  = 0.5000 * noise(pos); pos = m * pos * 1.01;",
-          // "    n2 += 0.2500 * noise(pos); pos = m * pos * 2.02;",
-          // "    n2 += 0.1250 * noise(pos); pos = m * pos * 1.03;",
-          "    n2 += 0.0625 * noise(pos); pos = m * pos * 2.01;",
-          "    n2 = n2 * 1.25 + 0.5;",
-          "    c += vec3(n2 * n2);",
-          "  }",
-          "  color = c;",
-          "  gl_FragColor = 1.0 - vec4(smoothstep(0.0, 1.0, color/ 20.0), 0.50) + texture2D(uSampler, st);",
-          // "  gl_FragColor = texture2D(uSampler, st);",
-          "}"].join('');
+    this.fragmentShader = ["precision mediump float;",
+      "uniform vec2 resolution;",
+      "uniform vec2 mouse;",
+      "uniform vec2 textureSize;",
+      "uniform float scroll;",
+      "uniform float time;",
+      "uniform sampler2D spriteTexture;",
+      "varying vec2 vTextureCoord;",
+      "vec2 random2(vec2 st){",
+      "    st = vec2(dot(st, vec2(127.1,311.7)), dot(st, vec2(269.5,183.3)));",
+      "    return -1.0 + 2.0 * fract(sin(st) * 43758.5453123);",
+      "}",
+      "float noise(vec2 st) {",
+      "    vec2 i = floor(st);",
+      "    vec2 f = fract(st);",
+      "    vec2 u = f*f*(3.0-2.0*f);",
+      "    return mix(mix(dot(random2(i + vec2(0.0,0.0)), f - vec2(0.0,0.0)), dot(random2(i + vec2(1.0,0.0)), f - vec2(1.0,0.0)), u.x),",
+      "               mix(dot(random2(i + vec2(0.0,1.0)), f - vec2(0.0,1.0)), dot(random2(i + vec2(1.0,1.0)), f - vec2(1.0,1.0)), u.x), u.y);",
+      "}",
+      "void main() {",
+      "  vec2 st = gl_FragCoord.xy / resolution.xy;",
+      "  vec2 st_texture = gl_FragCoord.xy / textureSize.xy;",
+      "  vec2 st_mouse = mouse.xy / resolution.xy;",
+      "  float _time = time / 60.0;",
+      "  vec3 color = vec3(0.0);",
+      "  vec2 pos;",
+      "  float n2;",
+      "  vec3 c = vec3(0.0);",
+      "  mat2 m = mat2(1.25, 1.5, -1.2, 1.5);",
+      "  for(float i = 0.0; i <20.0; i++) {",
+      "    pos = ((st * cos(0.5 * i + 0.50) + 0.25 * _time) * 15.0);",
+      // "    pos = (st + (-_time * 0.5)) * 4.0;",
+      "    n2  = 0.5000 * noise(pos); pos = m * pos * 1.01;",
+      "    n2 += 0.2500 * noise(pos); pos = m * pos * 1.02;",
+      "    n2 += 0.1250 * noise(pos); pos = m * pos * 1.03;",
+      "    n2 += 0.0625 * noise(pos); pos = m * pos * 1.01;",
+      "    n2 = n2 * 2.5 + 0.25;",
+      "    c += vec3(n2 * n2);",
+      "  }",
+      "  color = c;",
+      "  float modifier = 25.0 * (scroll * 2.0);",
+      "  gl_FragColor = vec4(smoothstep(0.0, 1.0, color / modifier), 0.50) + texture2D(spriteTexture, vTextureCoord);",
+      "}"].join('');
   }
 
   componentWillReceiveProps() {
@@ -557,13 +364,6 @@ class Shade extends ScanComponent {
 
   isActive(d){
     return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
-  }
-
-  randomFill(width, height) {
-    var arr = _.flatten(Array(width*height).fill(0).map(() => {
-      return (Math.random() > 0.75) ? [255.0,255.0,255.0,255.0] : [0.0,0.0,0.0,255.0];
-    }));
-    return new Uint8ClampedArray(arr);
   }
 
   adjust(last_state) {
@@ -580,39 +380,21 @@ class Shade extends ScanComponent {
     return {animate: false};
   }
 
-  makeInitialGameState(width, height) {
-    var fill = this.randomFill(width, height);
-    var initialStage = new PIXI.Container();
-    var renderer = new PIXI.CanvasRenderer(width, height, null, true);
-    var context = renderer.context;
-    var imageData = new ImageData(fill, width, height);
-
-    this.refs.stage.appendChild(renderer.view);
-    renderer.render(initialStage);
-    context.putImageData(imageData, 0, 0);
-    return renderer.view;
-  };
-
   componentDidMount() {
-    //var initialState = this.makeInitialGameState(this.props.measurements.viewportWidth, this.props.measurements.viewportHeight-0);
-    var bg = PIXI.Sprite.fromImage("http://www.goodboydigital.com/pixijs/examples/25/test_BG.jpg");
-    //var initialTexture = PIXI.Texture.fromCanvas(initialState);
-    var initialTexture = PIXI.Texture.EMPTY;
-    // var bg = new PIXI.Sprite(initialTexture);
-    bg.width = this.props.measurements.viewportWidth;
-    bg.height = this.props.measurements.viewportHeight-0;
+    var bg = PIXI.Sprite.fromImage("/shade/gza.jpg");
+    bg.width = 334;
+    bg.height = 416;
 
-    // bg.texture = initialTexture;
     this.renderer = new PIXI.WebGLRenderer(this.props.measurements.viewportWidth,this.props.measurements.viewportHeight-0, {transparent: true});
     this.refs.stage.appendChild(this.renderer.view);
 
     this.stage = new PIXI.Container();
     this.uniforms = {
       resolution: { type: "v2", value: {x: this.props.measurements.viewportWidth, y: this.props.measurements.viewportHeight-0}},
-      prevState: { type: "sampler2D", value: bg.texture },
-      // redraw: {type: "bool", value: false},
       time: {type: "1f", value: 0.0},
       mouse: { type: "v2", value: {x: 0.0, y: 0.0}},
+      textureSize: { type: "v2", value: {x: 334.0, y: 416.0}},
+      spriteTexture: {type: "sampler2D", value: bg.texture },
       scroll: {type: "1f", value: 0.0}
     };
 
@@ -623,8 +405,6 @@ class Shade extends ScanComponent {
     this.interactionManager = new PIXI.interaction.InteractionManager(this.renderer);
     this.stage.addChild(bg);
     this.animate();
-    // this.renderer.render(this.stage);
-    // debugger;
     this.bindHandlers();
   }
 
