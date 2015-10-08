@@ -336,25 +336,36 @@ class Shade extends ScanComponent {
       "  vec2 st = gl_FragCoord.xy / resolution.xy;",
       "  vec2 st_texture = gl_FragCoord.xy / textureSize.xy;",
       "  vec2 st_mouse = mouse.xy / resolution.xy;",
-      "  float _time = time / 60.0;",
+      "  float _time = time / 30.0;",
       "  vec3 color = vec3(0.0);",
       "  vec2 pos;",
       "  float n2;",
       "  vec3 c = vec3(0.0);",
-      "  mat2 m = mat2(1.25, 1.5, -1.2, 1.5);",
-      "  for(float i = 0.0; i <20.0; i++) {",
-      "    pos = ((st * cos(0.5 * i + 0.50) + 0.25 * _time) * 15.0);",
-      // "    pos = (st + (-_time * 0.5)) * 4.0;",
-      "    n2  = 0.5000 * noise(pos); pos = m * pos * 1.01;",
-      "    n2 += 0.2500 * noise(pos); pos = m * pos * 1.02;",
-      "    n2 += 0.1250 * noise(pos); pos = m * pos * 1.03;",
-      "    n2 += 0.0625 * noise(pos); pos = m * pos * 1.01;",
-      "    n2 = n2 * 2.5 + 0.25;",
+      "  mat2 m = mat2(1.25, 1.1, -1.2, 1.5);",
+      "  for(float i = 0.0; i < 30.0; i++) {",
+      "    pos = ((st * sin(0.25 * i + 0.50) + 0.05 * _time) * 8.0);",
+      // "    pos = (st * cos(i * 0.5 + 0.25) + 0.15 * _time) * 10.0;",
+      // "    pos = (st + (_time * 0.5)) * 10.0;",
+      "    n2  = 0.8000 * noise(pos); pos = m * pos * 1.01;",
+      "    n2 += 0.6500 * noise(pos); pos = m * pos * 1.02;",
+      "    n2 += 0.4250 * noise(pos); pos = m * pos * 1.03;",
+      "    n2 += 0.20625 * noise(pos); pos = m * pos * 1.14;",
+      "    n2 = n2 * 2.5 * 0.25;",
       "    c += vec3(n2 * n2);",
       "  }",
       "  color = c;",
-      "  float modifier = 25.0 * (scroll * 2.0);",
-      "  gl_FragColor = vec4(smoothstep(0.0, 1.0, color / modifier), 0.50) + texture2D(spriteTexture, vTextureCoord);",
+      "  float modifier = 3.0 * (2.0 * scroll);",
+      // "  gl_FragColor = vec4(smoothstep(0.0, 1.0, color / modifier), 0.25) + texture2D(spriteTexture, vTextureCoord);",
+      "vec4 spriteValue = texture2D(spriteTexture, vTextureCoord);",
+      "vec4 shadeValue = vec4(smoothstep(0.0, 1.0, color / modifier), 0.0);",
+      "float alpha = 1.0 - (shadeValue.r + shadeValue.g + shadeValue.b);",
+      "if(alpha <= 0.0 || scroll == 0.0 || spriteValue.a == 0.0) {",
+      "  discard;",
+      "} else {",
+      // spriteValue + vec4(smoothstep(0.0, 1.0, color / modifier), 0.0);
+      // "  gl_FragColor = vec4(spriteValue.rgb, alpha);",
+      "  gl_FragColor = vec4(smoothstep(0.0, 1.0, spriteValue.rgb), alpha);",
+      "}",
       "}"].join('');
   }
 
@@ -381,9 +392,10 @@ class Shade extends ScanComponent {
   }
 
   componentDidMount() {
-    var bg = PIXI.Sprite.fromImage("/shade/gza.jpg");
-    bg.width = 334;
-    bg.height = 416;
+    var gza = PIXI.Sprite.fromImage("/shade/gza.png");
+    gza.width = 260;
+    gza.height = 613;
+    gza.position = new PIXI.Point(525, 45);
 
     this.renderer = new PIXI.WebGLRenderer(this.props.measurements.viewportWidth,this.props.measurements.viewportHeight-0, {transparent: true});
     this.refs.stage.appendChild(this.renderer.view);
@@ -393,17 +405,17 @@ class Shade extends ScanComponent {
       resolution: { type: "v2", value: {x: this.props.measurements.viewportWidth, y: this.props.measurements.viewportHeight-0}},
       time: {type: "1f", value: 0.0},
       mouse: { type: "v2", value: {x: 0.0, y: 0.0}},
-      textureSize: { type: "v2", value: {x: 334.0, y: 416.0}},
-      spriteTexture: {type: "sampler2D", value: bg.texture },
+      textureSize: { type: "v2", value: {x: 260.0, y: 613.0}},
+      spriteTexture: {type: "sampler2D", value: gza.texture },
       scroll: {type: "1f", value: 0.0}
     };
 
     this.shader = new PIXI.AbstractFilter(null, this.fragmentShader, this.uniforms);
     this.count = 0;
 
-    bg.shader = this.shader;
+    gza.shader = this.shader;
     this.interactionManager = new PIXI.interaction.InteractionManager(this.renderer);
-    this.stage.addChild(bg);
+    this.stage.addChild(gza);
     this.animate();
     this.bindHandlers();
   }
