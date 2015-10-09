@@ -4,7 +4,6 @@ var ReactDOM = require('react-dom');
 var _ = require('underscore');
 var directions = require('directions');
 var Conti = require('conti');
-// var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
 var scaler = (function(currMin, currMax, otherMin, otherMax) {
   var left = currMax - currMin;
@@ -21,15 +20,6 @@ var scaler = (function(currMin, currMax, otherMin, otherMax) {
 
 window.Conti = Conti;
 window.jQ = $;
-
-/*
-  // Progress V.
-  <div className="v-white-glow"/>
-  <div className="v-white">
-    <div className="v-red" style={{height: this.state.redh}}/>
-  </div>
-  <div className="full-black" style={{opacity: this.state.black}}/>
-*/
 
 Math.linearTween = function (t, b, c, d) {
   //
@@ -258,7 +248,15 @@ class Root extends React.Component {
         component: SlideMovie,
         props: {videoSrc: "/thailand/soup_history.mp4", caption: "This soup was delicious but there must be more to eat."}}];
 
-
+    var indicators = [{head: "default", start: 0, end: 0.05, style: 'major'},
+                      // {head: "default", start: 0.05, end: 0.12},
+                      {head: "perspective", start: 0.12, end: 0.24, style: 'minor'},
+                      {head: "action", start: 0.24, end: 0.31, style: 'minor'},
+                      {head: "perspective", start: 0.31, end: 0.41, style: 'minor'},
+                      {head: "perspective", start: 0.40, end:0.55, style: 'major'},
+                      {head: "default", start: 0.55, end:1, style: 'major'},
+                      {head: "default", start: 0.075, end: 0.12, style: 'minor'},
+                      {head: "default", start: 1, style: 'major'}  ];
     return (
       <div>
         <SlideBlock measurements={this.props.measurements} start={0.075} end={0.12} caption="&ldquo;I am a spice fiend, live and breath that shit, and it's been like that since day one. I got introduced to Thai food and it was like a match made in heaven. I was like instantly hooked. I love reading about it, the people, the culture. I'm such a big fan.&rdquo;" />
@@ -269,6 +267,8 @@ class Root extends React.Component {
         <ImageSwitcher measurements={this.props.measurements} start={0.40} end={0.55} images={images} altImages={altImages} />
         <ZoomWords measurements={this.props.measurements} start={0.40} end={0.55} bgUrl="" quote={["Khao San Road ", " Bangkok's famous backpacker disneyland. ", " Cheap eats. ", " Cheap hostels. ", " Cheap drinks. ", " You can find absolutely anything there."]} />
         <SlippyBlock measurements={this.props.measurements} start={0.31} end={0.41} />
+        <ScrollGallery measurements={this.props.measurements} start={0.55} end={1} images={galleryImages} />
+        <ProgressBar measurements={this.props.measurements} indicators={indicators} />
       </div>
     );
   }
@@ -353,12 +353,40 @@ ScanComponent.contextTypes = {
   toggleWormhole: React.PropTypes.func.isRequired
 };
 
-class SlideComponent extends ScanComponent {
+
+class ProgressBar extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-      top: 0
+      progress: 0,
+      progressPx: 0,
+      progressPct: 0,
+      playhead: "default", //"default, perspective, play, split"
+      hint: "",
+      hintBoxStyle: { display: "none" }
+    };
+  }
+
+  handleClick(i, evt) {
+    var indicator = this.props.progressIndicators[i];
+    indicator.show = true;
+    if(this.state.activeIndicator.name === indicator.name) {
+      this.setState(_.extend(this.state, {activeIndicator: {show: false}}));
+    } else {
+      this.setState(_.extend(this.state, {activeIndicator: indicator}));
+      this.setCard(evt.clientX, evt.clientY);
     }
+  }
+
+  getCurrentIndicator() {
+    var pctScroll = this.props.measurements.pctScroll;
+    return this.props.progressIndicators.filter((i) => {
+      return pctScroll >= i.startPosition && pctScroll < i.endPosition;
+    })[0];
+  }
+
+  componentWillMount() {
+    this.setState(_.extend(this.state, {barWidth: (this.props.measurements.viewportWidth - 80)}));
   }
 
   componentWillReceiveProps() {
@@ -366,33 +394,94 @@ class SlideComponent extends ScanComponent {
   }
 
   adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements;
+    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll, viewportWidth} = this.props.measurements,
+      playhead = last_state.playhead,
+      currentIndicactor = this.props.indicators.filter((i) => {
+        return (pctScroll >= i.start && pctScroll < i.end);
+      })[0];
 
-    var destTop = viewportHeight * -1,
-      newTop;
-
-    if (pctScroll >= this.props.end) {
-        newTop = destTop;
-    } else if(pctScroll >= this.props.start){
-        newTop = Math.linearTween((pctScroll-this.props.start), 0, destTop, 0.1);
-    } else {
-      newTop = 0;
+    if(currentIndicactor && currentIndicactor.head) {
+      playhead = currentIndicactor.head;
     }
 
-    return {top: newTop};
+    return {progressPx: Math.round(this.state.barWidth * pctScroll), progressPct: (pctScroll * 100), playhead};
+  }
+
+  buildIndicator(i, idx) {
+    var r = 5;
+
+    var classes = (i.style === "minor") ? "progress-indicator-minor" : "progress-indicator-major";
+    if (i.start < this.props.measurements.pctScroll) {
+      classes = classes + " progress-indicator-passed";
+    }
+
+    var xPos = i.start * this.state.barWidth;
+    return (
+      <div key={idx} className={classes} style={{transform: "translate(" + xPos + "px, 0)"}}></div>
+      );
+  }
+
+  getCurrentplayhead() {
+    var className = "progress-playhead";
+    switch (this.state.playhead) {
+      case "perspective":
+        return {className: className + " playhead-perspective", src: "/thailand/6th_eye.svg"};
+      case "action":
+        return {className: className + " playhead-action", src: "/thailand/2600.png"};
+      case "split":
+        return {className: className + " playhead-split", src: "/map-unfold/asap-head.png"};
+      default:
+        return {className: className + " playhead-default", src: "/map-unfold/asap-head.png"};
+    }
+  }
+
+  handleMouseMove(evt) {
+    if(this.state.playhead === "default") {
+      this.setState({hintBoxStyle: {display: "none"}});
+      return;
+    }
+
+    let hint = "",
+        x = evt.clientX - 260,
+        y = evt.clientY,
+        hintBoxStyle = {display: "block", left: x, top: y};
+
+    switch (this.state.playhead) {
+      case "perspective":
+        hint = "Hit shift to get a different perspective.";
+        break;
+      case "action":
+        hint = "Push enter to perform a trick.";
+        break;
+      case "split":
+        hint = "Shift? Enter? Maybe both?";
+        break;
+    }
+
+    this.setState({hint, hintBoxStyle});
+  }
+
+  handleMouseOut(evt) {
+    let hintBoxStyle = {display: "none"};
+    this.setState({hintBoxStyle});
   }
 
   render() {
-    // width: this.props.measurements.viewportWidth
-    return(
-      <div className='bg-slide' style={{
-        top: this.state.top,
-        backgroundColor: this.props.backgroundColor,
-        height: this.props.measurements.viewportHeight,
-      }}>
-       {this.props.backgroundColor}
+    var playhead = this.getCurrentplayhead();
+    var indicators = this.props.indicators.map(this.buildIndicator, this);
+    // <img src={playhead.src} id="playhead" className={playhead.className}/>
+    // style={{transform: "translate(" + (this.state.progressPx-5) + "px,0)"}}
+    return (
+
+      <div className="progress-bar minimal" style={{width: this.state.barWidth}}>
+        <div className="progress-back"></div>
+        <div className="progress-fill" style={{width: this.state.progressPx}}>
+        </div>
+        {indicators}
+        <div onMouseOut={this.handleMouseOut.bind(this)} onMouseMove={this.handleMouseMove.bind(this)} className={playhead.className}></div>
+        <div className="hint-box" ref="hintBox" style={this.state.hintBoxStyle}>{this.state.hint}</div>
       </div>
-    )
+    );
   }
 }
 
@@ -436,9 +525,9 @@ class Title extends ScanComponent {
 
   render() {
     return(
-      <div className='bg-slide title-slide' style={{
+      <div className="bg-slide title-slide" style={{
         height: this.props.measurements.viewportHeight,
-        top: this.state.top,
+        transform: "translate(0, " + this.state.top + "px)",
         backgroundImage: "url('" + this.props.backgroundImage + "')",
         backgroundSize: "cover"
       }}>
@@ -504,8 +593,8 @@ class WordMask extends ScanComponent {
         wordCount: 0,
         wordIdx: -1,
         played: false,
-        clipMode: 'text',
-        word: '',
+        clipMode: "text",
+        word: "",
         flickered: false
     };
     this.wordScaler = scaler(this.props.start, this.props.end-0.025, 0, 1);
@@ -513,12 +602,12 @@ class WordMask extends ScanComponent {
 
   flicker(count) {
     if(count === 0) {
-      $(this.refs.bg).css('-webkit-background-clip', 'initial');
+      $(this.refs.bg).css("-webkit-background-clip", "initial");
       return;
     } else if(count % 2 === 0) {
-      $(this.refs.bg).css('-webkit-background-clip', 'initial');
+      $(this.refs.bg).css("-webkit-background-clip", "initial");
     } else {
-      $(this.refs.bg).css('-webkit-background-clip', 'text');
+      $(this.refs.bg).css("-webkit-background-clip", "text");
     }
 
     setTimeout(() => {
@@ -555,16 +644,16 @@ class WordMask extends ScanComponent {
 
     if(adjustedPctScroll < 0) {
       wordIdx = -1;
-      clipMode = 'text';
+      clipMode = "text";
       flickered = false;
     } else {
       wordIdx = Math.round(this.state.wordCount * adjustWordScroll);
-      clipMode = 'text';
+      clipMode = "text";
     }
 
     //flash in the background
     if(wordIdx > this.state.wordCount) {
-      clipMode = '';
+      clipMode = "";
       wordIdx = this.state.wordCount+1;
 
       if(!this.state.flickered) {
@@ -572,7 +661,7 @@ class WordMask extends ScanComponent {
       }
       flickered = true;
       if (this.refs.welcome.paused && !this.state.played && this.state.active) {
-        this.refs.welcome.play();
+        // this.refs.welcome.play();
         played = true;
       }
     }
@@ -605,7 +694,7 @@ class WordMask extends ScanComponent {
   render() {
     return(
       <div>
-        <div className="bg-mask mask-text" style={{backgroundImage: 'url(' + this.state.bgUrl + ')', WebkitBackgroundClip: this.state.clipMode }} ref="bg">
+        <div className="bg-mask mask-text" style={{backgroundImage: "url(" + this.state.bgUrl + ")", WebkitBackgroundClip: this.state.clipMode }} ref="bg">
           {this.state.maskText}
         </div>
         <span ref="text" className="mask-text text"><span ref="hide" className="hide">{this.state.text}</span><span ref="show" className="show">{this.state.word}</span></span>
@@ -704,18 +793,19 @@ class SlideMovie extends ScanComponent {
   }
 
   render() {
-    var controls = (this.props.controls) ? 'controls' : '';
-    var loop = (this.props.loop) ? 'loop' : '';
+    var controls = (this.props.controls) ? "controls" : "";
+    var loop = (this.props.loop) ? "loop" : "";
+    // {this.props.videoSrc}
     return(
-      <div ref="slideRoot" className='bg-slide bg-video' style={{
-        top: this.state.top,
+      <div ref="slideRoot" className="bg-slide bg-video" style={{
+        transform: "translate(0, " + this.state.top + "px)",
         height: this.props.measurements.viewportHeight,
         zIndex: 100
       }}>
         <video ref="video" className="slide-video" controls>
-          <source ref="videoSrc" type="video/mp4" src={this.props.videoSrc} />
+          <source ref="videoSrc" type="video/mp4" src="" />
         </video>
-        <h5 className="slide-caption video-caption" style={{display: this.state.caption ? 'block' : 'none'}}>
+        <h5 className="slide-caption video-caption" style={{display: this.state.caption ? "block" : "none"}}>
           &ldquo;It's amazing this <GoogleCardLink cssClass="video-link" cardData={this.state.cardData} text="market" />.&rdquo;
         </h5>
       </div>
@@ -731,7 +821,7 @@ class SlideBlock extends ScanComponent {
       opacity: 0,
       active: false,
       caption: true,
-      display: 'none'
+      display: "none"
     };
   }
 
@@ -777,15 +867,15 @@ class SlideBlock extends ScanComponent {
     if(adjustedPctScroll < 0) {
       top = viewportHeight;
       opacity = 0;
-      display = 'none';
+      display = "none";
     } else if (adjustedPctScroll > 1) {
       top = 0;
       opacity = 0;
-      display = 'none';
+      display = "none";
     } else {
       top = trans_data.top;
       opacity = trans_data.opacity;
-      display = 'block';
+      display = "block";
     }
 
     return {active, opacity, top, display};
@@ -793,14 +883,14 @@ class SlideBlock extends ScanComponent {
 
   render() {
     return(
-      <div ref="slideRoot" className='bg-slide slide-block' style={{
-        top: this.state.top,
+      <div ref="slideRoot" className="bg-slide slide-block" style={{
+        transform: "transform(0, " + this.state.top + "px)",
         height: this.props.measurements.viewportHeight,
         zIndex: 200,
         opacity: this.state.opacity,
         display: this.state.display
       }}>
-        <h5 className="slide-caption block-caption" style={{display: this.state.caption ? 'block' : 'none'}}>
+        <h5 className="slide-caption block-caption" style={{display: this.state.caption ? "block" : "none"}}>
           {this.props.caption}
         </h5>
       </div>
@@ -847,7 +937,7 @@ class SlippyBlock extends ScanComponent {
   constructor(props) {
     super(props);
     this.state = {
-      caption: 'Off to Khao San Road.',
+      caption: "Off to Khao San Road.",
       count: 0,
       maxCount: 6,
       top: 0,
@@ -892,7 +982,7 @@ class SlippyBlock extends ScanComponent {
 
     var hammerSwipe = new Hammer(document.body);
 
-    hammerSwipe.on('swipe', (ev) => {
+    hammerSwipe.on("swipe", (ev) => {
         if(this.state.active) {
           ev.preventDefault();
           this.toggleWormhole();
@@ -968,17 +1058,17 @@ class SlippyBlock extends ScanComponent {
     if(adjustedPctScroll <= 0) {
       top = 0;
       count = 0;
-      if($slipRoot.hasClass('fadezzz')) {
-        $slipRoot.removeClass('fadezzz');
+      if($slipRoot.hasClass("fadezzz")) {
+        $slipRoot.removeClass("fadezzz");
       }
     } else if (adjustedPctScroll > 1) {
       top = viewportHeight;
-      if(!$slipRoot.hasClass('fadezzz')) {
-        $slipRoot.addClass('fadezzz');
+      if(!$slipRoot.hasClass("fadezzz")) {
+        $slipRoot.addClass("fadezzz");
       }
     } else {
-      if($slipRoot.hasClass('fadezzz')) {
-        $slipRoot.removeClass('fadezzz');
+      if($slipRoot.hasClass("fadezzz")) {
+        $slipRoot.removeClass("fadezzz");
       }
       count = Math.round(this.state.maxCount * adjustedPctScroll);
       top = Math.linearTween(adjustedPctScroll, 0, viewportHeight, 0.85);
@@ -1033,9 +1123,9 @@ class ZoomWords extends ScanComponent {
         maskText: [],
         wordCount: 0,
         wordIdx: -1,
-        clipMode: 'none',
-        display: 'none',
-        word: '',
+        clipMode: "none",
+        display: "none",
+        word: "",
         flickered: false
     };
   }
@@ -1065,13 +1155,13 @@ class ZoomWords extends ScanComponent {
         newTop;
 
     if(pctScroll < this.props.start) {
-      display = 'none';
+      display = "none";
       wordIdx = -1;
     } else if (pctScroll > this.props.end) {
       wordIdx = this.state.wordCount+1;
-      display = 'block';
+      display = "block";
     } else {
-      display = 'block';
+      display = "block";
       wordIdx = Math.min(this.state.wordCount, Math.round(this.state.wordCount * adjustedPctScroll));
     }
 
@@ -1102,7 +1192,7 @@ class ZoomWords extends ScanComponent {
   getZoomText() {
     return (
       <div className="zoomed-text" style={{
-        display: (this.state.word) ? 'flex' : 'none'
+        display: (this.state.word) ? "flex" : "none"
       }}>
         <span ref="zoomText">{this.state.word}</span>
       </div>);
@@ -1114,7 +1204,7 @@ class ZoomWords extends ScanComponent {
     return(
       <div style={{display: this.state.display}}>
         <div className="bg-zoom zoom-text" style={{
-          backgroundImage: (this.state.bgUrl) ? 'url(' + this.state.bgUrl + ')' : '',
+          backgroundImage: (this.state.bgUrl) ? "url(" + this.state.bgUrl + ")" : "",
           WebkitBackgroundClip: this.state.clipMode,
           zIndex: 100 }}
           ref="bg">
@@ -1161,12 +1251,12 @@ class ImageSwitcher extends ScanComponent {
     // console.log(adjustedPctScroll);
     if(pctScroll < this.props.start) {
       imageIdx = -1;
-      display = 'none';
+      display = "none";
     } else if (pctScroll > this.props.end) {
       imageIdx = this.state.imageCount;
-      display = 'block';
+      display = "block";
     } else {
-      display = 'block';
+      display = "block";
       imageIdx = Math.min(this.state.imageCount, Math.round(this.state.imageCount * adjustedPctScroll));
     }
 
@@ -1179,7 +1269,7 @@ class ImageSwitcher extends ScanComponent {
     let $alt = $(this.refs.altImage);
     if(!$alt.hasClass("switch-from-left")) {
       $(this.refs.altImage).addClass("switch-from-left");
-      $('.zoomed-text').addClass('pull-right');
+      $(".zoomed-text").addClass("pull-right");
     }
   }
 
@@ -1187,7 +1277,7 @@ class ImageSwitcher extends ScanComponent {
     let $alt = $(this.refs.altImage);
     if($alt.hasClass("switch-from-left")) {
       $(this.refs.altImage).removeClass("switch-from-left");
-      $('.zoomed-text').removeClass('pull-right');
+      $(".zoomed-text").removeClass("pull-right");
     }
   }
 
@@ -1208,7 +1298,7 @@ class ImageSwitcher extends ScanComponent {
 
     var hammerSwipe = new Hammer(document.body);
 
-    hammerSwipe.on('swipeleft', (ev) => {
+    hammerSwipe.on("swipeleft", (ev) => {
         if(this.state.active) {
           ev.preventDefault();
           this.showAltImage();
@@ -1216,7 +1306,7 @@ class ImageSwitcher extends ScanComponent {
         }
     });
 
-    hammerSwipe.on('swiperight', (ev) => {
+    hammerSwipe.on("swiperight", (ev) => {
         if(this.state.active) {
           ev.preventDefault();
           this.hideAltImage();
@@ -1268,16 +1358,16 @@ class ScrollGallery extends ScanComponent {
         imageIdx,
         zIndex = last_state.zIndex;
 
-    // console.log('scrollGallery:measurements: ', pctScroll, ':', adjustedPctScroll);
+    // console.log("scrollGallery:measurements: ", pctScroll, ":", adjustedPctScroll);
     if(adjustedPctScroll < 0) {
       imageIdx = -1;
-      display = 'none';
+      display = "none";
       zIndex = 0;
     } else if (adjustedPctScroll > 1) {
       imageIdx = this.state.imageCount;
-      display = 'block';
+      display = "block";
     } else {
-      display = 'block';
+      display = "block";
       imageIdx = Math.min(this.state.imageCount, Math.round(this.state.imageCount * adjustedPctScroll));
       zIndex = 103;
     }
@@ -1315,7 +1405,7 @@ class GalleryImage extends ScanComponent {
       opacity: 0,
       active: false,
       caption: true,
-      display: 'none'
+      display: "none"
     };
   }
 
@@ -1363,32 +1453,32 @@ class GalleryImage extends ScanComponent {
     if(adjustedPctScroll < 0) {
       top = viewportHeight;
       // opacity = 0;
-      display = 'none';
+      display = "none";
     } else if (adjustedPctScroll > 1) {
       top = 0;
       // opacity = 0;
-      // display = 'none';
+      // display = "none";
     } else {
       top = Math.linearTween(adjustedPctScroll,viewportHeight,-viewportHeight,1);
       // opacity = 1;
-      display = 'block';
+      display = "block";
     }
 
     return {active, opacity: trans_data.opacity, top, display, caption};
   }
 
   render() {
-    var bgImage = (this.props.bgImage) ? "url(" + this.props.bgImage + ")" : '';
+    var bgImage = (this.props.bgImage) ? "url(" + this.props.bgImage + ")" : "";
     return(
-      <div ref="slideRoot" className='bg-slide slide-block' style={{
-        top: this.state.top,
+      <div ref="slideRoot" className="bg-slide slide-block" style={{
+        transform: "translate(0, " + this.state.top + "px)",
         height: this.props.measurements.viewportHeight,
         // zIndex: 200,
         // opacity: this.state.opacity,
         display: this.state.display,
         backgroundImage: bgImage
       }}>
-        <h5 className="slide-caption block-caption" style={{display: (this.state.caption && this.props.caption) ? 'block' : 'none',
+        <h5 className="slide-caption block-caption" style={{display: (this.state.caption && this.props.caption) ? "block" : "none",
         opacity: this.state.opacity}}>
           &ldquo;{this.props.caption}&rdquo;
         </h5>
@@ -1585,7 +1675,7 @@ class GoogleCard extends React.Component {
   }
 
   render() {
-    var showCard = (this.props.show) ? 'visible' : 'hidden';
+    var showCard = (this.props.show) ? "visible" : "hidden";
     return (
       <div ref="googleCard" className="google-card" style={{visibility: showCard}}>
           <div ref="cardMap" className="google-card-map">
