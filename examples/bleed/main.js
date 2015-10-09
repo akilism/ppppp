@@ -783,6 +783,7 @@ class Slide1 extends ScanComponent {
         requestAnimationFrame( animate );
         var that = this;
         
+
         function animate() {
                     
                 requestAnimationFrame( animate );
@@ -798,6 +799,7 @@ class Slide1 extends ScanComponent {
                 movie_2.gotoAndStop(that.state.frame_2);
                 renderer.render(stage);
             }
+
     }
     render(){
         console.log("st",this.state.scroll_top)
