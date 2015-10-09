@@ -26,7 +26,7 @@
   src: url("TradeGothic-Bold.otf");
 }
 
-body {
+body {`
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -44,7 +44,7 @@ body {
   justify-content: center;
   color: #fff;
   text-transform: uppercase;
-  font-family: 'ViceGothic';
+  font-family: 'TradeGothic';
   font-size: 15vw;
 }
 
@@ -64,7 +64,7 @@ body {
   font-size: 20vw;
   color: white;
   text-transform: uppercase;
-  font-family: 'ViceGothic';
+  font-family: 'TradeGothic';
   margin: 0;
   padding: 0;
   line-height: 0.65;
@@ -222,7 +222,7 @@ body {
 
 .mask-text {
     font-size: 13vw;
-    font-family: ViceGothic, sans-serif;
+    font-family: 'TradeGothic', sans-serif;
     line-height: 0.7;
     letter-spacing: -3px;
     text-transform: uppercase;
@@ -376,7 +376,7 @@ body {
   transform: translateX(-300%);
   /*font-size: 5rem;*/
   font-size: 7vw;
-  font-family: ViceGothic, sans-serif;
+  font-family: 'TradeGothic', sans-serif;
   line-height: 1;
   display: inline-block;
   padding: 20px 35px;
@@ -421,7 +421,7 @@ body {
 
 .zoom-text {
   font-size: 13vw;
-  font-family: ViceGothic, sans-serif;
+  font-family: 'TradeGothic', sans-serif;
   line-height: .75;
   letter-spacing: -3px;
   text-transform: uppercase;
@@ -537,6 +537,9 @@ body {
   display: flex;
   align-items: center;
   flex-direction: column;
+  color: #fff;
+  margin-top: 13%;
+  background-color: rgba(0,0,0,0.35);
 }
 
 .choice-title {
@@ -550,6 +553,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
   flex: 1;
 }
 
@@ -565,7 +569,7 @@ body {
 }
 
 .active-choice {
-  box-shadow: 0 0 10px #f0f;
+  color: rgb(128, 255, 65);
 }
 
 .choice-name {
@@ -577,6 +581,10 @@ body {
   font-size: 4vw;
   flex: 1;
   text-align: center;
+}
+
+.choice-image {
+  display: none;
 }
 
 

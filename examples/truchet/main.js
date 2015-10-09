@@ -4,19 +4,9 @@ var ReactDOM = require('react-dom');
 var _ = require('underscore');
 var directions = require('directions');
 var Conti = require('conti');
+// var Base = require('base');
+// var ScanComponent = require('scanComponent');
 
-var scaler = (function(currMin, currMax, otherMin, otherMax) {
-  var left = currMax - currMin;
-  var right = otherMax - otherMin;
-
-  var scale = right / left;
-
-  var getVal = function(val) {
-    return otherMin + (val - currMin) * scale;
-  };
-
-  return getVal;
-});
 
 window.Conti = Conti;
 window.jQ = $;
@@ -32,6 +22,18 @@ Math.easeInOutQuad = function (t, b, c, d) {
   t--;
   return -c/2 * (t*(t-2) - 1) + b;
 };
+ var scaler = (function(currMin, currMax, otherMin, otherMax) {
+  var left = currMax - currMin;
+  var right = otherMax - otherMin;
+
+  var scale = right / left;
+
+  var getVal = function(val) {
+    return otherMin + (val - currMin) * scale;
+  };
+
+  return getVal;
+});
 
 
 function createViewport(Component, container) {
@@ -251,20 +253,6 @@ class Base extends React.Component {
   }
 }
 
-class MarkerComponent extends Base {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return (
-      <p className="marker-p" id={this.props.id}  onClick={this.props.clickHandler} data-activate={this.props.isActive}>
-        {this.props.copy}
-      </p>
-    );
-  }
-}
-
 class ScanComponent extends Base {
   constructor(props) {
     super(props);
@@ -272,20 +260,20 @@ class ScanComponent extends Base {
   }
 
   adjust() {
-    throw "You must override adjust"
+    throw "You must override adjust";
   }
 
   errorInput() {
     //shake screen or something here.
     console.error("ERROR INPUT!!!!");
-    $(".stage-bg").addClass("shake");
-    // $("#sfxError")[0].stop();
-    var $sfxError = $("#sfxError");
-    $sfxError[0].currentTime = 0;
-    $sfxError[0].play();
-    setTimeout(() => {
-      $(".stage-bg").removeClass("shake");
-    }, 100);
+    // $(".stage-bg").addClass("shake");
+    // // $("#sfxError")[0].stop();
+    // var $sfxError = $("#sfxError");
+    // $sfxError[0].currentTime = 0;
+    // $sfxError[0].play();
+    // setTimeout(() => {
+    //   $(".stage-bg").removeClass("shake");
+    // }, 100);
   }
 
   bindHandlers() {
@@ -304,6 +292,19 @@ ScanComponent.contextTypes = {
   toggleWormhole: React.PropTypes.func.isRequired
 };
 
+class MarkerComponent extends Base {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <p className="marker-p" id={this.props.id}  onClick={this.props.clickHandler} data-activate={this.props.isActive}>
+        {this.props.copy}
+      </p>
+    );
+  }
+}
 
 class Shade extends ScanComponent {
   constructor(props) {
@@ -316,6 +317,8 @@ class Shade extends ScanComponent {
       "uniform vec2 mouse;",
       "uniform float scroll;",
       "uniform float time;",
+      "uniform float brainScale;",
+      "uniform bool drugged;",
       "float random(vec2 st, float multiplier) {",
       "  return fract(sin(dot(st.xy, vec2(21.8380, 132.039932))) * multiplier);",
       "}",
@@ -334,14 +337,15 @@ class Shade extends ScanComponent {
       "  vec2 st = gl_FragCoord.xy / resolution.xy;",
       "  vec2 st_mouse = mouse.xy / resolution.xy;",
       "  float _time = time / 60.0;",
-      "  st *= 10.0;",
+      "  st *= brainScale;",
       "  st = (st - vec2(5.0)) * 1.5;",
       "  vec2 ipos = floor(st);",
       "  vec2 fpos = fract(st);",
       "  vec2 tile = truchetPattern(fpos, random(ipos, (scroll * _time)));",
       "  float color = 0.0;",
-      "  color = (step(length(tile), 0.6) - step(length(tile), 0.4)) + (step(length(tile - vec2(1.0)), 0.6) - step(length(tile - vec2(1.0)), 0.4));",
-      "  gl_FragColor = vec4((vec3(color) - vec3(0.50,0.25,0.5)), 1.0);",
+      "  if(!drugged) { color = step(tile.x, tile.y); } ",
+      "  else { color = (step(length(tile), 0.6) - step(length(tile), 0.4)) + (step(length(tile - vec2(1.0)), 0.6) - step(length(tile - vec2(1.0)), 0.4)); }",
+      "  gl_FragColor = vec4((vec3(color) - vec3(0.5, (-scroll + 0.15), 0.3)), 1.0);",
       "}"].join('');
   }
 
@@ -373,6 +377,33 @@ class Shade extends ScanComponent {
     return {textTop: textTop};
   }
 
+  brainScale(increase) {
+    if(this.shader.uniforms.brainScale.value > 10) {
+      this.shader.uniforms.brainScale.value = 2;
+    } else {
+      this.shader.uniforms.brainScale.value += increase;
+    }
+
+  }
+
+  bindHandlers() {
+    $(window).on("keydown", (e) => {
+        if(e.keyCode == 13){
+          e.preventDefault();
+          this.brainScale(0.5);
+          return false;
+        }
+    });
+
+    // $(window).on("keydown", (e) => {
+    //     if(e.keyCode == 16){
+    //       e.preventDefault();
+    //       this.shader.uniforms.drugged.value = !this.shader.uniforms.drugged.value;
+    //       return false;
+    //     }
+    // });
+  }
+
   componentDidMount() {
     var gza = PIXI.Sprite.fromImage("/shade/gza.png");
     gza.width = this.props.measurements.viewportWidth;
@@ -388,7 +419,9 @@ class Shade extends ScanComponent {
       mouse: { type: "v2", value: {x: 0.0, y: 0.0}},
       textureSize: { type: "v2", value: {x: this.props.measurements.viewportWidth, y: this.props.measurements.viewportHeight}},
       spriteTexture: {type: "sampler2D", value: gza.texture },
-      scroll: {type: "1f", value: 0.0}
+      scroll: {type: "1f", value: 0.0},
+      brainScale: {type: "1f", value: 7.0},
+      drugged: {type: "bool", value: true}
     };
 
     this.shader = new PIXI.AbstractFilter(null, this.fragmentShader, this.uniforms);
@@ -410,7 +443,12 @@ class Shade extends ScanComponent {
       this.shader.uniforms.mouse.value = {x: mouse.x, y: mouse.y};
     }
 
-    this.count++;
+    if(this.count > 3000) {
+      this.count = 15;
+    } else {
+      this.count++;
+    }
+
     this.renderer.render(this.stage);
   }
 

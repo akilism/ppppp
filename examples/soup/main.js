@@ -269,7 +269,7 @@ class Root extends React.Component {
     return (
       <div>
         <Title measurements={this.props.measurements} start={0} end={0.05} title="bangkok" subtitle="with Jourdan Dunn" backgroundImage="/thailand/bangkok.jpg" />
-        <PathChoice measurements={this.props.measurements} choices={pathChoices} start={0.05} end={0.15} title="Damn I'm fucking staaaarving..." instructions="sshhhiiiiifffftttt" />
+        <PathChoice measurements={this.props.measurements} choices={pathChoices} start={0.05} end={0.15} title="Damn I'm fucking staaaarving..." instructions="" />
         <WordMask measurements={this.props.measurements} start={0.15} end={0.24} bgUrl="/thailand/biketomarket.gif" quote={["The thing is ", " I've never actually ", " been there. ", " That shit's ", " going to change. ", " JD ", " is ", " going ", " to ", " Thailand."]} />
       </div>
     );
@@ -836,7 +836,7 @@ class SlippyText extends ScanComponent {
 
   render() {
     return (
-      <div>
+      <div >
       <h5 className={this.state.className}>
         {this.props.caption}
       </h5>
@@ -1410,12 +1410,13 @@ class PathChoice extends ScanComponent {
       wormholeMeasurements: {},
       wormholeJump: null,
       display: "flex",
+      bgImage: '',
       zIndex: -1
     };
   }
 
   componentWillMount() {
-    this.setState({choice: 0});
+    this.setState({choice: 0, bgImage: this.props.choices[0].choiceImage});
   }
 
   componentWillReceiveProps() {
@@ -1502,7 +1503,7 @@ class PathChoice extends ScanComponent {
       var className = (active) ? "active-choice choice-item" : "choice-item";
       return (
         <li key={i} className={className}>
-          <img style={{height: 270}} src={p.choiceImage} />
+          <img className="choice-image" style={{height: 270}} src={p.choiceImage} />
           <span className="choice-name">{p.name}</span>
         </li>
       );
@@ -1516,7 +1517,7 @@ class PathChoice extends ScanComponent {
 
   switchChoice() {
     let choice = (this.state.choice === this.props.choices.length - 1) ? 0 : this.state.choice + 1;
-    this.setState({choice: choice});
+    this.setState({choice: choice, bgImage: this.props.choices[choice].choiceImage});
   }
 
   render() {
@@ -1529,7 +1530,12 @@ class PathChoice extends ScanComponent {
       wormholeComponent = "";
     }
     return (
-      <div style={{position: "fixed", top: 0, left: 0, zIndex: this.state.zIndex}}>
+      <div style={{
+        backgroundImage: "url(" + this.state.bgImage + ")",
+        backgroundSize: "cover",
+        position: "fixed",
+        top: 0, right: 0, bottom: 0, left: 0,
+        zIndex: this.state.zIndex}}>
         <div className="path-chooser" style={{display: this.state.display}}>
           <h5 className="choice-title">{this.props.title}</h5>
           {choices}
