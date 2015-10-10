@@ -481,7 +481,7 @@ class Shade extends ScanComponent {
   render() {
     return(
       <div className="stage-bg" style={{position: "fixed", width: this.props.measurements.viewportWidth, height: this.props.measurements.viewportHeight-0}}>
-        <BangerText measurements={this.props.measurements} start={0.3} end={0.4} caption="Enter the GZA." />
+        <BangerText measurements={this.props.measurements} start={0.3} end={0.5} caption="Enter the GZA." />
         <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
       </div>
     )
