@@ -193,7 +193,7 @@ class Root extends React.Component {
     // <ScrambleMask measurements={this.props.measurements} start={0} end={0.1} imagePath="/akilpixi/ratking.jpg" />
     return (
       <div>
-        <Shade measurements={this.props.measurements} start={0} end={0.35}  />
+        <Shade measurements={this.props.measurements} start={0} end={0.5}  />
         <audio id="sfxError">
           <source src="/akilpixi/error.wav" type="audio/wav" />
         </audio>
@@ -332,6 +332,9 @@ class BangerText extends ScanComponent {
         }
         if(active) {
           scaleValue = Math.linearTween(adjustedPctScroll, 0, 1, 1);
+        }
+        if(pctScroll >= this.props.end) {
+          scaleValue = 1;
         }
 
     return {active, scaleValue};
@@ -481,7 +484,7 @@ class Shade extends ScanComponent {
   render() {
     return(
       <div className="stage-bg" style={{position: "fixed", width: this.props.measurements.viewportWidth, height: this.props.measurements.viewportHeight-0}}>
-        <BangerText measurements={this.props.measurements} start={0.3} end={0.5} caption="Enter the GZA." />
+        <BangerText measurements={this.props.measurements} start={0.45} end={0.65} caption="Enter the GZA." />
         <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
       </div>
     )
