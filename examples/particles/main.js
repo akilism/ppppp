@@ -2,7 +2,14 @@ var $ = require('jquery');
 var React = require('react');
 var ReactDOM = require('react-dom');
 var _ = require('underscore');
-var directions = require('directions');
+var ndarray = require('ndarray');
+var Geom = require('gl-geometry');
+var VAO = require('gl-vao');
+var GLBuffer = require('gl-buffer');
+var Shader = require('gl-shader');
+var Texture = require('gl-texture2d');
+var FBO = require('gl-fbo');
+var ABT = require('a-big-triangle');
 var Conti = require('conti');
 
 var scaler = (function(currMin, currMax, otherMin, otherMax) {
@@ -305,73 +312,105 @@ ScanComponent.contextTypes = {
 class WebGL extends ScanComponent {
   constructor(props) {
     super(props);
-    this.state = {
-        maxCellSize: 15,
-        animate: true
-    };
+    this.state = { animate: true };
 
-    this.particleVertShader = `attribute vec2 aVertexPosition;
-      attribute vec2 aTextureCoord;
-      // attribute vec4 aColor;
-
-      // uniform mat3 projectionMatrix;
-      // uniform mat3 otherMatrix;
+    this.vert = `
+      attribute vec2 aTexturePosition;
+      attribute vec2 aVertexPosition;
       uniform vec2 uResolution;
 
-      varying vec2 vTextureCoord;
+      varying vec2 vTexturePosition;
 
       void main() {
         vec2 zeroToOne = aVertexPosition / uResolution;
-        // convert from 0->1 to 0->2
         vec2 zeroToTwo = zeroToOne * 2.0;
-        // convert from 0->2 to -1->+1 (clipspace)
         vec2 clipSpace = zeroToTwo - 1.0;
-        // flip y coordinate put 0,0 in top left instead of bottom left.
         gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-        vTextureCoord = aTextureCoord;
-      }`;
+        vTexturePosition = aTexturePosition;
+      }
+    `;
 
-    this.particleFragShader = `precision mediump float;
+    this.frag = `
+      precision mediump float;
       uniform sampler2D uImage;
       uniform vec2 uTextureSize;
-
-      varying vec2 vTextureCoord;
-
+      varying vec2 vTexturePosition;
       void main() {
-        gl_FragColor = texture2D(uImage, vTextureCoord).rgba;
-      }`;
+        //vec2 onePixel = vec2(1.0, 1.0) / uTextureSize;
+        gl_FragColor = texture2D(uImage, vTexturePosition).rgba;
+      }
+    `;
 
-    this.fragmentShader = `precision mediump float;
+    this.renderVert = `
+      precision mediump float;
+      attribute vec2 aTexturePosition;
+      attribute vec2 aVertexPosition;
       uniform vec2 uResolution;
-      uniform vec2 uMouse;
-      uniform vec2 uTextureSize;
-      uniform float uScroll;
-      uniform float uTtime;
-      uniform sampler2D uSpriteTexture;
-      varying vec2 vTextureCoord;
 
-      vec2 random2(vec2 st){
-          st = vec2(dot(st, vec2(127.1,311.7)), dot(st, vec2(269.5,183.3)));
-          return -1.0 + 2.0 * fract(sin(st) * 43758.5453123);
-      }
-
-      float noise(vec2 st) {
-          vec2 i = floor(st);
-          vec2 f = fract(st);
-          vec2 u = f*f*(3.0-2.0*f);
-          return mix(mix(dot(random2(i + vec2(0.0,0.0)), f - vec2(0.0,0.0)), dot(random2(i + vec2(1.0,0.0)), f - vec2(1.0,0.0)), u.x),
-                     mix(dot(random2(i + vec2(0.0,1.0)), f - vec2(0.0,1.0)), dot(random2(i + vec2(1.0,1.0)), f - vec2(1.0,1.0)), u.x), u.y);
-      }
+      varying vec2 vTexturePosition;
 
       void main() {
-        vec2 st = gl_FragCoord.xy / uResolution.xy;
-        vec2 st_texture = gl_FragCoord.xy / uTextureSize.xy;
-        vec2 st_mouse = uMouse.xy / uResolution.xy;
-        float time = uTime / 30.0;
-        vec4 spriteValue = texture2D(uSpriteTexture, vTextureCoord);
-        vec3 color = vec3(0.0);
-        gl_FragColor = spriteValue;
-      }`;
+        // vec2 zeroToOne = aVertexPosition / uResolution;
+        // vec2 zeroToTwo = zeroToOne * 2.0;
+        // vec2 clipSpace = zeroToTwo - 1.0;
+        gl_Position = vec4(aVertexPosition , 0, 1); //vec4(clipSpace * vec2(1, -1), 0, 1);
+        vTexturePosition = aTexturePosition;
+      }
+    `;
+
+    this.renderFrag = `
+      precision mediump float;
+      uniform sampler2D uImage;
+      uniform vec2 uTextureSize;
+      uniform sampler2D uData;
+      uniform vec2 uResolution;
+
+      varying vec2 vTexturePosition;
+
+      void main() {
+        //vec2 onePixel = vec2(1.0, 1.0) / uTextureSize;
+        vec2 uv = gl_FragCoord.xy / uResolution;
+        vec4 tData = texture2D(uData, vTexturePosition);
+        gl_FragColor = vec4(0,0,0,1); //texture2D(uImage, tData.zw).rgba;
+      }
+    `;
+
+    this.logicVert = `
+      precision mediump float;
+      attribute vec4 aVertexPosition;
+      void main() {
+        gl_Position = aVertexPosition;
+      }
+    `;
+
+    this.logicFrag = `
+      precision mediump float;
+      #define PI 3.14159265359
+      uniform sampler2D uData;
+      uniform vec2 uResolution;
+      void main() {
+        vec2 uv       = gl_FragCoord.xy / uResolution;
+        vec4 tData    = texture2D(uData, uv);
+        vec2 position = tData.xy;
+        vec2 speed    = tData.zw;
+        // speed.x += uv.x * 0.000225;
+        // speed.y += uv.y * 0.000225;
+        // float r = length(position);
+        // float a;
+        // if (r > 0.001) {
+        //   a = atan(position.y, position.x);
+        // } else {
+        //   a = 0.0;
+        // }
+        // position.x += cos(a + PI * 0.5) * 0.005;
+        // position.y += sin(a + PI * 0.5) * 0.005;
+        // position += speed;
+        // speed *= 0.975;
+        // position *= 0.995;
+        gl_FragColor = vec4(position, speed);
+      }
+    `;
+
   }
 
   componentWillReceiveProps() {
@@ -396,161 +435,171 @@ class WebGL extends ScanComponent {
     return {animate: false};
   }
 
-
-  compileShader(gl, shaderSource, shaderType) {
-    // Create the shader object
-    var shader = gl.createShader(shaderType);
-
-    // Set the shader source code.
-    gl.shaderSource(shader, shaderSource);
-
-    // Compile the shader
-    gl.compileShader(shader);
-
-    // Check if it compiled
-    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-    if (!success) {
-      // Something went wrong during compilation; get the error
-      throw "could not compile shader:" + gl.getShaderInfoLog(shader);
-    }
-
-    return shader;
-  }
-
-  createProgram(gl, vertexShader, fragmentShader) {
-    var program = gl.createProgram();
-
-    // attach the shaders.
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-
-    // link the program.
-    gl.linkProgram(program);
-
-    // Check if it linked.
-    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
-    if (!success) {
-        // something went wrong with the link
-        throw ("program filed to link:" + gl.getProgramInfoLog (program));
-    }
-
-    return program;
-  }
-
-  createTexture(gl) {
-    var texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-
-    // Set the parameters so we can render any size image.
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-    return texture;
-  }
-
-  createTextFBO(gl, width, height, image=null) {
-    var texture = this.createTexture(gl);
-
-    if(image) {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    } else {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    }
-
-    // Create a framebuffer
-    var fbo = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-
-    // Attach a texture to it.
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-
-    return {texture, fbo};
-  }
-
-  setParticleData(w, h) {
+  setInitialParticleData([w, h]) {
     let numParticles = w * h,
-        arrLen = numParticles * 3,
-        arrPos = new Float32Array(arrLen),
-        arrIdx = new Float32Array(arrLen);
+        data = new Float32Array(numParticles * 4);
 
     for(var i = 0; i < numParticles; i++) {
-      let pIdx = i * 3,
+      let pIdx = i * 4,
           tX = Math.floor(i % w) / w, //Texture pixel x.
           tY = Math.floor(i / w) / h, //Texture pixel y.
-          x = Math.random() * 2.0 - 1.0, //Effect pixel x.
-          y = Math.random() * 2.0 - 1.0; //Effect pixel y.
+          x = Math.abs(Math.random() * 2.0 - 1.0), //Effect pixel x.
+          y = Math.abs(Math.random() * 2.0 - 1.0); //Effect pixel y.
 
-          arrPos[pIdx] = x;
-          arrPos[pIdx + 1] = y;
-          arrPos[pIdx + 2] = 0;
-          arrIdx[pIdx] = tX;
-          arrIdx[pIdx + 1] = tY;
-          arrIdx[pIdx + 2] = 1;
+          data[pIdx] = x;
+          data[pIdx + 1] = y;
+          data[pIdx + 2] = tX;
+          data[pIdx + 3] = tY;
     }
+
+    var pixels = ndarray(data, [w, h, 4]);
+    this.prevFBO.color[0].setPixels(pixels);
+    this.currFBO.color[0].setPixels(pixels);
+  }
+
+  generateLUT([w, h]) {
+    var size = w * h * 2;
+    var data = new Float32Array(size);
+    var k = 0;
+
+    for (var i = 0; i < w; i++) {
+      for (var j = 0; j < h; j++) {
+        var u = i / (w - 1);
+        var v = j / (h - 1);
+        data[k++] = u;
+        data[k++] = v;
+      }
+    }
+
+    return data;
+  }
+
+  setupParticleSim() {
+    console.log('setup called');
+    var canvas = this.refs.stage;
+    this.gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    let gl = this.gl;
+
+    this.texture = Texture(gl, this.refs.gza);
+    let [w, h] = this.texture.shape;
+
+    this.logicShader = Shader(gl, this.logicVert, this.logicFrag);
+    console.log('logic shader created');
+    this.renderShader = Shader(gl, this.renderVert, this.renderFrag);
+    console.log('render shader created');
+    this.currFBO = FBO(gl, [w, h], {float: true});
+    this.prevFBO = FBO(gl, [w, h], {float: true});
+
+    this.setInitialParticleData(this.texture.shape);
+
+    this.particleVAO = VAO(gl,
+      [{"buffer": GLBuffer(gl, this.generateLUT([w, h])),
+        "type": gl.Float,
+        "size": 2},
+       {"buffer": GLBuffer(gl, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0])),
+        "type": gl.FLOAT,
+        "size": 2}]);
+
+    this.logicShader.attributes.aVertexPosition.location = 0;
+    this.renderShader.attributes.aVertexPosition.location = 0;
+    this.renderShader.attributes.aTexturePosition.location = 1;
+    this.draw();
+  }
+
+  step() {
+    let [w, h] = this.texture.shape;
+    this.currFBO.bind();
+    this.gl.viewport(0, 0, w, h);
+
+    this.logicShader.bind();
+    this.logicShader.uniforms.uResolution = [w, h];
+    this.logicShader.uniforms.uData = this.prevFBO.color[0].bind();
+
+
+    console.log('step called');
+    // this.particleVAO.bind();
+    // this.vao.draw(gl.TRIANGLES, 6);
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+
+    var prevFBO = this.prevFBO;
+    this.prevFBO = this.currFBO;
+    this.currFBO = prevFBO;
+  }
+
+  draw() {
+    console.log('draw called');
+    let gl = this.gl,
+        width  = gl.drawingBufferWidth,
+        height = gl.drawingBufferHeight,
+        [w, h] = this.texture.shape;
+
+    // Disabling blending here is important – if it's still
+    // enabled your simulation will behave differently
+    // to what you'd expect.
+    gl.disable(gl.DEPTH_TEST)
+    gl.disable(gl.BLEND);
+    this.step();
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
+    gl.clearColor(0.045, 0.02, 0.095, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.viewport(0, 0, width, height);
+
+    // this.particleGeo.bind(this.logicShader);
+    this.renderShader.bind();
+    this.renderShader.uniforms.uData = this.prevFBO.color[0].bind();
+    this.renderShader.uniforms.uResolution = this.texture.shape;
+    this.renderShader.uniforms.uImage = this.texture.bind();
+    this.renderShader.uniforms.uTextureSize = this.texture.shape;
+    this.particleVAO.bind();
+    this.particleVAO.draw(gl.POINTS);
+    // this.particleVAO.unbind();
+  }
+
+  setupWebGL() {
+    var canvas = this.refs.stage;
+    this.gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    let gl = this.gl;
+
+
+    this.texture = Texture(gl, this.refs.gza);
+    let [w, h] = this.texture.shape;
+
+    // 0 = aVertexCoord  //This is the shape to draw the texture into. texture_width x texture_height
+    // 1 = aTextureCoord //These are the 0->1 webgl coordinates for the texture.
+    this.vao = VAO(gl,
+      [{"buffer": GLBuffer(gl, new Float32Array([10, 20, w, 20, 10, h, 10, h, w, 20, w, h])),
+        "type": gl.FLOAT,
+        "size": 2},
+       {"buffer": GLBuffer(gl, new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0])),
+        "type": gl.FLOAT,
+        "size": 2}]);
+
+    this.shader = Shader(gl, this.vert, this.frag);
+    this.shader.attributes.aVertexPosition.location = 0;
+    this.shader.attributes.aTexturePosition.location = 1;
+
+    this.shader.bind();
+    this.shader.uniforms.uImage = this.texture.bind();
+    this.shader.uniforms.uResolution = [this.props.measurements.viewportWidth, this.props.measurements.viewportHeight];
+    this.shader.uniforms.uTextureSize = [w, h];
+    this.vao.bind();
+    this.vao.draw(gl.TRIANGLES, 6);
+    this.vao.unbind();
   }
 
   componentDidMount() {
-    var canvas = this.refs.stage;
     var image = this.refs.gza;
-    this.gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-    var gl = this.gl,
-      vertShader = this.compileShader(gl, this.particleVertShader, gl.VERTEX_SHADER),
-      fragShader = this.compileShader(gl, this.particleFragShader, gl.FRAGMENT_SHADER),
-      program = this.createProgram(gl, vertShader, fragShader);
-    gl.useProgram(program);
 
     image.onload = () => {
-      context.enableExtension("OES_texture_float");
-      context.maxVertexTextureImageUnits();
-
-      var textureSizeLocation = gl.getUniformLocation(program, "uTextureSize"),
-          resolutionLocation = gl.getUniformLocation(program, "uResolution"),
-          positionLocation = gl.getAttribLocation(program, "aVertexPosition"),
-          texCoordLocation = gl.getAttribLocation(program, "aTextureCoord"),
-          vertexBuffer = gl.createBuffer(),
-          textureCoordBuffer = gl.createBuffer();
-
-      gl.uniform2f(textureSizeLocation, image.width, image.height);
-      gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-
-      // look up where the vertex data needs to go.
-      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-      // setup a rectangle from 10,20 to image.width, image.height in pixels
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-          10, 20,
-          image.width, 20,
-          10, image.height,
-          10, image.height,
-          image.width, 20,
-          image.width, image.height]), gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(positionLocation);
-      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-      // provide texture coordinates for the rectangle.
-      gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-          0.0,  0.0,
-          1.0,  0.0,
-          0.0,  1.0,
-          0.0,  1.0,
-          1.0,  0.0,
-          1.0,  1.0]), gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(texCoordLocation);
-      gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-      var {texture: originalTexture, fbo: originalFbo} = this.createTextFBO(gl, canvas.width, canvas.height, image);
-      var {texture: particleTexture, fbo: particleFbo} = this.createTextFBO(gl, image.width, image.height, null);
-
-       // draw
-      gl.bindTexture(gl.TEXTURE_2D, originalTexture);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      this.setupParticleSim();
     }
-
   }
 
+  animate() {
+    requestAnimationFrame(() => { this.animate(); });
+  }
 
   render() {
     return(
@@ -564,156 +613,6 @@ class WebGL extends ScanComponent {
     )
   }
 }
-
-class Shade extends ScanComponent {
-  constructor(props) {
-    super(props);
-    this.state = {
-        maxCellSize: 15,
-        animate: true
-    };
-
-    this.particleVertShader = `attribute vec2 aVertexPosition;
-      attribute vec2 aTextureCoord;
-      attribute vec4 aColor;
-
-      uniform mat3 projectionMatrix;
-      uniform mat3 otherMatrix;
-
-      void main() {
-        gl_Position = vec4((projectionMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
-      }`;
-
-    this.particleFragShader = `void main() {
-      gl_FragColor = vec4(0, 1, 0, 1);  // green
-    }`;
-
-    this.fragmentShader = `precision mediump float;
-      uniform vec2 uResolution;
-      uniform vec2 uMouse;
-      uniform vec2 uTextureSize;
-      uniform float uScroll;
-      uniform float uTtime;
-      uniform sampler2D uSpriteTexture;
-      varying vec2 vTextureCoord;
-
-      vec2 random2(vec2 st){
-          st = vec2(dot(st, vec2(127.1,311.7)), dot(st, vec2(269.5,183.3)));
-          return -1.0 + 2.0 * fract(sin(st) * 43758.5453123);
-      }
-
-      float noise(vec2 st) {
-          vec2 i = floor(st);
-          vec2 f = fract(st);
-          vec2 u = f*f*(3.0-2.0*f);
-          return mix(mix(dot(random2(i + vec2(0.0,0.0)), f - vec2(0.0,0.0)), dot(random2(i + vec2(1.0,0.0)), f - vec2(1.0,0.0)), u.x),
-                     mix(dot(random2(i + vec2(0.0,1.0)), f - vec2(0.0,1.0)), dot(random2(i + vec2(1.0,1.0)), f - vec2(1.0,1.0)), u.x), u.y);
-      }
-
-      void main() {
-        vec2 st = gl_FragCoord.xy / uResolution.xy;
-        vec2 st_texture = gl_FragCoord.xy / uTextureSize.xy;
-        vec2 st_mouse = uMouse.xy / uResolution.xy;
-        float time = uTime / 30.0;
-        vec4 spriteValue = texture2D(uSpriteTexture, vTextureCoord);
-        vec3 color = vec3(0.0);
-        gl_FragColor = spriteValue;
-      }`;
-  }
-
-  componentWillReceiveProps() {
-    this.setState(this.adjust(this.state));
-  }
-
-  isActive(d){
-    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
-  }
-
-  adjust(last_state) {
-    var {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
-        adjustedPctScroll = this.scaler(pctScroll),
-        active = this.isActive(this.props.measurements),
-        maxCellSize = this.state.maxCellSize,
-        animate = last_state.animate;
-
-    if(active) {
-     // this.shader.uniforms.uScroll.value = adjustedPctScroll;
-    }
-
-    return {animate: false};
-  }
-
-  setBuffer(gl) {
-    this.buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-    console.log(this.buffer);
-  }
-
-  setParticleShaders() {
-    // this.particleShaderManager = new PIXI.ShaderManager(this.renderer);
-    var uniforms = {},
-        attribs = {aPosition: 0};
-
-    // this.particleShader = new PIXI.Shader(this.renderer.shaderManager, this.particleVertShader, this.particleFragShader, uniforms, attribs);
-    this.particleShader = new PIXI.AbstractFilter(this.particleVertShader, this.particleFragShader, uniforms);
-    // this.renderer.shaderManager.setShader(this.particleShader);
-  }
-
-  componentDidMount() {
-    var gza = PIXI.Sprite.fromImage("/shade/gza.png");
-    gza.width = 260;
-    gza.height = 613;
-    gza.position = new PIXI.Point(525, 45);
-
-    this.renderer = new PIXI.WebGLRenderer(this.props.measurements.viewportWidth,this.props.measurements.viewportHeight-0, {transparent: true});
-    this.setBuffer(this.renderer.gl);
-    this.refs.stage.appendChild(this.renderer.view);
-
-    this.stage = new PIXI.Container();
-    // this.uniforms = {
-    //   uResolution: { type: "v2", value: {x: this.props.measurements.viewportWidth, y: this.props.measurements.viewportHeight-0}},
-    //   uTime: {type: "1f", value: 0.0},
-    //   uMouse: { type: "v2", value: {x: 0.0, y: 0.0}},
-    //   uTextureSize: { type: "v2", value: {x: 260.0, y: 613.0}},
-    //   uSpriteTexture: {type: "sampler2D", value: gza.texture },
-    //   uScroll: {type: "1f", value: 0.0}
-    // };
-
-    // this.shader = new PIXI.AbstractFilter(null, this.fragmentShader, this.uniforms);
-    this.count = 0;
-
-    this.interactionManager = new PIXI.interaction.InteractionManager(this.renderer);
-    this.setParticleShaders();
-    // gza.shader = this.particleShader;
-    // console.log(this.particleShader);
-    this.stage.addChild(gza);
-
-    this.animate();
-    this.bindHandlers();
-  }
-
-  animate() {
-    requestAnimationFrame(() => { this.animate(); });
-    var mouse = this.interactionManager.mouse.global;
-    // this.shader.uniforms.uTime.value = this.count;
-
-    // if (mouse.x > 0 && mouse.y > 0) {  // If mouse is over stage
-    //   this.shader.uniforms.uMouse.value = {x: mouse.x, y: mouse.y};
-    // }
-
-    this.count++;
-    this.renderer.render(this.stage);
-  }
-
-  render() {
-    return(
-      <div className="stage-bg" style={{position: "fixed", width: this.props.measurements.viewportWidth, height: this.props.measurements.viewportHeight-0}}>
-        <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
-      </div>
-    )
-  }
-}
-
 
 function embedComponent(Component, container, callback) {
   $(container).empty();
