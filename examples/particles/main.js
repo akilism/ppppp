@@ -469,6 +469,28 @@ class WebGL extends ScanComponent {
     return {texture, fbo};
   }
 
+  setParticleData(w, h) {
+    let numParticles = w * h,
+        arrLen = numParticles * 3,
+        arrPos = new Float32Array(arrLen),
+        arrIdx = new Float32Array(arrLen);
+
+    for(var i = 0; i < numParticles; i++) {
+      let pIdx = i * 3,
+          tX = Math.floor(i % w) / w, //Texture pixel x.
+          tY = Math.floor(i / w) / h, //Texture pixel y.
+          x = Math.random() * 2.0 - 1.0, //Effect pixel x.
+          y = Math.random() * 2.0 - 1.0; //Effect pixel y.
+
+          arrPos[pIdx] = x;
+          arrPos[pIdx + 1] = y;
+          arrPos[pIdx + 2] = 0;
+          arrIdx[pIdx] = tX;
+          arrIdx[pIdx + 1] = tY;
+          arrIdx[pIdx + 2] = 1;
+    }
+  }
+
   componentDidMount() {
     var canvas = this.refs.stage;
     var image = this.refs.gza;
@@ -480,6 +502,9 @@ class WebGL extends ScanComponent {
     gl.useProgram(program);
 
     image.onload = () => {
+      context.enableExtension("OES_texture_float");
+      context.maxVertexTextureImageUnits();
+
       var textureSizeLocation = gl.getUniformLocation(program, "uTextureSize"),
           resolutionLocation = gl.getUniformLocation(program, "uResolution"),
           positionLocation = gl.getAttribLocation(program, "aVertexPosition"),
