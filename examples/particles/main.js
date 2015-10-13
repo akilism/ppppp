@@ -12,6 +12,7 @@ var FBO = require('gl-fbo');
 var ABT = require('a-big-triangle');
 var Conti = require('conti');
 
+
 var scaler = (function(currMin, currMax, otherMin, otherMax) {
   var left = currMax - currMin;
   var right = otherMax - otherMin;
@@ -343,18 +344,27 @@ class WebGL extends ScanComponent {
 
     this.renderVert = `
       precision mediump float;
-      attribute vec2 aTexturePosition;
+      // attribute vec2 aTexturePosition;
       attribute vec2 aVertexPosition;
       uniform vec2 uResolution;
+      uniform sampler2D uData;
+      uniform float uTime;
 
       varying vec2 vTexturePosition;
+
 
       void main() {
         // vec2 zeroToOne = aVertexPosition / uResolution;
         // vec2 zeroToTwo = zeroToOne * 2.0;
         // vec2 clipSpace = zeroToTwo - 1.0;
-        gl_Position = vec4(aVertexPosition , 0, 1); //vec4(clipSpace * vec2(1, -1), 0, 1);
-        vTexturePosition = aTexturePosition;
+        // gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+        vec4 fboPosition = texture2D(uData, aVertexPosition);
+        vec2 position = fboPosition.xy;
+        // position.x *= uResolution.y / uResolution.x;
+        gl_PointSize = 2.0;
+        gl_Position = vec4(position, 1, 1);
+        // gl_Position = vec4(aVertexPosition, 1, 1);
+        vTexturePosition = aVertexPosition;
       }
     `;
 
@@ -371,42 +381,64 @@ class WebGL extends ScanComponent {
         //vec2 onePixel = vec2(1.0, 1.0) / uTextureSize;
         vec2 uv = gl_FragCoord.xy / uResolution;
         vec4 tData = texture2D(uData, vTexturePosition);
-        gl_FragColor = vec4(0,0,0,1); //texture2D(uImage, tData.zw).rgba;
+        gl_FragColor = texture2D(uImage, vTexturePosition).rgba; //vec4(1,1,1,1); //
+        vec2  p = (gl_PointCoord.xy - 0.5) * 2.0;
+        float d = 1.0 - dot(p, p);
+        gl_FragColor = vec4(d * vec3(0.55, 0.2, 0.25), 1);
       }
     `;
 
     this.logicVert = `
       precision mediump float;
-      attribute vec4 aVertexPosition;
+      attribute vec2 aVertexPosition;
+
       void main() {
-        gl_Position = aVertexPosition;
+        gl_Position = vec4(aVertexPosition, 1, 1);
       }
     `;
 
     this.logicFrag = `
+      // precision mediump float;
+      // uniform sampler2D uData;
+      // uniform vec2 uResolution;
+
+      // void main() {
+      //   vec2 uv = gl_FragCoord.xy / uResolution;
+      //   vec4 tData = texture2D(uData, uv);
+      //   vec2 position = tData.xy;
+      //   vec2 finalPosition = tData.zw;
+      //   vec2 onePixel = vec2(1.0, 1.0) / uResolution;
+      //   vec2 newPosition = position + onePixel;
+
+      //   gl_FragColor = vec4(vec2(0.5), finalPosition);
+      // }
+
       precision mediump float;
       #define PI 3.14159265359
       uniform sampler2D uData;
+      // uniform float time;
       uniform vec2 uResolution;
+      // #pragma glslify: noise = require('glsl-noise/simplex/3d')
       void main() {
         vec2 uv       = gl_FragCoord.xy / uResolution;
         vec4 tData    = texture2D(uData, uv);
         vec2 position = tData.xy;
         vec2 speed    = tData.zw;
-        // speed.x += uv.x * 0.000225;
-        // speed.y += uv.y * 0.000225;
-        // float r = length(position);
-        // float a;
-        // if (r > 0.001) {
-        //   a = atan(position.y, position.x);
-        // } else {
-        //   a = 0.0;
-        // }
-        // position.x += cos(a + PI * 0.5) * 0.005;
-        // position.y += sin(a + PI * 0.5) * 0.005;
-        // position += speed;
-        // speed *= 0.975;
-        // position *= 0.995;
+        // speed.x += noise(vec3(position * 2.125, uv.x + time)) * 0.000225;
+        // speed.y += noise(vec3(position * 2.125, uv.y + time + 1000.0)) * 0.000225;
+        float r = length(position);
+        float a;
+        if (r > 0.001) {
+          a = atan(position.y, position.x);
+        } else {
+          a = 0.0;
+        }
+        position.x += cos(a + PI * 0.5) * 0.005;
+        position.y += sin(a + PI * 0.5) * 0.005;
+        position += speed;
+        speed *= 0.975;
+        position *= 0.995;
+        gl_FragColor = vec4(position, speed);
         gl_FragColor = vec4(position, speed);
       }
     `;
@@ -437,22 +469,26 @@ class WebGL extends ScanComponent {
 
   setInitialParticleData([w, h]) {
     let numParticles = w * h,
-        data = new Float32Array(numParticles * 4);
+        data = new Float32Array(numParticles * 4),
+        pIdx = 0;
 
-    for(var i = 0; i < numParticles; i++) {
-      let pIdx = i * 4,
-          tX = Math.floor(i % w) / w, //Texture pixel x.
-          tY = Math.floor(i / w) / h, //Texture pixel y.
-          x = Math.abs(Math.random() * 2.0 - 1.0), //Effect pixel x.
-          y = Math.abs(Math.random() * 2.0 - 1.0); //Effect pixel y.
-
-          data[pIdx] = x;
-          data[pIdx + 1] = y;
-          data[pIdx + 2] = tX;
-          data[pIdx + 3] = tY;
+    for(var i = 0; i < w; i++) {
+      for(var j = 0; j < h; j++) {
+        var u = i / (w - 1);
+        var v = j / (h - 1);
+        var x = Math.abs(Math.random() * 2.0 - 1.0);
+        var y = Math.abs(Math.random() * 2.0 - 1.0);
+        data[pIdx++] = x;
+        data[pIdx++] = y;
+        data[pIdx++] = u;
+        data[pIdx++] = v;
+      }
     }
 
     var pixels = ndarray(data, [w, h, 4]);
+    console.log(pixels);
+    // this.FBOs[0].color[0].setPixels(pixels);
+    // this.FBOs[1].color[0].setPixels(pixels);
     this.prevFBO.color[0].setPixels(pixels);
     this.currFBO.color[0].setPixels(pixels);
   }
@@ -470,7 +506,6 @@ class WebGL extends ScanComponent {
         data[k++] = v;
       }
     }
-
     return data;
   }
 
@@ -487,8 +522,12 @@ class WebGL extends ScanComponent {
     console.log('logic shader created');
     this.renderShader = Shader(gl, this.renderVert, this.renderFrag);
     console.log('render shader created');
+
     this.currFBO = FBO(gl, [w, h], {float: true});
     this.prevFBO = FBO(gl, [w, h], {float: true});
+
+    // this.current = 0;
+    // this.FBOs = [FBO(gl, [w, h], {float: true}), FBO(gl, [w, h], {float: true})];
 
     this.setInitialParticleData(this.texture.shape);
 
@@ -502,32 +541,52 @@ class WebGL extends ScanComponent {
 
     this.logicShader.attributes.aVertexPosition.location = 0;
     this.renderShader.attributes.aVertexPosition.location = 0;
-    this.renderShader.attributes.aTexturePosition.location = 1;
-    this.draw();
+    // this.renderShader.attributes.aTexturePosition.location = 1;
+    this.animate();
+    // this.draw();
   }
 
   step() {
+    // console.log('step called');
     let [w, h] = this.texture.shape;
     this.currFBO.bind();
+    // let prevFBO = this.FBOs[this.current],
+    //     currFBO = this.FBOs[this.current ^= 1];
+
+    // currFBO.bind()
     this.gl.viewport(0, 0, w, h);
 
     this.logicShader.bind();
     this.logicShader.uniforms.uResolution = [w, h];
     this.logicShader.uniforms.uData = this.prevFBO.color[0].bind();
 
-
-    console.log('step called');
-    // this.particleVAO.bind();
-    // this.vao.draw(gl.TRIANGLES, 6);
+    this.particleVAO.bind();
+    this.particleVAO.draw(this.gl.POINTS, w * h);
+    // ABT(this.gl);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+
 
     var prevFBO = this.prevFBO;
     this.prevFBO = this.currFBO;
     this.currFBO = prevFBO;
   }
 
-  draw() {
-    console.log('draw called');
+  /*
+    checkFBOs(lastFBO) {
+      read(this.prevFBO.color[0], function(err, prevData) {
+        read(lastFBO.color[0], function(err, lastData) {
+          read(this.currFBO.color[0], function(err, currData) {
+            console.log(assert.deepEqual(currData, lastData));
+            console.log(assert.deepEqual(prevData, lastData));
+            console.log(assert.deepEqual(currData, prevData));
+         });
+        });
+      });
+    }
+  */
+
+  draw(delta) {
+    // console.log('draw called:', delta);
     let gl = this.gl,
         width  = gl.drawingBufferWidth,
         height = gl.drawingBufferHeight,
@@ -536,7 +595,6 @@ class WebGL extends ScanComponent {
     // Disabling blending here is important – if it's still
     // enabled your simulation will behave differently
     // to what you'd expect.
-    gl.disable(gl.DEPTH_TEST)
     gl.disable(gl.BLEND);
     this.step();
 
@@ -546,15 +604,15 @@ class WebGL extends ScanComponent {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.viewport(0, 0, width, height);
 
-    // this.particleGeo.bind(this.logicShader);
     this.renderShader.bind();
-    this.renderShader.uniforms.uData = this.prevFBO.color[0].bind();
-    this.renderShader.uniforms.uResolution = this.texture.shape;
+    this.renderShader.uniforms.uData = this.prevFBO.color[0].bind(); //this.FBOs[this.current].color[0].bind();
+    this.renderShader.uniforms.uResolution = [w, h];
     this.renderShader.uniforms.uImage = this.texture.bind();
-    this.renderShader.uniforms.uTextureSize = this.texture.shape;
+    this.renderShader.uniforms.uTextureSize = [w, h];
+    this.renderShader.uniforms.uTime = delta;
     this.particleVAO.bind();
-    this.particleVAO.draw(gl.POINTS);
-    // this.particleVAO.unbind();
+    this.particleVAO.draw(gl.POINTS, w * h);
+    this.particleVAO.unbind();
   }
 
   setupWebGL() {
@@ -593,12 +651,17 @@ class WebGL extends ScanComponent {
     var image = this.refs.gza;
 
     image.onload = () => {
+      this.lastFrame = 0;
       this.setupParticleSim();
     }
   }
 
-  animate() {
-    requestAnimationFrame(() => { this.animate(); });
+  animate(time) {
+    time = time || 0;
+    let delta = time - this.lastFrame;
+    this.lastFrame = time;
+    requestAnimationFrame((t) => { this.animate(t); });
+    this.draw(delta);
   }
 
   render() {
