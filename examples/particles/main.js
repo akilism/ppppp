@@ -358,9 +358,15 @@ class WebGL extends ScanComponent {
         // vec2 clipSpace = zeroToTwo - 1.0;
         // gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
         vec4 fboPosition = texture2D(uData, aVertexPosition);
-        vec2 position = fboPosition.yx; // - vec2(0.5, 0.5);
+        vec2 position = fboPosition.xy * vec2(1, -1) - vec2(0.5, -0.5);
         gl_PointSize = 2.0;
-        gl_Position = vec4(position, 1, 1);
+        // float sVal = sin(radians(0.0));
+        // float cVal = cos(radians(0.0));
+        // mat3 rotMat = mat3(cVal, -sVal, 0.0,
+        //                    sVal,  cVal, 0.0,
+        //                     0.0,   0.0, 1.0);
+        // gl_Position = vec4(vec3(position, 1.0) * rotMat, 1.0);
+        gl_Position = vec4(position, 1.0, 1.0);
         vTexturePosition = aVertexPosition;
       }
     `;
@@ -402,9 +408,26 @@ class WebGL extends ScanComponent {
         vec2 uv = gl_FragCoord.xy / uResolution;
         vec4 tData = texture2D(uData, uv);
         vec2 position = tData.xy;
-        vec2 finalPosition = tData.zw;
         vec2 onePixel = vec2(1.0, 1.0) / uResolution;
-        vec2 newPosition = mix(position, finalPosition, (onePixel.y * 5.0));
+        vec2 finalPosition = tData.zw;
+        vec2 newPosition = mix(position, finalPosition, (onePixel.y  * 10.0));
+        gl_FragColor = vec4(newPosition, finalPosition);
+      }
+    `;
+
+    this.logicFragRandom = `
+      precision mediump float;
+      uniform sampler2D uData;
+      uniform vec2 uResolution;
+      uniform float uTime;
+
+      void main() {
+        vec2 uv = gl_FragCoord.xy / uResolution;
+        vec4 tData = texture2D(uData, uv);
+        vec2 position = tData.xy;
+        vec2 onePixel = vec2(1.0, 1.0) / uResolution;
+        vec2 finalPosition = tData.zw;
+        vec2 newPosition = mix(position, finalPosition, (onePixel.y  * 10.0));
         gl_FragColor = vec4(newPosition, finalPosition);
       }
     `;
@@ -445,8 +468,7 @@ class WebGL extends ScanComponent {
         //Starting Point Coords
         var x = Math.random() * 2.0 - 1.0;
         var y = Math.random() * 2.0 - 1.0;
-        // var x = 0.0;
-        // var y = 0.0;
+
         //Texture Coords
         var u = i;
         var v = j;
@@ -470,8 +492,8 @@ class WebGL extends ScanComponent {
         xDim = 1.0 / w,
         yDim = 1.0 / h;
 
-    for (var i = 0; i < 1; i += xDim) {
-      for (var j = 0; j < 1; j += yDim) {
+    for (var i = 0; i < 1; i += yDim) {
+      for (var j = 0; j < 1; j += xDim) {
         data[k++] = i;
         data[k++] = j;
       }
@@ -488,7 +510,7 @@ class WebGL extends ScanComponent {
     this.texture = Texture(gl, this.refs.gza);
     let [w, h] = this.texture.shape;
 
-    this.logicShader = Shader(gl, this.logicVert, this.logicFrag);
+    this.logicShader = Shader(gl, this.logicVert, this.logicFragRandom);
     console.log('logic shader created');
     this.renderShader = Shader(gl, this.renderVert, this.renderFrag);
     console.log('render shader created');
@@ -562,7 +584,7 @@ class WebGL extends ScanComponent {
     this.step();
 
     // gl.enable(gl.BLEND);
-    // gl.blendFunc(gl.ONE, gl.ONE);
+    // gl.blendFunc(gl.SRC_ALPHA, gl.SRC_ALPHA);
     gl.clearColor(1.0, 1.0, 1.0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.viewport(0, 0, width, height);
@@ -570,7 +592,7 @@ class WebGL extends ScanComponent {
     this.renderShader.bind();
     this.renderShader.uniforms = {
       uData: this.prevFBO.color[0].bind(0),
-      uResolution: [w, h],
+      uResolution: [width, height],
       uImage: this.texture.bind(1),
       uTextureSize: [w, h],
       uTime: delta
@@ -636,7 +658,7 @@ class WebGL extends ScanComponent {
                                         height: this.props.measurements.viewportHeight-0}}>
         <canvas ref="stage" className="stage" width={this.props.measurements.viewportWidth}
                 height={this.props.measurements.viewportHeight}></canvas>
-        <img src="/shade/gza.png" ref="gza" style={{visibility: 'hidden'}} />
+        <img src="/particles/heart.jpg" ref="gza" style={{visibility: 'hidden'}} />
       </div>
     )
   }
