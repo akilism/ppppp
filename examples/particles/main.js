@@ -352,28 +352,26 @@ class WebGL extends ScanComponent {
 
       varying vec2 vTexturePosition;
 
-
       void main() {
         // vec2 zeroToOne = aVertexPosition / uResolution;
         // vec2 zeroToTwo = zeroToOne * 2.0;
         // vec2 clipSpace = zeroToTwo - 1.0;
         // gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
         vec4 fboPosition = texture2D(uData, aVertexPosition);
-        vec2 position = fboPosition.xy - vec2(0.5, 0.5);
-        position.x *= uResolution.y / uResolution.x;
-        gl_PointSize = 1.0;
+        vec2 position = fboPosition.xy; // - vec2(0.5, 0.5);
+        gl_PointSize = 2.0;
         gl_Position = vec4(position, 1, 1);
-        // gl_Position = vec4(aVertexPosition, 1, 1);
         vTexturePosition = aVertexPosition;
       }
     `;
 
     this.renderFrag = `
       precision mediump float;
-      // uniform sampler2D uImage;
+
       uniform vec2 uTextureSize;
-      uniform sampler2D uData;
       uniform vec2 uResolution;
+      uniform sampler2D uImage;
+      uniform sampler2D uData;
 
       varying vec2 vTexturePosition;
 
@@ -381,10 +379,7 @@ class WebGL extends ScanComponent {
         //vec2 onePixel = vec2(1.0, 1.0) / uTextureSize;
         vec2 uv = gl_FragCoord.xy / uResolution;
         vec4 tData = texture2D(uData, vTexturePosition);
-        // gl_FragColor = texture2D(uImage, vTexturePosition).rgba; //vec4(1,1,1,1); //
-        // vec2  p = (gl_PointCoord.xy - 0.5) * 2.0;
-        // float d = 1.0 - dot(p, p);
-        gl_FragColor = vec4(1,1,1,1); //vec4(d * vec3(0.55, 0.2, 0.25), 1);
+        gl_FragColor = texture2D(uImage, tData.zw).rgba;
       }
     `;
 
@@ -403,18 +398,13 @@ class WebGL extends ScanComponent {
       uniform vec2 uResolution;
       uniform float uTime;
 
-      // vec2 linearTween(float t, vec2 b, vec2 c float d) {
-      //   return c*t/d + b;
-      // }
-
       void main() {
         vec2 uv = gl_FragCoord.xy / uResolution;
         vec4 tData = texture2D(uData, uv);
         vec2 position = tData.xy;
         vec2 finalPosition = tData.zw;
         vec2 onePixel = vec2(1.0, 1.0) / uResolution;
-        // vec2 newPosition = linearTween(uTime, position, finalPosition, 1.0);
-        vec2 newPosition = finalPosition * uTime / 10000.0 + position;
+        vec2 newPosition = mix(position, finalPosition, (onePixel.y * 5.0));
         gl_FragColor = vec4(newPosition, finalPosition);
       }
     `;
@@ -446,14 +436,21 @@ class WebGL extends ScanComponent {
   setInitialParticleData([w, h]) {
     let numParticles = w * h,
         data = new Float32Array(numParticles * 4),
-        pIdx = 0;
+        pIdx = 0,
+        xDim = 1.0 / w,
+        yDim = 1.0 / h;
 
-    for(var i = 0; i < w; i++) {
-      for(var j = 0; j < h; j++) {
-        var u = i / (w - 1);
-        var v = j / (h - 1);
-        var x = Math.abs(Math.random() * 2.0 - 1.0);
-        var y = Math.abs(Math.random() * 2.0 - 1.0);
+    for(var i = 0; i < 1; i += xDim) {
+      for(var j = 0; j < 1; j += yDim) {
+        //Starting Point Coords
+        var x = Math.random() * 2.0 - 1.0;
+        var y = Math.random() * 2.0 - 1.0;
+        // var x = 0.0;
+        // var y = 0.0;
+        //Texture Coords
+        var u = i;
+        var v = j;
+
         data[pIdx++] = x;
         data[pIdx++] = y;
         data[pIdx++] = u;
@@ -462,24 +459,21 @@ class WebGL extends ScanComponent {
     }
 
     var pixels = ndarray(data, [w, h, 4]);
-    console.log(pixels);
-    // this.FBOs[0].color[0].setPixels(pixels);
-    // this.FBOs[1].color[0].setPixels(pixels);
     this.prevFBO.color[0].setPixels(pixels);
     this.currFBO.color[0].setPixels(pixels);
   }
 
   generateLUT([w, h]) {
-    var size = w * h * 2;
-    var data = new Float32Array(size);
-    var k = 0;
+    var size = w * h * 2,
+        data = new Float32Array(size),
+        k = 0,
+        xDim = 1.0 / w,
+        yDim = 1.0 / h;
 
-    for (var i = 0; i < w; i++) {
-      for (var j = 0; j < h; j++) {
-        var u = i / (w - 1);
-        var v = j / (h - 1);
-        data[k++] = u;
-        data[k++] = v;
+    for (var i = 0; i < 1; i += xDim) {
+      for (var j = 0; j < 1; j += yDim) {
+        data[k++] = i;
+        data[k++] = j;
       }
     }
     return data;
@@ -502,9 +496,6 @@ class WebGL extends ScanComponent {
     this.currFBO = FBO(gl, [w, h], {float: true});
     this.prevFBO = FBO(gl, [w, h], {float: true});
 
-    // this.current = 0;
-    // this.FBOs = [FBO(gl, [w, h], {float: true}), FBO(gl, [w, h], {float: true})];
-
     this.setInitialParticleData(this.texture.shape);
 
     this.particleVAO = VAO(gl,
@@ -526,22 +517,17 @@ class WebGL extends ScanComponent {
     // console.log('step called');
     let [w, h] = this.texture.shape;
     this.currFBO.bind();
-    // let prevFBO = this.FBOs[this.current],
-    //     currFBO = this.FBOs[this.current ^= 1];
-
-    // currFBO.bind()
     this.gl.viewport(0, 0, w, h);
 
     this.logicShader.bind();
-    this.logicShader.uniforms.uResolution = [w, h];
-    this.logicShader.uniforms.uTime = this.lastFrame * 0.001;
-    this.logicShader.uniforms.uData = this.prevFBO.color[0].bind();
+    this.logicShader.uniforms = {
+      uResolution: [w, h],
+      uTime: this.lastFrame * 0.001,
+      uData: this.prevFBO.color[0].bind()
+    };
 
-    // this.particleVAO.bind();
-    // this.particleVAO.draw(this.gl.POINTS, w * h);
     ABT(this.gl);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-
 
     var prevFBO = this.prevFBO;
     this.prevFBO = this.currFBO;
@@ -575,18 +561,20 @@ class WebGL extends ScanComponent {
     gl.disable(gl.BLEND);
     this.step();
 
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE);
-    gl.clearColor(0.045, 0.02, 0.095, 1);
+    // gl.enable(gl.BLEND);
+    // gl.blendFunc(gl.ONE, gl.ONE);
+    gl.clearColor(1.0, 1.0, 1.0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.viewport(0, 0, width, height);
 
     this.renderShader.bind();
-    this.renderShader.uniforms.uData = this.prevFBO.color[0].bind(); //this.FBOs[this.current].color[0].bind();
-    this.renderShader.uniforms.uResolution = [w, h];
-    // this.renderShader.uniforms.uImage = this.texture.bind();
-    this.renderShader.uniforms.uTextureSize = [w, h];
-    this.renderShader.uniforms.uTime = delta;
+    this.renderShader.uniforms = {
+      uData: this.prevFBO.color[0].bind(0),
+      uResolution: [w, h],
+      uImage: this.texture.bind(1),
+      uTextureSize: [w, h],
+      uTime: delta
+    };
     this.particleVAO.bind();
     this.particleVAO.draw(gl.POINTS, w * h);
     this.particleVAO.unbind();
