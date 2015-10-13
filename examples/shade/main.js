@@ -193,7 +193,7 @@ class Root extends React.Component {
     // <ScrambleMask measurements={this.props.measurements} start={0} end={0.1} imagePath="/akilpixi/ratking.jpg" />
     return (
       <div>
-        <Shade measurements={this.props.measurements} start={0} end={1}  />
+        <Shade measurements={this.props.measurements} start={0} end={0.5}  />
         <audio id="sfxError">
           <source src="/akilpixi/error.wav" type="audio/wav" />
         </audio>
@@ -304,6 +304,54 @@ ScanComponent.contextTypes = {
   toggleWormhole: React.PropTypes.func.isRequired
 };
 
+class BangerText extends ScanComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      className: "banger-text",
+      scaleValue: 0
+    }
+  }
+
+  componentWillReceiveProps() {
+    this.setState(this.adjust(this.state));
+  }
+
+  isActive(d){
+    return (d.pctScroll >= this.props.start && d.pctScroll < this.props.end);
+  }
+
+  adjust(last_state, d) {
+    let {viewportHeight, viewportTop, adjustedViewportTop, contentHeight, pctScroll} = this.props.measurements,
+        adjustedPctScroll = this.scaler(pctScroll),
+        active = this.isActive(this.props.measurements),
+        scaleValue = last_state.scaleValue;
+
+        if(pctScroll < this.props.start) {
+          scaleValue = 0;
+        }
+        if(active) {
+          scaleValue = Math.linearTween(adjustedPctScroll, 0, 1, 1);
+        }
+        if(pctScroll >= this.props.end) {
+          scaleValue = 1;
+        }
+
+    return {active, scaleValue};
+  }
+
+  render() {
+    return (
+      <div style={{textAlign: "center"}}>
+      <h5 className={this.state.className} style={{
+        transform: "scale(" + this.state.scaleValue + ")"
+      }}>
+        {this.props.caption}
+      </h5>
+      </div>
+    );
+  }
+}
 
 class Shade extends ScanComponent {
   constructor(props) {
@@ -436,6 +484,7 @@ class Shade extends ScanComponent {
   render() {
     return(
       <div className="stage-bg" style={{position: "fixed", width: this.props.measurements.viewportWidth, height: this.props.measurements.viewportHeight-0}}>
+        <BangerText measurements={this.props.measurements} start={0.45} end={0.65} caption="Enter the GZA." />
         <div ref="stage" className="pixi-stage" style={{width: "100%", height: "100%"}} ></div>
       </div>
     )
