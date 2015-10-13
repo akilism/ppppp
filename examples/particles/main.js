@@ -359,9 +359,9 @@ class WebGL extends ScanComponent {
         // vec2 clipSpace = zeroToTwo - 1.0;
         // gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
         vec4 fboPosition = texture2D(uData, aVertexPosition);
-        vec2 position = fboPosition.xy;
-        // position.x *= uResolution.y / uResolution.x;
-        gl_PointSize = 2.0;
+        vec2 position = fboPosition.xy - vec2(0.5, 0.5);
+        position.x *= uResolution.y / uResolution.x;
+        gl_PointSize = 1.0;
         gl_Position = vec4(position, 1, 1);
         // gl_Position = vec4(aVertexPosition, 1, 1);
         vTexturePosition = aVertexPosition;
@@ -382,9 +382,9 @@ class WebGL extends ScanComponent {
         vec2 uv = gl_FragCoord.xy / uResolution;
         vec4 tData = texture2D(uData, vTexturePosition);
         // gl_FragColor = texture2D(uImage, vTexturePosition).rgba; //vec4(1,1,1,1); //
-        vec2  p = (gl_PointCoord.xy - 0.5) * 2.0;
-        float d = 1.0 - dot(p, p);
-        gl_FragColor = vec4(d * vec3(0.55, 0.2, 0.25), 1);
+        // vec2  p = (gl_PointCoord.xy - 0.5) * 2.0;
+        // float d = 1.0 - dot(p, p);
+        gl_FragColor = vec4(1,1,1,1); //vec4(d * vec3(0.55, 0.2, 0.25), 1);
       }
     `;
 
@@ -401,6 +401,11 @@ class WebGL extends ScanComponent {
       precision mediump float;
       uniform sampler2D uData;
       uniform vec2 uResolution;
+      uniform float uTime;
+
+      // vec2 linearTween(float t, vec2 b, vec2 c float d) {
+      //   return c*t/d + b;
+      // }
 
       void main() {
         vec2 uv = gl_FragCoord.xy / uResolution;
@@ -408,39 +413,10 @@ class WebGL extends ScanComponent {
         vec2 position = tData.xy;
         vec2 finalPosition = tData.zw;
         vec2 onePixel = vec2(1.0, 1.0) / uResolution;
-        vec2 newPosition = position - onePixel;
-
+        // vec2 newPosition = linearTween(uTime, position, finalPosition, 1.0);
+        vec2 newPosition = finalPosition * uTime / 10000.0 + position;
         gl_FragColor = vec4(newPosition, finalPosition);
       }
-
-      // precision mediump float;
-      // #define PI 3.14159265359
-      // uniform sampler2D uData;
-      // // uniform float time;
-      // uniform vec2 uResolution;
-      // // #pragma glslify: noise = require('glsl-noise/simplex/3d')
-      // void main() {
-      //   vec2 uv       = gl_FragCoord.xy / uResolution;
-      //   vec4 tData    = texture2D(uData, uv);
-      //   vec2 position = tData.xy;
-      //   vec2 speed    = tData.zw;
-      //   // speed.x += noise(vec3(position * 2.125, uv.x + time)) * 0.000225;
-      //   // speed.y += noise(vec3(position * 2.125, uv.y + time + 1000.0)) * 0.000225;
-      //   float r = length(position);
-      //   float a;
-      //   if (r > 0.001) {
-      //     a = atan(position.y, position.x);
-      //   } else {
-      //     a = 0.0;
-      //   }
-      //   position.x += cos(a + PI * 0.5) * 0.005;
-      //   position.y += sin(a + PI * 0.5) * 0.005;
-      //   position += speed;
-      //   speed *= 0.975;
-      //   position *= 0.995;
-      //   gl_FragColor = vec4(position, speed);
-      //   gl_FragColor = vec4(position, speed);
-      // }
     `;
 
   }
@@ -558,6 +534,7 @@ class WebGL extends ScanComponent {
 
     this.logicShader.bind();
     this.logicShader.uniforms.uResolution = [w, h];
+    this.logicShader.uniforms.uTime = this.lastFrame * 0.001;
     this.logicShader.uniforms.uData = this.prevFBO.color[0].bind();
 
     // this.particleVAO.bind();
