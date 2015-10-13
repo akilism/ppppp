@@ -344,7 +344,7 @@ class WebGL extends ScanComponent {
 
     this.renderVert = `
       precision mediump float;
-      // attribute vec2 aTexturePosition;
+      attribute vec2 aTexturePosition;
       attribute vec2 aVertexPosition;
       uniform vec2 uResolution;
       uniform sampler2D uData;
@@ -358,7 +358,7 @@ class WebGL extends ScanComponent {
         // vec2 clipSpace = zeroToTwo - 1.0;
         // gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
         vec4 fboPosition = texture2D(uData, aVertexPosition);
-        vec2 position = fboPosition.xy; // - vec2(0.5, 0.5);
+        vec2 position = fboPosition.yx; // - vec2(0.5, 0.5);
         gl_PointSize = 2.0;
         gl_Position = vec4(position, 1, 1);
         vTexturePosition = aVertexPosition;
