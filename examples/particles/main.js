@@ -370,7 +370,7 @@ class WebGL extends ScanComponent {
 
     this.renderFrag = `
       precision mediump float;
-      uniform sampler2D uImage;
+      // uniform sampler2D uImage;
       uniform vec2 uTextureSize;
       uniform sampler2D uData;
       uniform vec2 uResolution;
@@ -381,7 +381,7 @@ class WebGL extends ScanComponent {
         //vec2 onePixel = vec2(1.0, 1.0) / uTextureSize;
         vec2 uv = gl_FragCoord.xy / uResolution;
         vec4 tData = texture2D(uData, vTexturePosition);
-        gl_FragColor = texture2D(uImage, vTexturePosition).rgba; //vec4(1,1,1,1); //
+        // gl_FragColor = texture2D(uImage, vTexturePosition).rgba; //vec4(1,1,1,1); //
         vec2  p = (gl_PointCoord.xy - 0.5) * 2.0;
         float d = 1.0 - dot(p, p);
         gl_FragColor = vec4(d * vec3(0.55, 0.2, 0.25), 1);
@@ -398,49 +398,49 @@ class WebGL extends ScanComponent {
     `;
 
     this.logicFrag = `
-      // precision mediump float;
-      // uniform sampler2D uData;
-      // uniform vec2 uResolution;
-
-      // void main() {
-      //   vec2 uv = gl_FragCoord.xy / uResolution;
-      //   vec4 tData = texture2D(uData, uv);
-      //   vec2 position = tData.xy;
-      //   vec2 finalPosition = tData.zw;
-      //   vec2 onePixel = vec2(1.0, 1.0) / uResolution;
-      //   vec2 newPosition = position + onePixel;
-
-      //   gl_FragColor = vec4(vec2(0.5), finalPosition);
-      // }
-
       precision mediump float;
-      #define PI 3.14159265359
       uniform sampler2D uData;
-      // uniform float time;
       uniform vec2 uResolution;
-      // #pragma glslify: noise = require('glsl-noise/simplex/3d')
+
       void main() {
-        vec2 uv       = gl_FragCoord.xy / uResolution;
-        vec4 tData    = texture2D(uData, uv);
+        vec2 uv = gl_FragCoord.xy / uResolution;
+        vec4 tData = texture2D(uData, uv);
         vec2 position = tData.xy;
-        vec2 speed    = tData.zw;
-        // speed.x += noise(vec3(position * 2.125, uv.x + time)) * 0.000225;
-        // speed.y += noise(vec3(position * 2.125, uv.y + time + 1000.0)) * 0.000225;
-        float r = length(position);
-        float a;
-        if (r > 0.001) {
-          a = atan(position.y, position.x);
-        } else {
-          a = 0.0;
-        }
-        position.x += cos(a + PI * 0.5) * 0.005;
-        position.y += sin(a + PI * 0.5) * 0.005;
-        position += speed;
-        speed *= 0.975;
-        position *= 0.995;
-        gl_FragColor = vec4(position, speed);
-        gl_FragColor = vec4(position, speed);
+        vec2 finalPosition = tData.zw;
+        vec2 onePixel = vec2(1.0, 1.0) / uResolution;
+        vec2 newPosition = position - onePixel;
+
+        gl_FragColor = vec4(newPosition, finalPosition);
       }
+
+      // precision mediump float;
+      // #define PI 3.14159265359
+      // uniform sampler2D uData;
+      // // uniform float time;
+      // uniform vec2 uResolution;
+      // // #pragma glslify: noise = require('glsl-noise/simplex/3d')
+      // void main() {
+      //   vec2 uv       = gl_FragCoord.xy / uResolution;
+      //   vec4 tData    = texture2D(uData, uv);
+      //   vec2 position = tData.xy;
+      //   vec2 speed    = tData.zw;
+      //   // speed.x += noise(vec3(position * 2.125, uv.x + time)) * 0.000225;
+      //   // speed.y += noise(vec3(position * 2.125, uv.y + time + 1000.0)) * 0.000225;
+      //   float r = length(position);
+      //   float a;
+      //   if (r > 0.001) {
+      //     a = atan(position.y, position.x);
+      //   } else {
+      //     a = 0.0;
+      //   }
+      //   position.x += cos(a + PI * 0.5) * 0.005;
+      //   position.y += sin(a + PI * 0.5) * 0.005;
+      //   position += speed;
+      //   speed *= 0.975;
+      //   position *= 0.995;
+      //   gl_FragColor = vec4(position, speed);
+      //   gl_FragColor = vec4(position, speed);
+      // }
     `;
 
   }
@@ -560,9 +560,9 @@ class WebGL extends ScanComponent {
     this.logicShader.uniforms.uResolution = [w, h];
     this.logicShader.uniforms.uData = this.prevFBO.color[0].bind();
 
-    this.particleVAO.bind();
-    this.particleVAO.draw(this.gl.POINTS, w * h);
-    // ABT(this.gl);
+    // this.particleVAO.bind();
+    // this.particleVAO.draw(this.gl.POINTS, w * h);
+    ABT(this.gl);
     this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
 
 
@@ -607,7 +607,7 @@ class WebGL extends ScanComponent {
     this.renderShader.bind();
     this.renderShader.uniforms.uData = this.prevFBO.color[0].bind(); //this.FBOs[this.current].color[0].bind();
     this.renderShader.uniforms.uResolution = [w, h];
-    this.renderShader.uniforms.uImage = this.texture.bind();
+    // this.renderShader.uniforms.uImage = this.texture.bind();
     this.renderShader.uniforms.uTextureSize = [w, h];
     this.renderShader.uniforms.uTime = delta;
     this.particleVAO.bind();
