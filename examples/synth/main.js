@@ -662,7 +662,8 @@ class Slide0 extends ScanComponent {
         low_pass: 4,
         wav: false,
         selection: 0,
-        bass: false
+        bass: false,
+        invert: false
       };
     }
 
@@ -677,6 +678,85 @@ class Slide0 extends ScanComponent {
         var loader = PIXI.loader;
         var frames = _.range(0,40);
         var movie;
+
+        this.fragmentShader = `
+            precision mediump float;
+            uniform vec2 resolution;
+            uniform float time;
+            uniform float time_multi;
+            uniform float freq;
+            uniform float ts;
+
+            const mat3 rgb2yiq = mat3(0.299, 0.587, 0.114, 0.595716, -0.274453, -0.321263, 0.211456, -0.522591, 0.311135);
+            const mat3 yiq2rgb = mat3(1.0, 0.9563, 0.6210, 1.0, -0.2721, -0.6474, 1.0, -1.1070, 1.7046);
+
+            void main(){
+                // Fragment coords relative to the center of viewport, in a 1 by 1 coords sytem.
+                vec2 uv = -1.0 + 2.0* gl_FragCoord.xy / resolution.xy;
+
+                // But I want circles, not ovales, so I adjust y with x resolution.
+                vec2 homoCoords = vec2( uv.x, 2.0* gl_FragCoord.y/resolution.x );
+
+                // Sin of distance from a moving origin to current fragment will give us..... 
+                vec2 movingOrigin1 = vec2(sin(time*.7*time_multi),+sin(time*1.7*time_multi));
+                
+                // ...numerous... 
+                float frequencyBoost = freq; 
+                
+                // ... awesome concentric circles.
+                float wavePoint1 = sin(distance(movingOrigin1, homoCoords)*frequencyBoost);
+                
+                // I want sharp circles, not blurry ones.
+                float blackOrWhite1 = sign(wavePoint1);
+                
+                // That was cool ! Let's do it again ! (No, I dont want to write a function today, I'm tired).
+                vec2 movingOrigin2 = vec2(-cos(time*2.0),-sin(time*3.0));
+                float wavePoint2 = sin(distance(movingOrigin2, homoCoords)*frequencyBoost * ts);
+                float blackOrWhite2 = sign(wavePoint2);
+                
+                // I love pink.
+                vec3 pink = vec3(1.0, .5, .9 );
+                vec3 darkPink = vec3(0.5, 0.1, 0.3);
+
+                vec3 yColorPink = rgb2yiq * pink;
+                float hue = mod(time, 360.0);
+                float originalHuePink = atan(yColorPink.b, yColorPink.g);
+                float finalHuePink = originalHuePink + hue;
+                float chromaPink = sqrt(yColorPink.b*yColorPink.b+yColorPink.g*yColorPink.g);
+                vec3 yFinalColor = vec3(yColorPink.r, chromaPink * cos(finalHuePink), chromaPink * sin(finalHuePink));
+                vec3 finalPink = yiq2rgb*yFinalColor;
+
+                vec3 yColorDPink = rgb2yiq * darkPink;
+                float originalHueDPink = atan(yColorDPink.b, yColorDPink.g);
+                float finalHueDPink = originalHueDPink + hue;
+                float chromaDPink = sqrt(yColorDPink.b*yColorDPink.b+yColorDPink.g*yColorDPink.g);
+                vec3 yFinalColorD = vec3(yColorDPink.r, chromaDPink * cos(finalHueDPink), chromaDPink * sin(finalHueDPink));
+                vec3 finalDPink = yiq2rgb*yFinalColorD;
+                
+                // XOR virtual machine.
+                float composite = blackOrWhite1 * blackOrWhite2;
+                
+                // Pinkization
+                gl_FragColor = vec4(max( finalPink * composite, finalDPink), 1.0);
+            }
+        `
+        this.eye_bg = new PIXI.Sprite.fromImage("grimes-gif/frame_0.gif")
+        this.eye_bg.width = $(window).width()
+        this.eye_bg.height = $(window).height()
+        this.uniforms = {
+            resolution: { type: "v2", value: {x: this.eye_bg.width, y: this.eye_bg.height}},
+            time: {type: "1f", value: 0.0},
+            freq: {type: "1f", value: 50.0},
+            time_multi: {type: "1f", value: 1.0},
+            ts: {type: "1f", value: 1.0}
+        }
+        this.shader = new PIXI.AbstractFilter(null, this.fragmentShader, this.uniforms)
+        this.eye_bg.shader = this.shader;
+        stage.addChild(this.eye_bg);
+        this.invert_filter = new PIXI.filters.InvertFilter(); 
+        this.eye_bg.filters = [this.invert_filter];
+
+
         frames = _.map(frames,function(i){
           loader.add("frame_"+i,"grimes-gif/frame_"+i+".gif")
           return "frame_"+i;
@@ -687,32 +767,50 @@ class Slide0 extends ScanComponent {
           })
           movie = new PIXI.extras.MovieClip(frames);
           var movie_2 = new PIXI.extras.MovieClip(frames);
-          movie.gotoAndPlay(0)
-          movie_2.gotoAndPlay(0)
+          var movie_3 = new PIXI.extras.MovieClip(frames);
+          var movie_4 = new PIXI.extras.MovieClip(frames);
           var ar = movie.height/movie.width;
-          movie.width = $(window).width();
-          movie.height = movie.width * ar;
-          movie_2.width = $(window).width();
-          movie_2.height = movie.width * ar;
-          window.movie = movie
-          window.movie_2 = movie_2
-          movie.anchor.x = 0.5
-          movie_2.anchor.x = 0.5
-          movie.position.x = $(window).width()/2;
-          movie_2.position.x = $(window).width()/2;
+          var new_height = $(window).width() * ar
+          var offset = $(window).height() - new_height;
+          this.movie = movie
+          this.movie_2 = movie_2
+          this.movie_3 = movie_3
+          this.movie_4 = movie_4
+
+          window.movies = [movie_4,movie_3,movie_2,movie];
+          var invert_filter = this.invert_filter;
+          _(window.movies).each(function(m){
+            m.gotoAndPlay(0); 
+            m.width = $(window).width();
+            m.height = m.width * ar;
+            m.position.y = offset;
+            m.anchor.x = 0.5;
+            m.position.x = $(window).width()/2;
+            m.animationSpeed = 0.48
+            stage.addChild(m);
+          })
+
           movie_2.scale.x = -1 * movie_2.scale.x;
+          movie_4.scale.x = -1 * movie_4.scale.x;
           movie_2.alpha = 0;
-          stage.addChild(movie);
-          stage.addChild(movie_2);
+          movie_3.alpha = 0;
+          movie_4.alpha = 0;
+
+          movie_3.scale.x = movie_3.scale.x * 2;
+          movie_3.scale.y = movie_3.scale.y * 2;
+          movie_4.scale.x = movie_4.scale.x * 2;
+          movie_4.scale.y = movie_4.scale.y * 2;
+          movie_3.blendMode = PIXI.BLEND_MODES.MULTIPLY;
+          movie_4.blendMode = PIXI.BLEND_MODES.MULTIPLY;
+          movie_3.position.y = -400;
+          movie_4.position.y = -400;
+
           requestAnimationFrame( animate );
-          this.movie = movie;
-          this.movie_2 = movie_2;
+          
           var filter = new PIXI.filters.ColorMatrixFilter();
-          movie.filters = [filter]
-          movie_2.filters = [filter]
+          movie.filters = [filter,this.invert_filter]
+          movie_2.filters = [filter,this.invert_filter]
           this.color_filter = filter;
-          movie.animationSpeed = 0.48
-          movie_2.animationSpeed = 0.48
           this.color_filter.saturate(this.state.speed_syn * 2)
           this.color_filter.hue((this.state.speed_syn - 1) * 90,true)
         },this))
@@ -840,10 +938,27 @@ class Slide0 extends ScanComponent {
           this.setState({bass: bass})
         }
 
+        if(e.keyCode === 13){
+          this.setState({invert: true})
+        }
+
       },this))
 
-      function animate() {
+      $(document).on("keyup",_.bind(function(e){
+        if(e.keyCode === 13){
+          this.setState({invert: false})
+        }
+      },this))
+
+      var uniforms = this.uniforms;
+      var state = this.state;
+      var that = this;
+      function animate(ts) {
               requestAnimationFrame( animate );
+              uniforms.time.value = ts/1000;
+              uniforms.freq.value = [5.0,10.0,20.0,40.0,60.0,100.0][that.state.low_pass]
+              uniforms.time_multi.value = [6.0,4.0,2.0,1.5,1.0,0.8][that.state.low_pass]
+              uniforms.ts.value = that.state.speed_syn
               //frame += 1
               //var wave = (frame % 40)
               //if(wave > 20){
@@ -897,6 +1012,12 @@ class Slide0 extends ScanComponent {
             this.color_filter.saturate(this.state.speed_syn * 2)
             this.color_filter.hue((this.state.speed_syn - 1) * 90,true)
             this.movie_2.alpha = this.state.bass ? 1.0 : 0
+            this.movie_3.alpha = this.state.wav ? 1.0 : 0;
+            this.movie_4.alpha = this.state.wav && this.state.bass ? 1.0 : 0;
+        }
+
+        if(this.invert_filter){
+            this.invert_filter.invert = (this.state.invert ? 1 : 0);
         }
 
         return (
@@ -909,7 +1030,7 @@ class Slide0 extends ScanComponent {
                     backgroundColor: "red",
                     height: bar_height,
                     width: 50,
-                }} className={bar_selected ? "selected-bar" : ""}></div>
+                }} className={bar_selected ? "selected-bar control-bar" : "control-bar"}></div>
                 <div id="bar-2" style={{
                     position: "absolute",
                     bottom:10,
@@ -917,7 +1038,7 @@ class Slide0 extends ScanComponent {
                     backgroundColor: "blue",
                     height: bar_height_2,
                     width: 50
-                }} className={bar_selected_2 ? "selected-bar" : ""}></div>
+                }} className={bar_selected_2 ? "selected-bar control-bar" : "control-bar"}></div>
                 <div id="bar-3" style={{
                     position: "absolute",
                     bottom:10,
@@ -925,7 +1046,7 @@ class Slide0 extends ScanComponent {
                     backgroundColor: "yellow",
                     height: bar_height_3,
                     width: 50
-                }} className={bar_selected_3 ? "selected-bar" : ""}></div>
+                }} className={bar_selected_3 ? "selected-bar control-bar" : "control-bar"}></div>
                 <div id="bar-4" style={{
                     position: "absolute",
                     bottom:10,
@@ -933,7 +1054,7 @@ class Slide0 extends ScanComponent {
                     backgroundColor: "green",
                     height: bar_height_4,
                     width: 50
-                }} className={bar_selected_4 ? "selected-bar" : ""}></div>
+                }} className={bar_selected_4 ? "selected-bar control-bar" : "control-bar"}></div>
             </div>
         )
     }
