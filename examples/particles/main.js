@@ -334,10 +334,10 @@ class WebGL extends ScanComponent {
     this.frag = `
       precision mediump float;
       uniform sampler2D uImage;
-      uniform vec2 uTextureSize;
+      uniform vec2 uTextureResolution;
       varying vec2 vTexturePosition;
       void main() {
-        //vec2 onePixel = vec2(1.0, 1.0) / uTextureSize;
+        //vec2 onePixel = vec2(1.0, 1.0) / uTextureResolution;
         gl_FragColor = texture2D(uImage, vTexturePosition).rgba;
       }
     `;
@@ -358,7 +358,7 @@ class WebGL extends ScanComponent {
         // vec2 clipSpace = zeroToTwo - 1.0;
         // gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
         vec4 fboPosition = texture2D(uData, aVertexPosition);
-        vec2 position = fboPosition.yx; // - vec2(0.5, 0.5);
+        vec2 position = fboPosition.xy; // - vec2(0.5, 0.5);
         gl_PointSize = 2.0;
         gl_Position = vec4(position, 1, 1);
         vTexturePosition = aVertexPosition;
@@ -368,7 +368,7 @@ class WebGL extends ScanComponent {
     this.renderFrag = `
       precision mediump float;
 
-      uniform vec2 uTextureSize;
+      uniform vec2 uTextureResolution;
       uniform vec2 uResolution;
       uniform sampler2D uImage;
       uniform sampler2D uData;
@@ -376,8 +376,8 @@ class WebGL extends ScanComponent {
       varying vec2 vTexturePosition;
 
       void main() {
-        //vec2 onePixel = vec2(1.0, 1.0) / uTextureSize;
-        vec2 uv = gl_FragCoord.xy / uResolution;
+        //vec2 onePixel = vec2(1.0, 1.0) / uTextureResolution;
+        vec2 uv = gl_FragCoord.xy / uTextureResolution;
         vec4 tData = texture2D(uData, vTexturePosition);
         gl_FragColor = texture2D(uImage, tData.zw).rgba;
       }
@@ -396,15 +396,16 @@ class WebGL extends ScanComponent {
       precision mediump float;
       uniform sampler2D uData;
       uniform vec2 uResolution;
+      uniform vec2 uTextureResolution;
       uniform float uTime;
 
       void main() {
-        vec2 uv = gl_FragCoord.xy / uResolution;
+        vec2 uv = gl_FragCoord.xy / uTextureResolution;
         vec4 tData = texture2D(uData, uv);
         vec2 position = tData.xy;
         vec2 finalPosition = tData.zw;
-        vec2 onePixel = vec2(1.0, 1.0) / uResolution;
-        vec2 newPosition = mix(position, finalPosition, (onePixel.y * 5.0));
+        vec2 onePixel = vec2(1.0, 1.0) / uTextureResolution;
+        vec2 newPosition = mix(position, finalPosition, (onePixel.y * 25.0));
         gl_FragColor = vec4(newPosition, finalPosition);
       }
     `;
@@ -522,7 +523,8 @@ class WebGL extends ScanComponent {
 
     this.logicShader.bind();
     this.logicShader.uniforms = {
-      uResolution: [w, h],
+      uResolution: [this.refs.stage.width, this.refs.stage.height],
+      uTextureResolution: [w, h],
       uTime: this.lastFrame * 0.001,
       uData: this.prevFBO.color[0].bind()
     };
@@ -534,20 +536,6 @@ class WebGL extends ScanComponent {
     this.prevFBO = this.currFBO;
     this.currFBO = prevFBO;
   }
-
-  /*
-    checkFBOs(lastFBO) {
-      read(this.prevFBO.color[0], function(err, prevData) {
-        read(lastFBO.color[0], function(err, lastData) {
-          read(this.currFBO.color[0], function(err, currData) {
-            console.log(assert.deepEqual(currData, lastData));
-            console.log(assert.deepEqual(prevData, lastData));
-            console.log(assert.deepEqual(currData, prevData));
-         });
-        });
-      });
-    }
-  */
 
   draw(delta) {
     // console.log('draw called:', delta);
@@ -571,9 +559,9 @@ class WebGL extends ScanComponent {
     this.renderShader.bind();
     this.renderShader.uniforms = {
       uData: this.prevFBO.color[0].bind(0),
-      uResolution: [w, h],
+      uResolution: [this.refs.stage.width, this.refs.stage.height],
       uImage: this.texture.bind(1),
-      uTextureSize: [w, h],
+      uTextureResolution: [w, h],
       uTime: delta
     };
     this.particleVAO.bind();
@@ -607,7 +595,7 @@ class WebGL extends ScanComponent {
     this.shader.bind();
     this.shader.uniforms.uImage = this.texture.bind();
     this.shader.uniforms.uResolution = [this.props.measurements.viewportWidth, this.props.measurements.viewportHeight];
-    this.shader.uniforms.uTextureSize = [w, h];
+    this.shader.uniforms.uTextureResolution = [w, h];
     this.vao.bind();
     this.vao.draw(gl.TRIANGLES, 6);
     this.vao.unbind();
@@ -637,7 +625,7 @@ class WebGL extends ScanComponent {
                                         height: this.props.measurements.viewportHeight-0}}>
         <canvas ref="stage" className="stage" width={this.props.measurements.viewportWidth}
                 height={this.props.measurements.viewportHeight}></canvas>
-        <img src="/shade/gza.png" ref="gza" style={{visibility: 'hidden'}} />
+        <img src="/particles/heart.jpg" ref="gza" style={{visibility: 'hidden'}} />
       </div>
     )
   }
