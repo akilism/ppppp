@@ -347,21 +347,30 @@ class WebGL extends ScanComponent {
       attribute vec2 aTexturePosition;
       attribute vec2 aVertexPosition;
       uniform vec2 uResolution;
+      uniform vec2 uTextureResolution;
       uniform sampler2D uData;
       uniform float uTime;
 
       varying vec2 vTexturePosition;
 
+      vec2 toClipSpace(in vec2 resolution, in vec2 position) {
+        vec2 zeroToOne = position / resolution;
+        vec2 zeroToTwo = zeroToOne * 2.0;
+        vec2 clipSpace = zeroToTwo - 1.0;
+        return clipSpace;
+      }
+
+      vec2 toColorSpace(in vec2 position) {
+        return position * 0.5 + 0.5;
+      }
+
       void main() {
-        // vec2 zeroToOne = aVertexPosition / uResolution;
-        // vec2 zeroToTwo = zeroToOne * 2.0;
-        // vec2 clipSpace = zeroToTwo - 1.0;
-        // gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-        vec4 fboPosition = texture2D(uData, aVertexPosition);
-        vec2 position = fboPosition.xy; // - vec2(0.5, 0.5);
+        vec2 colorSpace = toColorSpace(toClipSpace(uTextureResolution, aVertexPosition));
+        vec4 fboPosition = texture2D(uData, colorSpace);
+        vec2 position = colorSpace; // - vec2(0.5, 0.5);
         gl_PointSize = 2.0;
         gl_Position = vec4(position, 1, 1);
-        vTexturePosition = aVertexPosition;
+        vTexturePosition = colorSpace;
       }
     `;
 
@@ -379,7 +388,7 @@ class WebGL extends ScanComponent {
         //vec2 onePixel = vec2(1.0, 1.0) / uTextureResolution;
         vec2 uv = gl_FragCoord.xy / uTextureResolution;
         vec4 tData = texture2D(uData, vTexturePosition);
-        gl_FragColor = texture2D(uImage, tData.zw).rgba;
+        gl_FragColor = texture2D(uImage, uv).rgba;
       }
     `;
 
@@ -405,7 +414,7 @@ class WebGL extends ScanComponent {
         vec2 position = tData.xy;
         vec2 finalPosition = tData.zw;
         vec2 onePixel = vec2(1.0, 1.0) / uTextureResolution;
-        vec2 newPosition = mix(position, finalPosition, (onePixel.y * 25.0));
+        vec2 newPosition = mix(position, finalPosition, (onePixel.y * 10.0));
         gl_FragColor = vec4(newPosition, finalPosition);
       }
     `;
@@ -471,8 +480,8 @@ class WebGL extends ScanComponent {
         xDim = 1.0 / w,
         yDim = 1.0 / h;
 
-    for (var i = 0; i < 1; i += xDim) {
-      for (var j = 0; j < 1; j += yDim) {
+    for (var i = 0; i < w; i++) {
+      for (var j = 0; j < h; j++) {
         data[k++] = i;
         data[k++] = j;
       }
@@ -548,7 +557,7 @@ class WebGL extends ScanComponent {
     // enabled your simulation will behave differently
     // to what you'd expect.
     gl.disable(gl.BLEND);
-    this.step();
+    // this.step();
 
     // gl.enable(gl.BLEND);
     // gl.blendFunc(gl.ONE, gl.ONE);
