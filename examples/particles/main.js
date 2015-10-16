@@ -360,9 +360,12 @@ class WebGL extends ScanComponent {
         return clipSpace * vec2(1.0, -1.0);
       }
 
+      vec2 toColorSpace(in vec2 position) { return position * 0.5 + 0.5; }
+
       void main() {
         vec2 clipSpace = toClipSpace(uResolution, aVertexPosition);
-        vec2 position = clipSpace;
+        vec4 texPos = texture2D(uData, toColorSpace(clipSpace));
+        vec2 position = texPos.xy; //toClipSpace(uResolution, texPos.xy);
         gl_PointSize = 2.0;
         gl_Position = vec4(position, 1, 1);
         vVertexPosition = aVertexPosition;
