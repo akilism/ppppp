@@ -351,26 +351,21 @@ class WebGL extends ScanComponent {
       uniform sampler2D uData;
       uniform float uTime;
 
-      varying vec2 vTexturePosition;
+      varying vec2 vVertexPosition;
 
       vec2 toClipSpace(in vec2 resolution, in vec2 position) {
         vec2 zeroToOne = position / resolution;
         vec2 zeroToTwo = zeroToOne * 2.0;
         vec2 clipSpace = zeroToTwo - 1.0;
-        return clipSpace;
-      }
-
-      vec2 toColorSpace(in vec2 position) {
-        return position * 0.5 + 0.5;
+        return clipSpace * vec2(1.0, -1.0);
       }
 
       void main() {
-        vec2 colorSpace = toColorSpace(toClipSpace(uTextureResolution, aVertexPosition));
-        vec4 fboPosition = texture2D(uData, colorSpace);
-        vec2 position = colorSpace; // - vec2(0.5, 0.5);
+        vec2 clipSpace = toClipSpace(uResolution, aVertexPosition);
+        vec2 position = clipSpace;
         gl_PointSize = 2.0;
         gl_Position = vec4(position, 1, 1);
-        vTexturePosition = colorSpace;
+        vVertexPosition = aVertexPosition;
       }
     `;
 
@@ -382,13 +377,23 @@ class WebGL extends ScanComponent {
       uniform sampler2D uImage;
       uniform sampler2D uData;
 
-      varying vec2 vTexturePosition;
+      varying vec2 vVertexPosition;
+
+      vec2 toClipSpace(in vec2 resolution, in vec2 position) {
+        vec2 zeroToOne = position / resolution;
+        vec2 zeroToTwo = zeroToOne * 2.0;
+        vec2 clipSpace = zeroToTwo - 1.0;
+        return clipSpace;
+      }
+
+      vec2 toColorSpace(in vec2 position) { return position * 0.5 + 0.5; }
+
 
       void main() {
-        //vec2 onePixel = vec2(1.0, 1.0) / uTextureResolution;
-        vec2 uv = gl_FragCoord.xy / uTextureResolution;
-        vec4 tData = texture2D(uData, vTexturePosition);
-        gl_FragColor = texture2D(uImage, uv).rgba;
+        // vec2 uv = gl_FragCoord.xy / uTextureResolution;
+        vec4 tData = texture2D(uData, gl_FragCoord.xy);
+        vec2 uv = toClipSpace(uTextureResolution, vVertexPosition);
+        gl_FragColor = texture2D(uImage, toColorSpace(uv)).rgba;
       }
     `;
 
