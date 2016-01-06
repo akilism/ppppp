@@ -432,7 +432,7 @@ class WebGL extends ScanComponent {
         vec2 position = tData.xy;
         vec2 finalPosition = tData.zw;
         vec2 onePixel = vec2(1.0, 1.0) / uTextureResolution;
-        vec2 newPosition = mix(position, finalPosition, (onePixel * 20.0));
+        vec2 newPosition = mix(position, finalPosition, (onePixel * 30.0));
         gl_FragColor = vec4(newPosition, finalPosition);
       }
     `;
